@@ -9,12 +9,21 @@ error_reporting(E_ALL);
 ini_set('log_errors', 1);
 ini_set('error_log', __DIR__ . '/webapp_errors.log');
 
-// Database credentials (from your USSD config)
-$host     = '127.0.0.1';
-$user     = 'p601229';
-$pass     = '2:p2WpmX[0YTs7';
-$db       = 'p601229_AgroBusiness_MW';
-$charset  = 'utf8mb4';
+// Load credentials from .env
+$envFile = dirname(__DIR__) . '/.env';
+if (file_exists($envFile)) {
+    foreach (file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) as $line) {
+        if ($line[0] === '#' || strpos($line, '=') === false) continue;
+        [$k, $v] = explode('=', $line, 2);
+        $_ENV[trim($k)] = trim($v);
+    }
+}
+
+$host    = $_ENV['DB_HOST'] ?? 'promanaged-it.com';
+$user    = $_ENV['DB_USER'] ?? '';
+$pass    = $_ENV['DB_PASS'] ?? '';
+$db      = $_ENV['DB_NAME'] ?? '';
+$charset = 'utf8mb4';
 
 // Send HTML+JSON headers so console.log works before JSON
 header('Content-Type: text/html; charset=utf-8');

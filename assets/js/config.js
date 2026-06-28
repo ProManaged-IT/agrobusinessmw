@@ -23,7 +23,7 @@ const AppConfig = {
     // API Configuration for each environment
     api: {
         local: {
-            baseUrl: 'http://localhost:8000/api.php', // Local development
+            baseUrl: 'http://localhost:8080/api.php', // Local development
             host: 'YOUR_SERVER_IP', // Replace with your server IP
             environment: 'local'
         },

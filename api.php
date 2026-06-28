@@ -34,42 +34,29 @@ header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type');
 
-// --- SMART ENVIRONMENT DETECTION ---
-// Method 1: Check request header (from JavaScript)
-$requestedEnvironment = $_GET['env'] ?? $_SERVER['HTTP_X_ENVIRONMENT'] ?? 'production';
-
-// Method 2: Automatic detection by domain
-$currentDomain = $_SERVER['HTTP_HOST'] ?? '';
-$isLocal = ($currentDomain === 'localhost' || 
-           $currentDomain === '127.0.0.1' || 
-           strpos($currentDomain, '.local') !== false);
-
-if ($isLocal || $requestedEnvironment === 'local') {
-    // LOCAL DEVELOPMENT - Connect to Remote Server
-    $host = '185.43.232.18'; // Your server IP for remote MySQL
-    error_log('🌐 Environment: Local -> Remote Server');
-} else {
-    // PRODUCTION/STAGING - Connect to Localhost
-    $host = 'localhost';
-    error_log('🌐 Environment: Production');
+// --- LOAD .ENV CREDENTIALS ---
+$envFile = __DIR__ . '/.env';
+if (file_exists($envFile)) {
+    foreach (file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) as $line) {
+        if ($line[0] === '#' || strpos($line, '=') === false) continue;
+        [$key, $val] = explode('=', $line, 2);
+        $_ENV[trim($key)] = trim($val);
+    }
 }
 
+$host     = $_ENV['DB_HOST']     ?? 'promanaged-it.com';
+$username = $_ENV['DB_USER']     ?? '';
+$password = $_ENV['DB_PASS']     ?? '';
+$database = $_ENV['DB_NAME']     ?? '';
+$port     = (int)($_ENV['DB_PORT'] ?? 3306);
 
-// --- CRITICAL FIX 2: SMART HOST CONNECTION ---
-// Automatically detects if you are on Laptop (Local) or Server (CPanel)
+// On production server, connect via localhost socket instead of remote host
 $is_local = ($_SERVER['SERVER_NAME'] === 'localhost' || $_SERVER['SERVER_NAME'] === '127.0.0.1');
-
-$username = 'p601229';
-$password = '2:p2WpmX[0YTs7';
-$database = 'p601229_AgroBusiness_MW';
-
-if ($is_local) {
-    // 🛑 RUNNING LOCALLY: Connect to Remote Server using IP
-    $host = '185.43.232.18';  // Replace with your actual server IP
-} else {
-    // 🟢 RUNNING ON SERVER: Connect to Localhost
+if (!$is_local) {
     $host = 'localhost';
 }
+
+error_log('🌐 DB host: ' . $host . ' | env: ' . ($is_local ? 'local' : 'production'));
 
 // Connect to database
 try {
@@ -81,7 +68,7 @@ try {
     $mysqli->options(MYSQLI_OPT_CONNECT_TIMEOUT, 10); // 10s Timeout
     
     // Suppress warnings to handle errors manually
-    if (!@$mysqli->real_connect($host, $username, $password, $database)) {
+    if (!@$mysqli->real_connect($host, $username, $password, $database, $port)) {
         throw new Exception("Connect Failed: " . mysqli_connect_error());
     }
 
@@ -468,30 +455,404 @@ try {
             ]);
             break;
             
+        // ── ONBOARDING: Submit application ──────────────────────────
+        case 'submit_application':
+            if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+                throw new Exception('POST method required');
+            }
+
+            $body      = json_decode(file_get_contents('php://input'), true) ?? [];
+            $userType  = trim($body['user_type']  ?? '');
+            $fullName  = trim($body['full_name']   ?? '');
+            $phone     = trim($body['phone_number'] ?? '');
+            $email     = trim($body['email']        ?? '');
+            $nationalId = trim($body['national_id'] ?? '');
+            $districtId = (int)($body['district_id'] ?? 0) ?: null;
+            $village   = trim($body['village']      ?? '');
+            $crops     = trim($body['crops_of_interest'] ?? '');
+            $business  = trim($body['business_name'] ?? '');
+            $channel   = in_array($body['channel'] ?? '', ['web','ussd']) ? $body['channel'] : 'web';
+
+            if (!in_array($userType, ['farmer','seller','buyer'])) {
+                throw new Exception('Invalid user type');
+            }
+            if (strlen($fullName) < 2) {
+                throw new Exception('Full name is required');
+            }
+            if (!preg_match('/^\+?[0-9\s\-]{8,20}$/', $phone)) {
+                throw new Exception('Valid phone number is required');
+            }
+
+            // Generate unique reference
+            $ref = 'AGR-' . date('Ymd') . '-' . strtoupper(substr(bin2hex(random_bytes(3)), 0, 5));
+
+            $stmt = $mysqli->prepare(
+                "INSERT INTO onboarding_applications
+                 (application_ref, user_type, full_name, phone_number, email, national_id,
+                  district_id, village, crops_of_interest, business_name, channel)
+                 VALUES (?,?,?,?,?,?,?,?,?,?,?)"
+            );
+            $stmt->bind_param(
+                'ssssssissss',
+                $ref, $userType, $fullName, $phone, $email, $nationalId,
+                $districtId, $village, $crops, $business, $channel
+            );
+            $stmt->execute();
+
+            // Send confirmation email if provided
+            if ($email) {
+                $subject = "AgroBusiness Malawi — Application Received ({$ref})";
+                $message = "Dear {$fullName},\n\nYour application has been received.\n"
+                         . "Reference: {$ref}\nType: " . ucfirst($userType) . "\n\n"
+                         . "We will review and notify you within 2-3 business days.\n\n"
+                         . "AgroBusiness Malawi Team";
+                @mail($email, $subject, $message,
+                    "From: noreply@agrobusinessmw.com\r\nContent-Type: text/plain; charset=utf-8");
+            }
+
+            error_log("📝 New application: {$ref} ({$userType}) from {$channel}");
+            echo json_encode([
+                'success'   => true,
+                'message'   => 'Application submitted successfully',
+                'ref'       => $ref,
+                'timestamp' => date('c')
+            ]);
+            break;
+
+        // ── ONBOARDING: Check application status ────────────────────
+        case 'check_application':
+            $ref  = strtoupper(trim($_GET['ref'] ?? ''));
+            if (!$ref) throw new Exception('Reference number is required');
+
+            $stmt = $mysqli->prepare(
+                "SELECT a.application_ref, a.user_type, a.full_name, a.status,
+                        a.denial_reason, a.created_at, a.reviewed_at,
+                        d.name as district_name
+                 FROM onboarding_applications a
+                 LEFT JOIN districts d ON a.district_id = d.id
+                 WHERE a.application_ref = ?"
+            );
+            $stmt->bind_param('s', $ref);
+            $stmt->execute();
+            $row = $stmt->get_result()->fetch_assoc();
+
+            if (!$row) throw new Exception('Application not found');
+
+            echo json_encode(['success' => true, 'data' => $row, 'timestamp' => date('c')]);
+            break;
+
+        // ── ONBOARDING: Admin — list applications ───────────────────
+        case 'admin_applications':
+            $adminToken = $_SERVER['HTTP_X_ADMIN_TOKEN'] ?? ($_GET['token'] ?? '');
+            $envAdminToken = $_ENV['ADMIN_TOKEN'] ?? 'agro_admin_2024';
+            if ($adminToken !== $envAdminToken) {
+                http_response_code(200);
+                echo json_encode(['success' => false, 'error' => 'Unauthorized']);
+                exit;
+            }
+
+            $status = $_GET['status'] ?? 'pending';
+            if (!in_array($status, ['pending','approved','denied','all'])) $status = 'pending';
+
+            $where = $status === 'all' ? '' : "WHERE a.status = '{$status}'";
+            $result = $mysqli->query(
+                "SELECT a.id, a.application_ref, a.user_type, a.full_name, a.phone_number,
+                        a.email, a.national_id, a.channel, a.status, a.created_at, a.reviewed_at,
+                        d.name as district_name
+                 FROM onboarding_applications a
+                 LEFT JOIN districts d ON a.district_id = d.id
+                 {$where}
+                 ORDER BY a.created_at DESC
+                 LIMIT 100"
+            );
+            $apps = [];
+            while ($row = $result->fetch_assoc()) $apps[] = $row;
+
+            echo json_encode(['success' => true, 'data' => $apps, 'count' => count($apps), 'timestamp' => date('c')]);
+            break;
+
+        // ── ONBOARDING: Admin — approve / deny ──────────────────────
+        case 'admin_review':
+            if ($_SERVER['REQUEST_METHOD'] !== 'POST') throw new Exception('POST method required');
+
+            $adminToken = $_SERVER['HTTP_X_ADMIN_TOKEN'] ?? '';
+            $envAdminToken = $_ENV['ADMIN_TOKEN'] ?? 'agro_admin_2024';
+            if ($adminToken !== $envAdminToken) {
+                http_response_code(200);
+                echo json_encode(['success' => false, 'error' => 'Unauthorized']);
+                exit;
+            }
+
+            $body    = json_decode(file_get_contents('php://input'), true) ?? [];
+            $appId   = (int)($body['application_id'] ?? 0);
+            $action  = $body['action'] ?? '';
+            $notes   = trim($body['notes'] ?? '');
+
+            if (!$appId || !in_array($action, ['approve','deny'])) {
+                throw new Exception('application_id and action (approve/deny) are required');
+            }
+
+            $newStatus = $action === 'approve' ? 'approved' : 'denied';
+            $stmt = $mysqli->prepare(
+                "UPDATE onboarding_applications
+                 SET status=?, admin_notes=?, denial_reason=?, reviewed_at=NOW()
+                 WHERE id=?"
+            );
+            $denial = $action === 'deny' ? $notes : null;
+            $adminNotes = $action === 'approve' ? $notes : null;
+            $stmt->bind_param('sssi', $newStatus, $adminNotes, $denial, $appId);
+            $stmt->execute();
+
+            // Fetch applicant details to send notification
+            $stmt2 = $mysqli->prepare(
+                "SELECT full_name, email, phone_number, application_ref, user_type
+                 FROM onboarding_applications WHERE id=?"
+            );
+            $stmt2->bind_param('i', $appId);
+            $stmt2->execute();
+            $app = $stmt2->get_result()->fetch_assoc();
+
+            if ($app && $app['email']) {
+                if ($action === 'approve') {
+                    $subject = "AgroBusiness Malawi — Application Approved! ({$app['application_ref']})";
+                    $msg     = "Dear {$app['full_name']},\n\nGreat news! Your application ({$app['application_ref']}) "
+                             . "has been APPROVED.\n\nYou can now use all features of AgroBusiness Malawi.\n\n"
+                             . ($notes ? "Admin notes: {$notes}\n\n" : '')
+                             . "Welcome to the platform!\nAgroBusiness Malawi Team";
+                } else {
+                    $subject = "AgroBusiness Malawi — Application Update ({$app['application_ref']})";
+                    $msg     = "Dear {$app['full_name']},\n\nUnfortunately, your application ({$app['application_ref']}) "
+                             . "could not be approved at this time.\n\n"
+                             . ($notes ? "Reason: {$notes}\n\n" : '')
+                             . "Please contact us if you have questions.\nAgroBusiness Malawi Team";
+                }
+                @mail($app['email'], $subject, $msg,
+                    "From: noreply@agrobusinessmw.com\r\nContent-Type: text/plain; charset=utf-8");
+            }
+
+            error_log("✅ Application {$appId} {$newStatus} by admin");
+            echo json_encode([
+                'success'   => true,
+                'message'   => "Application {$newStatus}",
+                'ref'       => $app['application_ref'] ?? '',
+                'timestamp' => date('c')
+            ]);
+            break;
+
+        // ─── DUAL PRICE DATA ────────────────────────────────────────────────────
+
+        case 'dual_crop_prices':
+            // Returns both ADMARC official prices and community-reported prices
+            $crop_id = isset($_GET['crop_id']) ? (int)$_GET['crop_id'] : null;
+
+            // ADMARC prices
+            if ($crop_id) {
+                $stmt = $mysqli->prepare(
+                    "SELECT ap.*, c.name as crop_name, d.name as district_name
+                     FROM admarc_prices ap
+                     JOIN crops c ON ap.crop_id = c.id
+                     LEFT JOIN districts d ON ap.district_id = d.id
+                     WHERE ap.crop_id = ?
+                     ORDER BY ap.price_date DESC, ap.depot_name"
+                );
+                $stmt->bind_param('i', $crop_id);
+            } else {
+                $stmt = $mysqli->prepare(
+                    "SELECT ap.*, c.name as crop_name, d.name as district_name
+                     FROM admarc_prices ap
+                     JOIN crops c ON ap.crop_id = c.id
+                     LEFT JOIN districts d ON ap.district_id = d.id
+                     ORDER BY c.name, ap.price_date DESC, ap.depot_name"
+                );
+            }
+            $stmt->execute();
+            $admarc = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+
+            // Community prices — aggregated per crop + district
+            if ($crop_id) {
+                $stmt2 = $mysqli->prepare(
+                    "SELECT cp.crop_id, c.name as crop_name,
+                            d.name as district_name, cp.district_id,
+                            cp.market_name,
+                            ROUND(AVG(cp.price_per_kg),0) as avg_price,
+                            MIN(cp.price_per_kg) as min_price,
+                            MAX(cp.price_per_kg) as max_price,
+                            COUNT(*) as report_count,
+                            MAX(cp.created_at) as last_reported,
+                            cp.unit
+                     FROM crowdsourced_prices cp
+                     JOIN crops c ON cp.crop_id = c.id
+                     LEFT JOIN districts d ON cp.district_id = d.id
+                     WHERE cp.crop_id = ?
+                     GROUP BY cp.crop_id, cp.district_id, cp.market_name
+                     ORDER BY report_count DESC, last_reported DESC"
+                );
+                $stmt2->bind_param('i', $crop_id);
+            } else {
+                $stmt2 = $mysqli->prepare(
+                    "SELECT cp.crop_id, c.name as crop_name,
+                            d.name as district_name, cp.district_id,
+                            cp.market_name,
+                            ROUND(AVG(cp.price_per_kg),0) as avg_price,
+                            MIN(cp.price_per_kg) as min_price,
+                            MAX(cp.price_per_kg) as max_price,
+                            COUNT(*) as report_count,
+                            MAX(cp.created_at) as last_reported,
+                            cp.unit
+                     FROM crowdsourced_prices cp
+                     JOIN crops c ON cp.crop_id = c.id
+                     LEFT JOIN districts d ON cp.district_id = d.id
+                     GROUP BY cp.crop_id, cp.district_id, cp.market_name
+                     ORDER BY c.name, report_count DESC"
+                );
+            }
+            $stmt2->execute();
+            $community = $stmt2->get_result()->fetch_all(MYSQLI_ASSOC);
+
+            echo json_encode([
+                'success'   => true,
+                'admarc'    => $admarc,
+                'community' => $community,
+                'admarc_count'    => count($admarc),
+                'community_count' => count($community),
+            ]);
+            break;
+
+        case 'submit_price':
+            // Farmer submits a crowdsourced price
+            $body = json_decode(file_get_contents('php://input'), true) ?? [];
+            $crop_id    = (int)($body['crop_id']    ?? 0);
+            $district_id= isset($body['district_id']) ? (int)$body['district_id'] : null;
+            $price      = (float)($body['price_per_kg'] ?? 0);
+            $unit       = preg_replace('/[^a-zA-Z\/]/', '', $body['unit'] ?? 'kg');
+            $market     = mb_substr(trim($body['market_name'] ?? ''), 0, 200);
+            $phone      = mb_substr(trim($body['phone'] ?? 'anonymous'), 0, 50);
+            $channel    = in_array($body['channel'] ?? 'web', ['web','ussd']) ? ($body['channel'] ?? 'web') : 'web';
+
+            if (!$crop_id || $price <= 0) {
+                throw new Exception('crop_id and price_per_kg are required.');
+            }
+            if ($price > 100000) {
+                throw new Exception('Price seems too high. Please enter price per kg in MWK.');
+            }
+
+            $stmt = $mysqli->prepare(
+                "INSERT INTO crowdsourced_prices
+                 (crop_id, district_id, price_per_kg, unit, market_name, submitted_by, channel)
+                 VALUES (?,?,?,?,?,?,?)"
+            );
+            $stmt->bind_param('iidssss', $crop_id, $district_id, $price, $unit, $market, $phone, $channel);
+            $stmt->execute();
+
+            echo json_encode([
+                'success' => true,
+                'message' => 'Price report submitted. Thank you for helping fellow farmers!',
+                'id'      => $mysqli->insert_id,
+            ]);
+            break;
+
+        case 'admarc_scrape':
+            // Scrape ADMARC website for latest commodity prices (cron-triggered)
+            $adminToken = $_SERVER['HTTP_X_ADMIN_TOKEN'] ?? $_GET['token'] ?? '';
+            if ($adminToken !== ($_ENV['ADMIN_TOKEN'] ?? 'agro_admin_2024')) {
+                throw new Exception('Unauthorized.');
+            }
+
+            $result = scrape_admarc_prices($mysqli);
+            echo json_encode(['success' => true, 'scraped' => $result]);
+            break;
+
         default:
-            throw new Exception('Invalid action specified. Available actions: test, districts, crops, crop_prices, market_insights, sellers, buyers, pest_control, farming_tips, basic_info');
+            throw new Exception('Invalid action specified. Available actions: test, districts, crops, crop_prices, dual_crop_prices, submit_price, admarc_scrape, market_insights, sellers, buyers, pest_control, farming_tips, basic_info, submit_application, check_application, admin_applications, admin_review');
     }
-    
+
 } catch (Exception $e) {
     error_log('❌ API Error: ' . $e->getMessage());
     ob_clean();
-    
-    // --- CRITICAL FIX 3: RETURN 200 ON ERROR ---
-    // Return 200 instead of 500 so the frontend can display the message
     http_response_code(200);
     echo json_encode([
-        'success' => false,
-        'error' => $e->getMessage(),
-        'action' => $action,
+        'success'   => false,
+        'error'     => $e->getMessage(),
+        'action'    => $action ?? '',
         'timestamp' => date('c')
     ]);
+}
+
+// ─── ADMARC SCRAPER ──────────────────────────────────────────────────────────
+function scrape_admarc_prices(mysqli $db): array {
+    $sources = [
+        'https://admarc.co.mw/commodity-prices',
+        'https://admarc.co.mw/prices',
+        'https://www.admarc.co.mw/commodity-prices',
+    ];
+    $ctx = stream_context_create(['http' => [
+        'timeout'         => 10,
+        'user_agent'      => 'Mozilla/5.0 AgroBusiness-Malawi/1.0',
+        'follow_location' => 1,
+    ]]);
+
+    $html = null; $usedUrl = null;
+    foreach ($sources as $url) {
+        $raw = @file_get_contents($url, false, $ctx);
+        if ($raw && strlen($raw) > 500) { $html = $raw; $usedUrl = $url; break; }
+    }
+    if (!$html) {
+        return ['status' => 'unreachable', 'rows_inserted' => 0,
+                'message' => 'ADMARC website unreachable. Use manual admin entry.'];
+    }
+
+    libxml_use_internal_errors(true);
+    $dom = new DOMDocument();
+    $dom->loadHTML($html);
+    libxml_clear_errors();
+    $xpath = new DOMXPath($dom);
+
+    $cropMap = [];
+    $r = $db->query("SELECT id, name FROM crops");
+    while ($row = $r->fetch_assoc()) {
+        $cropMap[strtolower($row['name'])] = (int)$row['id'];
+    }
+
+    $inserted = 0;
+    foreach ($xpath->query('//table//tr') as $tr) {
+        $cells = $xpath->query('td', $tr);
+        if ($cells->length < 2) continue;
+        $cols = [];
+        foreach ($cells as $td) $cols[] = trim($td->textContent);
+
+        $cropId = null;
+        foreach ([0,1] as $ci) {
+            $lower = strtolower($cols[$ci] ?? '');
+            foreach ($cropMap as $name => $id) {
+                if (str_contains($lower, $name)) { $cropId = $id; break 2; }
+            }
+        }
+        if (!$cropId) continue;
+
+        $prices = [];
+        foreach ($cols as $c) {
+            $n = (float)preg_replace('/[^\d.]/', '', $c);
+            if ($n > 10 && $n < 500000) $prices[] = $n;
+        }
+        if (empty($prices)) continue;
+
+        $buying  = $prices[0];
+        $selling = $prices[1] ?? round($buying * 1.28, 2);
+        $depot   = trim($cols[0] ?? 'ADMARC Depot');
+
+        $stmt = $db->prepare(
+            "INSERT INTO admarc_prices (crop_id,depot_name,buying_price,selling_price,unit,price_date,source_url)
+             VALUES (?,?,?,?,'kg',CURDATE(),?)
+             ON DUPLICATE KEY UPDATE buying_price=VALUES(buying_price),selling_price=VALUES(selling_price),scraped_at=NOW()"
+        );
+        $stmt->bind_param('isdds', $cropId, $depot, $buying, $selling, $usedUrl);
+        if ($stmt->execute()) $inserted++;
+    }
+    return ['status' => 'ok', 'url' => $usedUrl, 'rows_inserted' => $inserted];
 }
 
 // Close database connection
 if (isset($mysqli)) {
     $mysqli->close();
 }
-
-
-
 ?>

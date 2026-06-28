@@ -3,9 +3,9 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Dec 05, 2025 at 12:06 AM
--- Server version: 8.0.43-cll-lve
--- PHP Version: 8.4.14
+-- Generation Time: Feb 16, 2026 at 09:57 AM
+-- Server version: 8.0.44-cll-lve
+-- PHP Version: 8.4.17
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -149,12 +149,7 @@ INSERT INTO `buyer_crops` (`buyer_id`, `crop_id`) VALUES
 (2, 3),
 (3, 3),
 (6, 3),
-(8, 3),
-(19, 4),
-(20, 5),
-(23, 5),
-(21, 7),
-(22, 9);
+(8, 3);
 
 -- --------------------------------------------------------
 
@@ -346,7 +341,7 @@ INSERT INTO `market_insights` (`id`, `district_id`, `insight_en`, `insight_ci`) 
 (15, 15, 'Zomba pigeon pea exports reach new Asian markets', 'Kutulutsa nandolo ku Asia kuyambira ku Zomba'),
 (16, 16, 'Nkhotakota cotton processing plant to open next season', 'Fakitale yopangira kotoni mu Nkhotakota izatsegulidwa mchaka chotsatira'),
 (17, 17, 'Ntcheu bean storage facilities construction begins', 'Kumangidwa kwa mabokosi osungira nyemba mu Ntcheu kwatamba'),
-(18, 18, 'Balaka soybean demand increasing with new processing plant', 'Kufunika kwa soybeans mu Balaka kukwera ndi fakitale yatsopano'),
+(18, 18, 'Balaka soybean demand increasing with new processing plant. Monitor for more', 'Kufunika kwa soybeans mu Balaka kukwera ndi fakitale yatsopano'),
 (19, 19, 'Mulanje tea workers receive 15% wage increase', 'Ogwira ntchito mu tiyi mu Mulanje alandira malipiro okwera 15%'),
 (20, 20, 'Machinga groundnut farmers form new cooperative', 'Alimi a nthola mu Machinga apanga bungwe latsopano'),
 (21, 21, 'Phalombe maize affected by armyworm outbreak', 'Chimanga mu Phalombe chikuvutika chifukwa cha zinyalala'),

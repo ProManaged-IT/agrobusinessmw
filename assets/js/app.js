@@ -889,93 +889,106 @@ updateTexts() {
     }
     
     showScreen(screenId) {
-        const currentActive = document.querySelector('.screen.active');
-        const targetScreen = document.getElementById(screenId);
-        
-        if (currentActive && targetScreen && currentActive !== targetScreen) {
-            // Enhanced screen transition
-            currentActive.style.transition = 'all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
-            currentActive.style.transform = 'translateX(-100px)';
-            currentActive.style.opacity = '0';
-            currentActive.style.filter = 'blur(5px)';
-            
-            setTimeout(() => {
-                document.querySelectorAll('.screen').forEach(screen => {
-                    screen.classList.remove('active');
-                    screen.style.transform = '';
-                    screen.style.opacity = '';
-                    screen.style.filter = '';
-                });
-                
-                targetScreen.classList.add('active');
-                targetScreen.style.transform = 'translateX(100px)';
-                targetScreen.style.opacity = '0';
-                
-                requestAnimationFrame(() => {
-                    targetScreen.style.transition = 'all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
-                    targetScreen.style.transform = '';
-                    targetScreen.style.opacity = '';
-                });
-                
-                this.currentScreen = screenId;
-            }, 500);
-        } else if (targetScreen) {
-            document.querySelectorAll('.screen').forEach(screen => {
-                screen.classList.remove('active');
+        // Cancel any pending transition so a quick second call never wins over the latest one
+        if (this._screenTimer) {
+            clearTimeout(this._screenTimer);
+            this._screenTimer = null;
+            // Reset any partially-animated screens
+            document.querySelectorAll('.screen').forEach(s => {
+                s.style.transition = '';
+                s.style.transform = '';
+                s.style.opacity = '';
+                s.style.filter = '';
             });
+        }
+
+        const currentActive = document.querySelector('.screen.active');
+        const targetScreen  = document.getElementById(screenId);
+        if (!targetScreen) return;
+
+        if (currentActive && currentActive !== targetScreen) {
+            currentActive.style.transition = 'all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+            currentActive.style.transform  = 'translateX(-60px)';
+            currentActive.style.opacity    = '0';
+
+            this._screenTimer = setTimeout(() => {
+                this._screenTimer = null;
+                document.querySelectorAll('.screen').forEach(s => {
+                    s.classList.remove('active');
+                    s.style.transition = '';
+                    s.style.transform  = '';
+                    s.style.opacity    = '';
+                    s.style.filter     = '';
+                });
+                targetScreen.classList.add('active');
+                targetScreen.style.opacity   = '0';
+                targetScreen.style.transform = 'translateX(30px)';
+                requestAnimationFrame(() => {
+                    targetScreen.style.transition = 'all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+                    targetScreen.style.transform  = '';
+                    targetScreen.style.opacity    = '';
+                });
+                this.currentScreen = screenId;
+            }, 300);
+        } else {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             targetScreen.classList.add('active');
             this.currentScreen = screenId;
         }
     }
     
     openService(service) {
+        // Register never leaves the dashboard — just open the modal
+        if (service === 'register') {
+            this.openRegistrationModal();
+            return;
+        }
+
         this.showScreen('content');
-        
+
         const title = document.getElementById('content-title');
         if (title) {
             title.textContent = this.texts[this.currentLang][service.replace('-', '_')] || service;
         }
-        
+
         this.showLoading();
-        
-        setTimeout(() => {
-            switch(service) {
-                case 'crop-prices':
-                    this.loadCropPrices();
-                    break;
-                case 'weather':
-                    if (this.selectedDistrict) {
-                        this.loadWeather(this.selectedDistrict);
-                    } else {
-                        this.showDistrictSelection(() => this.loadWeather(this.selectedDistrict));
-                    }
-                    break;
-                case 'market-insights':
-                    this.showDistrictSelection(() => this.loadMarketInsights(this.selectedDistrict));
-                    break;
-                case 'sellers':
-                    this.showDistrictSelection(() => this.loadSellers(this.selectedDistrict));
-                    break;
-                case 'buyers':
-                    this.showDistrictSelection(() => this.loadBuyers(this.selectedDistrict));
-                    break;
-                case 'pest-control':
-                    this.showCropSelection(() => {
-                        this.showDistrictSelection(() => {
-                            this.loadPestControl(this.selectedCrop, this.selectedDistrict);
-                        });
+
+        switch(service) {
+            case 'crop-prices':
+                this.loadCropPrices();
+                break;
+            case 'weather':
+                if (this.selectedDistrict) {
+                    this.loadWeather(this.selectedDistrict);
+                } else {
+                    this.showDistrictSelection(() => this.loadWeather(this.selectedDistrict));
+                }
+                break;
+            case 'market-insights':
+                this.showDistrictSelection(() => this.loadMarketInsights(this.selectedDistrict));
+                break;
+            case 'sellers':
+                this.showDistrictSelection(() => this.loadSellers(this.selectedDistrict));
+                break;
+            case 'buyers':
+                this.showDistrictSelection(() => this.loadBuyers(this.selectedDistrict));
+                break;
+            case 'pest-control':
+                this.showCropSelection(() => {
+                    this.showDistrictSelection(() => {
+                        this.loadPestControl(this.selectedCrop, this.selectedDistrict);
                     });
-                    break;
-                case 'farming-tips':
-                    this.showCropSelection(() => this.loadFarmingTips(this.selectedCrop));
-                    break;
-                case 'basic-info':
-                    this.loadBasicInfo();
-                    break;
-                default:
-                    this.showError('Service not available');
-            }
-        }, 300);
+                });
+                break;
+            case 'farming-tips':
+                this.showCropSelection(() => this.loadFarmingTips(this.selectedCrop));
+                break;
+            case 'basic-info':
+                this.loadBasicInfo();
+                break;
+            default:
+                this.showError('Service not available');
+        }
     }
     
     showLoading() {
@@ -1279,25 +1292,37 @@ updateTexts() {
                 `;
             }).join('');
             
+            // Track whether user selected before closing
+            let districtSelected = false;
+
+            // On modal close without selection, return to dashboard
+            const onDistrictModalClose = () => {
+                modal.removeEventListener('modalclosed', onDistrictModalClose);
+                if (!districtSelected && this.currentScreen === 'content') {
+                    this.showScreen('dashboard');
+                }
+            };
+            modal.addEventListener('modalclosed', onDistrictModalClose);
+
             // Add click handlers
             list.querySelectorAll('.district-item-revolution').forEach(item => {
                 item.addEventListener('click', () => {
                     this.selectedDistrict = item.dataset.id;
                     console.log('📍 District selected:', this.selectedDistrict);
-                    
-                    // Enhanced selection animation
+                    districtSelected = true;
+
                     item.style.background = 'var(--primary)';
                     item.style.color = 'white';
                     item.style.transform = 'scale(1.1)';
                     item.style.boxShadow = 'var(--shadow-glow)';
-                    
+
                     setTimeout(() => {
                         this.closeModal(modal);
                         if (callback) callback();
-                    }, 400);
+                    }, 300);
                 });
             });
-            
+
             this.openModal(modal);
         }).catch(error => {
             console.error('❌ District selection error:', error);
@@ -1340,25 +1365,37 @@ updateTexts() {
                 `;
             }).join('');
             
+            // Track whether user selected before closing
+            let cropSelected = false;
+
+            // On modal close without selection, return to dashboard
+            const onCropModalClose = () => {
+                modal.removeEventListener('modalclosed', onCropModalClose);
+                if (!cropSelected && this.currentScreen === 'content') {
+                    this.showScreen('dashboard');
+                }
+            };
+            modal.addEventListener('modalclosed', onCropModalClose);
+
             // Add click handlers
             list.querySelectorAll('.crop-item-revolution').forEach(item => {
                 item.addEventListener('click', () => {
                     this.selectedCrop = item.dataset.id;
                     console.log('🌾 Crop selected:', this.selectedCrop);
-                    
-                    // Enhanced selection animation
+                    cropSelected = true;
+
                     item.style.background = 'var(--success)';
                     item.style.color = 'white';
                     item.style.transform = 'scale(1.1)';
-                    item.style.boxShadow = '0 0 20px rgba(16, 185, 129, 0.4)';
-                    
+                    item.style.boxShadow = 'var(--shadow-glow)';
+
                     setTimeout(() => {
                         this.closeModal(modal);
                         if (callback) callback();
-                    }, 400);
+                    }, 300);
                 });
             });
-            
+
             this.openModal(modal);
         }).catch(error => {
             console.error('❌ Crop selection error:', error);
@@ -1409,8 +1446,8 @@ closeModal(modal) {
         setTimeout(() => {
             modal.classList.remove('active');
             document.body.style.overflow = '';
-            
-            // Return focus to the element that opened the modal
+            modal.dispatchEvent(new Event('modalclosed'));
+
             const lastFocused = document.querySelector('[data-last-focused]');
             if (lastFocused) {
                 lastFocused.focus();
@@ -1730,119 +1767,163 @@ closeModal(modal) {
     
     async loadCropPrices(specificCrop = null) {
         try {
-            const response = await this.apiCall('api.php?action=crop_prices');
-            
+            const url = specificCrop
+                ? `api.php?action=dual_crop_prices`
+                : `api.php?action=dual_crop_prices`;
+            const response = await this.apiCall(url);
+
             if (!response.success) {
                 this.showError(response.error || 'Failed to load crop prices');
                 return;
             }
-            
-            let crops = response.data || [];
-            
-            // Filter for specific crop if requested
+
+            let admarc    = response.admarc    || [];
+            let community = response.community || [];
+
             if (specificCrop) {
-                crops = crops.filter(crop => 
-                    crop.name.toLowerCase().includes(specificCrop.toLowerCase())
-                );
+                const lc = specificCrop.toLowerCase();
+                admarc    = admarc.filter(r => r.crop_name.toLowerCase().includes(lc));
+                community = community.filter(r => r.crop_name.toLowerCase().includes(lc));
             }
-            
-            if (crops.length === 0) {
-                this.showNoData();
-                return;
-            }
-            
-            const html = `
-                <h2 style="margin-bottom: 2rem; color: var(--primary);">💰 ${specificCrop ? specificCrop + ' ' : ''}Crop Prices</h2>
-                
-                <div class="price-overview" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
-                    <div class="price-stat" style="background: var(--white); padding: 1.5rem; border-radius: var(--radius-lg); box-shadow: var(--shadow-md); text-align: center;">
-                        <div style="font-size: 2rem; margin-bottom: 0.5rem;">📊</div>
-                        <div style="font-size: 2rem; font-weight: 700; color: var(--primary);">${crops.length}</div>
-                        <div style="color: var(--text-secondary);">Crops Listed</div>
-                    </div>
-                    <div class="price-stat" style="background: var(--white); padding: 1.5rem; border-radius: var(--radius-lg); box-shadow: var(--shadow-md); text-align: center;">
-                        <div style="font-size: 2rem; margin-bottom: 0.5rem;">💰</div>
-                        <div style="font-size: 1.5rem; font-weight: 700; color: var(--success);">Live Prices</div>
-                        <div style="color: var(--text-secondary);">Market Rates</div>
-                    </div>
-                    <div class="price-stat" style="background: var(--white); padding: 1.5rem; border-radius: var(--radius-lg); box-shadow: var(--shadow-md); text-align: center;">
-                        <div style="font-size: 2rem; margin-bottom: 0.5rem;">🕒</div>
-                        <div style="font-size: 1rem; font-weight: 700; color: var(--accent);">Updated</div>
-                        <div style="color: var(--text-secondary);">${new Date().toLocaleDateString()}</div>
-                    </div>
+
+            const fmt = n => n ? 'MK ' + parseFloat(n).toLocaleString() : 'N/A';
+            const ago = dt => {
+                const d = Math.floor((Date.now() - new Date(dt)) / 86400000);
+                return d === 0 ? 'Today' : d === 1 ? 'Yesterday' : `${d}d ago`;
+            };
+
+            const admarRows = admarc.map((r, i) => `
+                <tr style="animation:serviceReveal .3s ease ${i*.04}s both">
+                    <td><span style="font-size:1.3rem">${this.getCropIcon(r.crop_name)}</span> <strong>${r.crop_name}</strong></td>
+                    <td>${r.depot_name || '—'}</td>
+                    <td><span class="price-badge">${fmt(r.buying_price)}</span></td>
+                    <td><span class="price-badge price-high">${fmt(r.selling_price)}</span></td>
+                    <td style="color:var(--text-muted);font-size:.8rem">${r.price_date ? new Date(r.price_date).toLocaleDateString() : '—'}</td>
+                </tr>`).join('') || `<tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:2rem">No ADMARC data yet</td></tr>`;
+
+            const commRows = community.map((r, i) => `
+                <tr style="animation:serviceReveal .3s ease ${i*.04}s both">
+                    <td><span style="font-size:1.3rem">${this.getCropIcon(r.crop_name)}</span> <strong>${r.crop_name}</strong></td>
+                    <td>${r.district_name || '—'}</td>
+                    <td>${r.market_name || '—'}</td>
+                    <td><span class="price-badge">${fmt(r.min_price)}</span></td>
+                    <td><span class="price-badge price-high">${fmt(r.avg_price)}</span></td>
+                    <td><span class="price-badge" style="background:rgba(200,164,90,.12);color:var(--accent)">${fmt(r.max_price)}</span></td>
+                    <td style="color:var(--text-muted);font-size:.8rem">${r.report_count} report${r.report_count>1?'s':''}<br>${ago(r.last_reported)}</td>
+                </tr>`).join('') || `<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:2rem">No community reports yet — be the first!</td></tr>`;
+
+            const area = document.getElementById('content-area');
+            area.innerHTML = `
+                <h2 style="font-family:'DM Serif Display',serif;margin-bottom:1.5rem;color:var(--text-primary)">Crop Prices</h2>
+
+                <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:1.5rem">
+                    <button class="price-tab active" id="tab-admarc" onclick="app._priceTab('admarc')">ADMARC Official</button>
+                    <button class="price-tab" id="tab-community" onclick="app._priceTab('community')">Community Reports <span style="background:var(--accent);color:#fff;border-radius:20px;padding:.1rem .5rem;font-size:.75rem;margin-left:.3rem">${community.length}</span></button>
+                    <button class="price-tab" id="tab-report" onclick="app._priceTab('report')" style="margin-left:auto;background:var(--primary);color:#fff;border-color:var(--primary)">+ Report a Price</button>
                 </div>
 
-                <div class="table-container" style="background: var(--white); border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow-lg);">
+                <!-- ADMARC Tab -->
+                <div id="pane-admarc" class="price-pane">
+                    <p style="color:var(--text-muted);font-size:.85rem;margin-bottom:1rem">Official buying &amp; selling prices from ADMARC depots across Malawi. Updated daily when ADMARC publishes new data.</p>
+                    <div style="overflow-x:auto">
                     <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th style="background: var(--primary); color: white;">Crop</th>
-                                <th style="background: var(--primary); color: white;">Min Price (MWK)</th>
-                                <th style="background: var(--primary); color: white;">Market Price (MWK)</th>
-                                <th style="background: var(--primary); color: white;">Unit</th>
-                                <th style="background: var(--primary); color: white;">Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${crops.map((crop, index) => `
-                                <tr style="animation: serviceReveal 0.3s ease ${index * 0.05}s both; cursor: pointer;" onclick="app.showCropDetails('${crop.name}')">
-                                    <td>
-                                        <div class="crop-cell" style="display: flex; align-items: center; gap: 1rem;">
-                                            <span class="crop-icon" style="font-size: 1.8rem;">${this.getCropIcon(crop.name)}</span>
-                                            <div>
-                                                <div class="crop-name" style="font-weight: 600; margin-bottom: 0.25rem;">${crop.name}</div>
-                                                <div style="font-size: 0.8rem; color: var(--text-muted);">${this.getCropCategory(crop.name)} crop</div>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td class="price-cell">
-                                        ${crop.min_price ? `<span class="price" style="font-weight: 600; color: var(--text-primary);">MWK ${parseFloat(crop.min_price).toLocaleString()}</span>` : '<span class="no-price" style="color: var(--text-muted); font-style: italic;">N/A</span>'}
-                                    </td>
-                                    <td class="price-cell">
-                                        ${crop.market_price ? `<span class="price highlight" style="font-weight: 700; color: var(--success); background: var(--success-bg); padding: 0.25rem 0.75rem; border-radius: var(--radius-sm);">MWK ${parseFloat(crop.market_price).toLocaleString()}</span>` : '<span class="no-price" style="color: var(--text-muted); font-style: italic;">N/A</span>'}
-                                    </td>
-                                    <td>
-                                        <span class="unit-badge" style="background: var(--gray-100); padding: 0.25rem 0.75rem; border-radius: var(--radius-sm); font-size: 0.85rem; font-weight: 500; color: var(--text-secondary);">${crop.unit || 'kg'}</span>
-                                    </td>
-                                    <td>
-                                        ${crop.market_price && crop.min_price ? 
-                                            (parseFloat(crop.market_price) > parseFloat(crop.min_price) ? 
-                                                '<span style="color: var(--success); font-weight: 600;">📈 High</span>' : 
-                                                '<span style="color: var(--warning); font-weight: 600;">📊 Normal</span>') : 
-                                            '<span style="color: var(--text-muted);">➖ N/A</span>'
-                                        }
-                                    </td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
+                        <thead><tr>
+                            <th>Crop</th><th>Depot</th><th>ADMARC Buys (MWK)</th><th>ADMARC Sells (MWK)</th><th>Date</th>
+                        </tr></thead>
+                        <tbody>${admarRows}</tbody>
                     </table>
+                    </div>
+                    <p style="margin-top:1rem;font-size:.8rem;color:var(--text-muted)">Source: ADMARC Malawi. Prices in MWK per kg.</p>
                 </div>
 
-                <div class="price-legend" style="margin-top: 2rem; padding: 1.5rem; background: var(--gray-50); border-radius: var(--radius-lg); border: 1px solid var(--gray-200);">
-                    <h4 style="margin-bottom: 1rem; color: var(--primary);">📋 Price Guide</h4>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
-                        <div>
-                            <strong style="color: var(--success);">📈 High:</strong> Above minimum price
-                        </div>
-                        <div>
-                            <strong style="color: var(--warning);">📊 Normal:</strong> At minimum price level
-                        </div>
-                        <div>
-                            <strong style="color: var(--text-muted);">➖ N/A:</strong> Price data unavailable
-                        </div>
+                <!-- Community Tab -->
+                <div id="pane-community" class="price-pane" style="display:none">
+                    <p style="color:var(--text-muted);font-size:.85rem;margin-bottom:1rem">Prices reported by farmers and traders at local markets in the last 30 days. Compare with ADMARC to spot the best deal.</p>
+                    <div style="overflow-x:auto">
+                    <table class="data-table">
+                        <thead><tr>
+                            <th>Crop</th><th>District</th><th>Market</th><th>Min (MWK)</th><th>Avg (MWK)</th><th>Max (MWK)</th><th>Reports</th>
+                        </tr></thead>
+                        <tbody>${commRows}</tbody>
+                    </table>
                     </div>
-                    <p style="margin-top: 1rem; color: var(--text-secondary); font-size: 0.9rem;">
-                        💡 <strong>Tip:</strong> Click on any crop row to view detailed information and trends.
-                    </p>
+                </div>
+
+                <!-- Report Tab -->
+                <div id="pane-report" class="price-pane" style="display:none">
+                    <p style="color:var(--text-muted);font-size:.85rem;margin-bottom:1.5rem">Seen a price at your local market? Report it to help other farmers make better decisions.</p>
+                    <form id="price-report-form" style="max-width:480px;display:flex;flex-direction:column;gap:1rem">
+                        <div class="reg-field">
+                            <label>Crop *</label>
+                            <select id="pr-crop" required>
+                                <option value="">Select crop...</option>
+                                ${[...new Set([...admarc.map(r=>({id:r.crop_id,name:r.crop_name})),...community.map(r=>({id:r.crop_id,name:r.crop_name}))])
+                                    .reduce((acc,c)=>{if(!acc.find(x=>x.id===c.id))acc.push(c);return acc;},[])
+                                    .sort((a,b)=>a.name.localeCompare(b.name))
+                                    .map(c=>`<option value="${c.id}">${c.name}</option>`).join('')}
+                            </select>
+                        </div>
+                        <div class="reg-field">
+                            <label>Price per kg (MWK) *</label>
+                            <input type="number" id="pr-price" min="1" max="99999" step="1" placeholder="e.g. 250" required>
+                        </div>
+                        <div class="reg-field">
+                            <label>Market / Location</label>
+                            <input type="text" id="pr-market" placeholder="e.g. Limbe Market (optional)">
+                        </div>
+                        <div class="reg-field">
+                            <label>Your Phone (optional)</label>
+                            <input type="tel" id="pr-phone" placeholder="+265...">
+                        </div>
+                        <button type="submit" class="cta-button-revolution" style="align-self:flex-start">Submit Price Report</button>
+                        <p id="pr-msg" style="display:none;padding:.75rem 1rem;border-radius:8px;font-weight:600"></p>
+                    </form>
                 </div>
             `;
-            
-            document.getElementById('content-area').innerHTML = html;
-            
+
+            // Tab switching
+            area.querySelector('#price-report-form').addEventListener('submit', async e => {
+                e.preventDefault();
+                const btn = e.target.querySelector('button[type=submit]');
+                btn.disabled = true; btn.textContent = 'Submitting...';
+                const msg = document.getElementById('pr-msg');
+                try {
+                    const res = await this.apiCall('api.php?action=submit_price', {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            crop_id:    +document.getElementById('pr-crop').value,
+                            price_per_kg: +document.getElementById('pr-price').value,
+                            market_name: document.getElementById('pr-market').value.trim(),
+                            phone:       document.getElementById('pr-phone').value.trim() || 'web-anonymous',
+                            channel:     'web',
+                        })
+                    });
+                    msg.style.display = 'block';
+                    if (res.success) {
+                        msg.style.background = 'rgba(74,124,89,.1)'; msg.style.color = '#4a7c59';
+                        msg.textContent = res.message;
+                        e.target.reset();
+                        setTimeout(() => this.loadCropPrices(), 1500);
+                    } else {
+                        msg.style.background = 'rgba(185,64,64,.1)'; msg.style.color = '#b94040';
+                        msg.textContent = res.error || 'Submission failed.';
+                    }
+                } catch(err) {
+                    msg.style.display='block'; msg.style.color='#b94040'; msg.textContent='Network error.';
+                } finally { btn.disabled=false; btn.textContent='Submit Price Report'; }
+            });
+
         } catch (error) {
-            console.error('❌ Error loading crop prices:', error);
+            console.error('Error loading crop prices:', error);
             this.showError('Failed to load crop prices');
         }
+    }
+
+    _priceTab(tab) {
+        ['admarc','community','report'].forEach(t => {
+            document.getElementById('pane-'+t).style.display = t===tab ? 'block' : 'none';
+            document.getElementById('tab-'+t).classList.toggle('active', t===tab);
+        });
     }
 
     showCropDetails(cropName) {
@@ -2424,6 +2505,278 @@ document.head.appendChild(weatherStyle);
 
 // Initialize the revolutionary app
 const app = new AgroBusinessRevolution();
+
+// ─── REGISTRATION / KYC MODULE ────────────────────────────────────────────────
+
+AgroBusinessRevolution.prototype.openRegistrationModal = function() {
+    const modal = document.getElementById('register-modal');
+    if (!modal) return;
+    this._regState = { step: 1, userType: null, selectedCrops: [] };
+    this._regGotoStep(1);
+    this._regLoadDistricts();
+    this._regLoadCrops();
+    this.openModal(modal);
+};
+
+AgroBusinessRevolution.prototype._regGotoStep = function(step) {
+    const state = this._regState;
+    state.step = step;
+
+    // Hide all step contents
+    document.querySelectorAll('.reg-step-content').forEach(el => el.style.display = 'none');
+    const target = document.getElementById(`reg-step-${step}`);
+    if (target) target.style.display = '';
+
+    // Update step indicators
+    document.querySelectorAll('#reg-steps .reg-step').forEach(el => {
+        const s = parseInt(el.dataset.step);
+        el.classList.toggle('reg-step-active', s === step);
+        el.classList.toggle('reg-step-done', s < step);
+    });
+
+    // Build review on step 4
+    if (step === 4) this._regBuildReview();
+};
+
+AgroBusinessRevolution.prototype._regLoadDistricts = function() {
+    const sel = document.getElementById('reg-district');
+    if (!sel || sel.options.length > 1) return;
+    fetch(`${this.config.baseUrl}?action=districts`)
+        .then(r => r.json())
+        .then(data => {
+            if (!data.success) return;
+            data.data.forEach(d => {
+                const opt = document.createElement('option');
+                opt.value = d.id;
+                opt.textContent = d.name;
+                sel.appendChild(opt);
+            });
+        });
+};
+
+AgroBusinessRevolution.prototype._regLoadCrops = function() {
+    const grid = document.getElementById('reg-crops-grid');
+    if (!grid || grid.children.length > 0) return;
+    fetch(`${this.config.baseUrl}?action=crops`)
+        .then(r => r.json())
+        .then(data => {
+            if (!data.success) return;
+            grid.innerHTML = '';
+            data.data.forEach(c => {
+                const label = document.createElement('label');
+                label.className = 'reg-crop-checkbox';
+                label.innerHTML = `<input type="checkbox" value="${c.id}" data-name="${c.name}"> ${c.name}`;
+                grid.appendChild(label);
+            });
+        });
+};
+
+AgroBusinessRevolution.prototype._regBuildReview = function() {
+    const s = this._regState;
+    const districtName = document.getElementById('reg-district').selectedOptions[0]?.text || '—';
+    const selectedCrops = [...document.querySelectorAll('#reg-crops-grid input:checked')].map(el => el.dataset.name).join(', ') || '—';
+    const container = document.getElementById('reg-review-content');
+    if (!container) return;
+    container.innerHTML = `
+        <strong>Type:</strong> ${s.userType ? s.userType.charAt(0).toUpperCase() + s.userType.slice(1) : '—'}<br>
+        <strong>Name:</strong> ${document.getElementById('reg-full-name').value || '—'}<br>
+        <strong>Phone:</strong> ${document.getElementById('reg-phone').value || '—'}<br>
+        <strong>Email:</strong> ${document.getElementById('reg-email').value || 'Not provided'}<br>
+        <strong>National ID:</strong> ${document.getElementById('reg-national-id').value || 'Not provided'}<br>
+        <strong>District:</strong> ${districtName}<br>
+        <strong>Village:</strong> ${document.getElementById('reg-village').value || '—'}<br>
+        <strong>Crops:</strong> ${selectedCrops}<br>
+        ${s.userType !== 'farmer' ? `<strong>Business:</strong> ${document.getElementById('reg-business-name').value || '—'}<br>` : ''}
+    `;
+};
+
+// Wire up registration modal events once DOM is ready
+document.addEventListener('DOMContentLoaded', function() {
+    // Close button
+    const closeBtn = document.getElementById('register-modal-close');
+    if (closeBtn) {
+        closeBtn.addEventListener('click', () => {
+            const modal = document.getElementById('register-modal');
+            if (modal) { modal.classList.remove('active'); document.body.style.overflow = ''; }
+        });
+    }
+
+    // User type selection (step 1)
+    document.querySelectorAll('.reg-type-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.reg-type-btn').forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
+            if (window.app) {
+                window.app._regState.userType = btn.dataset.type;
+                // Show business name field for seller/buyer
+                const bizField = document.getElementById('reg-business-field');
+                if (bizField) bizField.style.display = btn.dataset.type !== 'farmer' ? '' : 'none';
+                setTimeout(() => window.app._regGotoStep(2), 200);
+            }
+        });
+    });
+
+    // Back buttons
+    document.querySelectorAll('.reg-back-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            if (window.app) window.app._regGotoStep(parseInt(btn.dataset.goto));
+        });
+    });
+
+    // Step 2 → 3
+    const step2Next = document.getElementById('reg-step2-next');
+    if (step2Next) {
+        step2Next.addEventListener('click', () => {
+            const name  = document.getElementById('reg-full-name').value.trim();
+            const phone = document.getElementById('reg-phone').value.trim();
+            if (!name || name.length < 2) { alert('Please enter your full name.'); return; }
+            if (!phone || !/\+?[\d\s\-]{8,20}/.test(phone)) { alert('Please enter a valid phone number.'); return; }
+            if (window.app) window.app._regGotoStep(3);
+        });
+    }
+
+    // Step 3 → 4
+    const step3Next = document.getElementById('reg-step3-next');
+    if (step3Next) {
+        step3Next.addEventListener('click', () => {
+            if (window.app) window.app._regGotoStep(4);
+        });
+    }
+
+    // Submit
+    const submitBtn = document.getElementById('reg-submit-btn');
+    if (submitBtn) {
+        submitBtn.addEventListener('click', async () => {
+            if (!window.app) return;
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Submitting…';
+
+            const state = window.app._regState;
+            const selectedCrops = [...document.querySelectorAll('#reg-crops-grid input:checked')].map(el => el.dataset.name).join(', ');
+            const districtId = document.getElementById('reg-district').value;
+
+            const payload = {
+                user_type:         state.userType,
+                full_name:         document.getElementById('reg-full-name').value.trim(),
+                phone_number:      document.getElementById('reg-phone').value.trim(),
+                email:             document.getElementById('reg-email').value.trim(),
+                national_id:       document.getElementById('reg-national-id').value.trim(),
+                district_id:       districtId ? parseInt(districtId) : null,
+                village:           document.getElementById('reg-village').value.trim(),
+                crops_of_interest: selectedCrops,
+                business_name:     document.getElementById('reg-business-name').value.trim(),
+                channel:           'web'
+            };
+
+            try {
+                const res = await fetch(`${window.app.config.baseUrl}?action=submit_application`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    document.querySelectorAll('.reg-step-content').forEach(el => el.style.display = 'none');
+                    const successEl = document.getElementById('reg-step-success');
+                    if (successEl) successEl.style.display = '';
+                    const refEl = document.getElementById('reg-ref-number');
+                    if (refEl) refEl.textContent = data.ref;
+                    // Mark all steps done
+                    document.querySelectorAll('#reg-steps .reg-step').forEach(el => {
+                        el.classList.remove('reg-step-active');
+                        el.classList.add('reg-step-done');
+                    });
+                } else {
+                    alert('Error: ' + (data.error || 'Submission failed. Please try again.'));
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Submit Application ✓';
+                }
+            } catch (err) {
+                alert('Network error. Please check your connection and try again.');
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Submit Application ✓';
+            }
+        });
+    }
+
+    // Check status button (opens status modal)
+    const checkStatusBtn = document.getElementById('reg-check-status-btn');
+    if (checkStatusBtn) {
+        checkStatusBtn.addEventListener('click', () => {
+            const regModal = document.getElementById('register-modal');
+            if (regModal) { regModal.classList.remove('active'); document.body.style.overflow = ''; }
+            const statusModal = document.getElementById('status-modal');
+            if (statusModal) { statusModal.classList.add('active'); document.body.style.overflow = 'hidden'; }
+        });
+    }
+
+    // Status modal close
+    const statusCloseBtn = document.getElementById('status-modal-close');
+    if (statusCloseBtn) {
+        statusCloseBtn.addEventListener('click', () => {
+            const modal = document.getElementById('status-modal');
+            if (modal) { modal.classList.remove('active'); document.body.style.overflow = ''; }
+        });
+    }
+
+    // Status check
+    const statusCheckBtn = document.getElementById('status-check-btn');
+    if (statusCheckBtn) {
+        statusCheckBtn.addEventListener('click', async () => {
+            const ref = document.getElementById('status-ref-input').value.trim().toUpperCase();
+            if (!ref) { alert('Please enter your reference number.'); return; }
+            statusCheckBtn.textContent = 'Checking…';
+            statusCheckBtn.disabled = true;
+            const result = document.getElementById('status-result');
+
+            try {
+                const res = await fetch(`${window.app.config.baseUrl}?action=check_application&ref=${encodeURIComponent(ref)}`);
+                const data = await res.json();
+                if (data.success && data.data) {
+                    const d = data.data;
+                    const statusClass = d.status;
+                    result.style.display = '';
+                    result.innerHTML = `
+                        <div style="background:#242424;border-radius:10px;padding:1rem;font-size:.9rem;line-height:1.8;">
+                            <strong>${d.full_name}</strong> &nbsp; <span class="status-badge ${statusClass}">${d.status.toUpperCase()}</span><br>
+                            <strong>Type:</strong> ${d.user_type}<br>
+                            <strong>District:</strong> ${d.district_name || '—'}<br>
+                            <strong>Applied:</strong> ${new Date(d.created_at).toLocaleDateString()}<br>
+                            ${d.status === 'denied' && d.denial_reason ? `<strong>Reason:</strong> ${d.denial_reason}<br>` : ''}
+                            ${d.status === 'approved' ? '<br>✅ You are now a verified member of AgroBusiness Malawi!' : ''}
+                            ${d.status === 'pending' ? '<br>⏳ Your application is under review. We will notify you soon.' : ''}
+                        </div>
+                    `;
+                } else {
+                    result.style.display = '';
+                    result.innerHTML = `<p style="color:#ef4444;">Application not found. Please check your reference number.</p>`;
+                }
+            } catch (err) {
+                result.style.display = '';
+                result.innerHTML = `<p style="color:#ef4444;">Network error. Please try again.</p>`;
+            }
+
+            statusCheckBtn.textContent = 'Check Status';
+            statusCheckBtn.disabled = false;
+        });
+    }
+
+    // Close modals on backdrop click
+    ['register-modal', 'status-modal'].forEach(id => {
+        const modal = document.getElementById(id);
+        if (modal) {
+            modal.addEventListener('click', e => {
+                if (e.target === modal || e.target.classList.contains('modal-backdrop-revolution')) {
+                    modal.classList.remove('active');
+                    document.body.style.overflow = '';
+                }
+            });
+        }
+    });
+});
+
+// ─── END REGISTRATION MODULE ──────────────────────────────────────────────────
 
 console.log('🎉 AgroBusiness Revolution initialized successfully!');
 console.log('🚀 Features: Open-Meteo Weather API, Revolutionary UI, Smart Language Switching, Mobile-First Design');
