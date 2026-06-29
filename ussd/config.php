@@ -17,8 +17,7 @@ if (file_exists($envFile)) {
 }
 
 function get_db_connection($max_retries = 2) {
-    $isLocal = in_array($_SERVER['SERVER_NAME'] ?? 'localhost', ['localhost', '127.0.0.1']);
-    $host = $isLocal ? ($_ENV['DB_HOST'] ?? 'promanaged-it.com') : 'localhost';
+    $host = $_ENV['DB_HOST'] ?? '';
     $user = $_ENV['DB_USER'] ?? '';
     $pass = $_ENV['DB_PASS'] ?? '';
     $db   = $_ENV['DB_NAME'] ?? '';

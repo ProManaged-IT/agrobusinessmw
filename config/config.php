@@ -16,8 +16,8 @@ if (file_exists($envFile)) {
     }
 }
 
-$host = $_ENV['DB_HOST'] ?? 'promanaged-it.com';
-$mysqli = @new mysqli($host, $_ENV['DB_USER'] ?? '', $_ENV['DB_PASS'] ?? '', $_ENV['DB_NAME'] ?? '');
+$host = $_ENV['DB_HOST'] ?? '';
+$mysqli = @new mysqli($host, $_ENV['DB_USER'] ?? '', $_ENV['DB_PASS'] ?? '', $_ENV['DB_NAME'] ?? '', (int)($_ENV['DB_PORT'] ?? 3306));
 
 if ($mysqli->connect_error) {
     echo json_encode([

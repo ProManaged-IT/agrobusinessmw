@@ -44,21 +44,17 @@ if (file_exists($envFile)) {
     }
 }
 
-$host     = $_ENV['DB_HOST']     ?? 'promanaged-it.com';
+$host     = $_ENV['DB_HOST']     ?? '';
 $username = $_ENV['DB_USER']     ?? '';
 $password = $_ENV['DB_PASS']     ?? '';
 $database = $_ENV['DB_NAME']     ?? '';
 $port     = (int)($_ENV['DB_PORT'] ?? 3306);
 
-// On production server, connect via localhost socket instead of remote host
-$is_local = ($_SERVER['SERVER_NAME'] === 'localhost' || $_SERVER['SERVER_NAME'] === '127.0.0.1');
-if (!$is_local) {
-    $host = 'localhost';
-}
-
-
 // Connect to database
 try {
+    if ($host === '' || $username === '' || $database === '') {
+        throw new Exception('Database credentials are missing from .env.');
+    }
     if (!class_exists('mysqli')) {
         throw new Exception("Critical Error: MySQLi extension is not loaded in php.ini.");
     }
@@ -81,8 +77,8 @@ try {
     echo json_encode([
         'success' => false,
         'error' => $e->getMessage(),
-        'hint' => $is_local ? "Is your IP whitelisted in CPanel > Remote MySQL?" : "Check database credentials.",
-        'environment' => $is_local ? 'Local -> Remote' : 'Production',
+        'hint' => "Check database credentials in .env.",
+        'environment' => $_SERVER['HTTP_HOST'] ?? 'unknown',
         'timestamp' => date('c')
     ]);
     exit;
@@ -102,7 +98,7 @@ try {
                     'success' => true,
                     'message' => 'Database connection successful',
                     'districts_count' => $row['count'],
-                    'environment' => $is_local ? 'Local -> Remote' : 'Production',
+                    'environment' => $_SERVER['HTTP_HOST'] ?? 'unknown',
                     'timestamp' => date('c')
                 ]);
             } else {

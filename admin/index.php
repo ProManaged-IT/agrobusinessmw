@@ -42,8 +42,7 @@ if (!isset($_SESSION['admin_logged_in'])) {
 }
 
 // ─── DB CONNECTION ────────────────────────────────────────────────────────────
-$isLocal = in_array($_SERVER['SERVER_NAME'] ?? 'localhost', ['localhost', '127.0.0.1']);
-$host    = $isLocal ? ($_ENV['DB_HOST'] ?? 'promanaged-it.com') : 'localhost';
+$host    = $_ENV['DB_HOST'] ?? '';
 $db      = @new mysqli($host, $_ENV['DB_USER'] ?? '', $_ENV['DB_PASS'] ?? '', $_ENV['DB_NAME'] ?? '', (int)($_ENV['DB_PORT'] ?? 3306));
 if ($db->connect_error) die('<p style="color:red">DB connection failed.</p>');
 $db->set_charset('utf8mb4');

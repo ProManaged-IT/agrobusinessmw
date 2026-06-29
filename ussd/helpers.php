@@ -12,15 +12,15 @@ function get_fews_ussd_prices($mysqli, $language) {
     }
 
     if (!$cached || !isset($cached['data']) || (time() - (int)($cached['fetched_at'] ?? 0)) >= $ttl) {
-        $url = 'http://127.0.0.1:8080/api.php?action=dual_crop_prices';
         $host = $_SERVER['HTTP_HOST'] ?? '';
+        $json = null;
         if ($host) {
             $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
             $url = $scheme . '://' . $host . dirname($_SERVER['SCRIPT_NAME']) . '/../api.php?action=dual_crop_prices';
+            $ctx = stream_context_create(['http' => ['timeout' => 15, 'user_agent' => 'AgroBusiness-Malawi-USSD/1.0']]);
+            $raw = @file_get_contents($url, false, $ctx);
+            $json = $raw ? json_decode($raw, true) : null;
         }
-        $ctx = stream_context_create(['http' => ['timeout' => 15, 'user_agent' => 'AgroBusiness-Malawi-USSD/1.0']]);
-        $raw = @file_get_contents($url, false, $ctx);
-        $json = $raw ? json_decode($raw, true) : null;
         if (is_array($json) && !empty($json['fews'])) {
             $cached = ['data' => $json['fews'], 'fetched_at' => time()];
             @file_put_contents($cacheFile, json_encode($cached), LOCK_EX);
