@@ -626,7 +626,9 @@ try {
             $admarc_cache = admarc_get_prices($mysqli);
             $admarc = $admarc_cache['data'] ?? [];
             if ($crop_id) {
-                $admarc = array_values(array_filter($admarc, fn($r) => (int)$r['crop_id'] === $crop_id));
+                $admarc = array_values(array_filter($admarc, function($r) use ($crop_id) {
+                    return (int)$r['crop_id'] === $crop_id;
+                }));
             }
 
             // Community prices — aggregated per crop + district
@@ -853,7 +855,7 @@ function admarc_scrape_live(mysqli $db): array {
         foreach ([0, 1] as $ci) {
             $lower = strtolower($cols[$ci] ?? '');
             foreach ($cropMap as $name => $info) {
-                if (str_contains($lower, $name)) { $matched = $info; break 2; }
+                if (strpos($lower, $name) !== false) { $matched = $info; break 2; }
             }
         }
         if (!$matched) continue;
