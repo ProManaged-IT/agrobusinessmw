@@ -1814,7 +1814,7 @@ class AgroBusinessRevolution {
             const priceRows = rows.map((r, i) => {
                 const searchText = [r.sourceLabel, r.crop_name, r.district, r.market, r.type, r.fewsPrice, r.communityPrice, r.reports, r.unit].join(' ').toLowerCase();
                 return `
-                <tr class="price-data-row" data-source="${esc(r.source)}" data-crop="${esc((r.crop_name || '').toLowerCase())}" data-search="${esc(searchText)}" style="animation:serviceReveal .3s ease ${i * .03}s both">
+                <tr class="price-data-row" data-source="${esc(r.source)}" data-crop="${esc((r.crop_name || '').toLowerCase())}" data-district="${esc((r.district || '').toLowerCase())}" data-search="${esc(searchText)}" style="animation:serviceReveal .3s ease ${i * .03}s both">
                     <td><span style="font-size:1.3rem">${this.getCropIcon(r.crop_name)}</span> <strong>${esc(r.crop_name || 'Unknown crop')}</strong><br><small style="color:var(--text-muted)">${esc(r.type)}</small></td>
                     <td>${esc(r.district)}<br><small style="color:var(--text-muted)">${esc(r.market)}</small></td>
                     <td><span class="price-badge ${r.source === 'fews' ? 'price-high' : ''}">${esc(r.fewsPrice)}</span></td>
@@ -1824,6 +1824,12 @@ class AgroBusinessRevolution {
                     <td><span class="price-badge" style="background:${r.source === 'fews' ? 'rgba(22,163,74,.12)' : 'rgba(200,164,90,.12)'};color:${r.source === 'fews' ? 'var(--primary)' : 'var(--accent)'}">${esc(r.sourceLabel)}</span></td>
                 </tr>`;
             }).join('');
+
+            // Load districts for the table filter
+            const districtsList = await this.loadDistricts();
+            const districtOptions = ['<option value="all">All districts</option>'].concat(
+                districtsList.map(d => `<option value="${esc((d.name || '').toLowerCase())}">${esc(d.name)}</option>`)
+            ).join('');
 
             const area = document.getElementById('content-area');
             area.innerHTML = `
@@ -1846,6 +1852,9 @@ class AgroBusinessRevolution {
                         <select id="price-crop-filter" style="padding:.75rem;border:1px solid var(--border);border-radius:8px">
                             <option value="all">All crops</option>
                             ${cropFilterOptions}
+                        </select>
+                        <select id="price-district-filter" style="padding:.75rem;border:1px solid var(--border);border-radius:8px">
+                            ${districtOptions}
                         </select>
                     </div>
                     <p id="price-filter-stats" style="color:var(--text-muted);font-size:.85rem;margin-bottom:.75rem">Showing ${rows.length} price records: ${fews.length} FEWS NET, ${community.length} community.</p>
@@ -1895,22 +1904,58 @@ class AgroBusinessRevolution {
                 const term = document.getElementById('price-search').value.trim().toLowerCase();
                 const source = document.getElementById('price-source-filter').value;
                 const crop = document.getElementById('price-crop-filter').value;
+                const district = document.getElementById('price-district-filter').value;
                 let visible = 0;
                 area.querySelectorAll('.price-data-row').forEach(row => {
                     const matchesTerm = !term || row.dataset.search.includes(term);
                     const matchesSource = source === 'all' || row.dataset.source === source;
                     const matchesCrop = crop === 'all' || row.dataset.crop === crop;
-                    const show = matchesTerm && matchesSource && matchesCrop;
+                    const matchesDistrict = district === 'all' || (row.dataset.district && row.dataset.district.includes(district));
+                    const show = matchesTerm && matchesSource && matchesCrop && matchesDistrict;
                     row.style.display = show ? '' : 'none';
                     if (show) visible++;
                 });
                 document.getElementById('price-no-results').style.display = visible ? 'none' : '';
                 document.getElementById('price-filter-stats').textContent = `Showing ${visible} of ${rows.length} price records`;
             };
-            ['price-search', 'price-source-filter', 'price-crop-filter'].forEach(id => {
-                document.getElementById(id).addEventListener('input', applyPriceFilters);
-                document.getElementById(id).addEventListener('change', applyPriceFilters);
+            ['price-search', 'price-source-filter', 'price-crop-filter', 'price-district-filter'].forEach(id => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                el.addEventListener('input', applyPriceFilters);
+                el.addEventListener('change', applyPriceFilters);
             });
+
+            // Table column sorting
+            const attachTableSorting = () => {
+                const table = document.getElementById('price-combined-table');
+                if (!table) return;
+                const headers = table.querySelectorAll('thead th');
+                headers.forEach((th, idx) => {
+                    th.style.cursor = 'pointer';
+                    th.setAttribute('role', 'button');
+                    th.addEventListener('click', () => {
+                        const current = th.dataset.sortOrder === 'asc' ? 'desc' : 'asc';
+                        headers.forEach(h => delete h.dataset.sortOrder);
+                        th.dataset.sortOrder = current;
+                        const tbody = table.tBodies[0];
+                        const rowsArr = Array.from(tbody.querySelectorAll('tr.price-data-row'));
+                        rowsArr.sort((a, b) => {
+                            const aText = (a.cells[idx] && a.cells[idx].innerText || '').trim();
+                            const bText = (b.cells[idx] && b.cells[idx].innerText || '').trim();
+                            const aNum = parseFloat(aText.replace(/[^0-9.-]+/g, ''));
+                            const bNum = parseFloat(bText.replace(/[^0-9.-]+/g, ''));
+                            if (!isNaN(aNum) && !isNaN(bNum)) {
+                                return current === 'asc' ? aNum - bNum : bNum - aNum;
+                            }
+                            return current === 'asc' ? aText.localeCompare(bText) : bText.localeCompare(aText);
+                        });
+                        rowsArr.forEach(r => tbody.appendChild(r));
+                    });
+                });
+            };
+
+            // Initialize sorting
+            attachTableSorting();
 
             area.querySelector('#price-report-form').addEventListener('submit', async e => {
                 e.preventDefault();
