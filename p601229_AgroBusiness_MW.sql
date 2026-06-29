@@ -825,6 +825,28 @@ ALTER TABLE `sellers`
 ALTER TABLE `seller_crops`
   ADD CONSTRAINT `seller_crops_ibfk_1` FOREIGN KEY (`seller_id`) REFERENCES `sellers` (`id`),
   ADD CONSTRAINT `seller_crops_ibfk_2` FOREIGN KEY (`crop_id`) REFERENCES `crops` (`id`);
+--
+-- Table structure for table `crowdsourced_prices`
+--
+
+CREATE TABLE IF NOT EXISTS `crowdsourced_prices` (
+  `id`           int          NOT NULL AUTO_INCREMENT,
+  `crop_id`      int          NOT NULL,
+  `district_id`  int          DEFAULT NULL,
+  `price_per_kg` decimal(10,2) NOT NULL,
+  `unit`         varchar(20)  NOT NULL DEFAULT 'kg',
+  `market_name`  varchar(200) DEFAULT NULL,
+  `submitted_by` varchar(50)  NOT NULL DEFAULT 'anonymous',
+  `channel`      enum('web','ussd') NOT NULL DEFAULT 'web',
+  `created_at`   timestamp    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_crop_id`     (`crop_id`),
+  KEY `idx_district_id` (`district_id`),
+  KEY `idx_created_at`  (`created_at`),
+  CONSTRAINT `cp_crop_fk`     FOREIGN KEY (`crop_id`)     REFERENCES `crops`     (`id`),
+  CONSTRAINT `cp_district_fk` FOREIGN KEY (`district_id`) REFERENCES `districts` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
