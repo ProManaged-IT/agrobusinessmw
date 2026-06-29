@@ -1733,12 +1733,12 @@ closeModal(modal) {
                 return;
             }
 
-            let admarc    = response.admarc    || [];
+            let fews      = response.fews      || [];
             let community = response.community || [];
 
             if (specificCrop) {
                 const lc = specificCrop.toLowerCase();
-                admarc    = admarc.filter(r => r.crop_name.toLowerCase().includes(lc));
+                fews      = fews.filter(r => r.crop_name.toLowerCase().includes(lc));
                 community = community.filter(r => r.crop_name.toLowerCase().includes(lc));
             }
 
@@ -1750,20 +1750,22 @@ closeModal(modal) {
 
             // Build crop options list for report form (deduplicated by id)
             const _seen = new Set();
-            const allCrops = [...admarc, ...community]
+            const allCrops = [...fews, ...community]
                 .map(r => ({ id: r.crop_id, name: r.crop_name }))
                 .filter(c => { if (_seen.has(c.id)) return false; _seen.add(c.id); return true; })
                 .sort((a, b) => a.name.localeCompare(b.name));
             const cropOptions = allCrops.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
 
-            const admarRows = admarc.map((r, i) => `
+            const fewsRows = fews.map((r, i) => `
                 <tr style="animation:serviceReveal .3s ease ${i*.04}s both">
                     <td><span style="font-size:1.3rem">${this.getCropIcon(r.crop_name)}</span> <strong>${r.crop_name}</strong></td>
-                    <td>${r.depot_name || '—'}</td>
-                    <td><span class="price-badge">${fmt(r.buying_price)}</span></td>
-                    <td><span class="price-badge price-high">${fmt(r.selling_price)}</span></td>
+                    <td>${r.district_name || '—'}</td>
+                    <td>${r.market_name || '—'}</td>
+                    <td>${r.price_type || 'Retail'}</td>
+                    <td><span class="price-badge price-high">${fmt(r.price)}</span></td>
+                    <td>${r.unit || 'kg'}</td>
                     <td style="color:var(--text-muted);font-size:.8rem">${r.price_date ? new Date(r.price_date).toLocaleDateString() : '—'}</td>
-                </tr>`).join('') || `<tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:2rem">No ADMARC data yet</td></tr>`;
+                </tr>`).join('') || `<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:2rem">No FEWS NET data yet</td></tr>`;
 
             const commRows = community.map((r, i) => `
                 <tr style="animation:serviceReveal .3s ease ${i*.04}s both">
@@ -1781,28 +1783,28 @@ closeModal(modal) {
                 <h2 style="font-family:'DM Serif Display',serif;margin-bottom:1.5rem;color:var(--text-primary)">Crop Prices</h2>
 
                 <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:1.5rem">
-                    <button class="price-tab active" id="tab-admarc" onclick="app._priceTab('admarc')">ADMARC Official</button>
+                    <button class="price-tab active" id="tab-fews" onclick="app._priceTab('fews')">FEWS NET Prices <span style="background:var(--accent);color:#fff;border-radius:20px;padding:.1rem .5rem;font-size:.75rem;margin-left:.3rem">${fews.length}</span></button>
                     <button class="price-tab" id="tab-community" onclick="app._priceTab('community')">Community Reports <span style="background:var(--accent);color:#fff;border-radius:20px;padding:.1rem .5rem;font-size:.75rem;margin-left:.3rem">${community.length}</span></button>
                     <button class="price-tab" id="tab-report" onclick="app._priceTab('report')" style="margin-left:auto;background:var(--primary);color:#fff;border-color:var(--primary)">+ Report a Price</button>
                 </div>
 
-                <!-- ADMARC Tab -->
-                <div id="pane-admarc" class="price-pane">
-                    <p style="color:var(--text-muted);font-size:.85rem;margin-bottom:1rem">Official buying &amp; selling prices from ADMARC depots across Malawi. Updated daily when ADMARC publishes new data.</p>
+                <!-- FEWS NET Tab -->
+                <div id="pane-fews" class="price-pane">
+                    <p style="color:var(--text-muted);font-size:.85rem;margin-bottom:1rem">Retail market prices for Malawi from the FEWS NET Data Warehouse.</p>
                     <div style="overflow-x:auto">
                     <table class="data-table">
                         <thead><tr>
-                            <th>Crop</th><th>Depot</th><th>ADMARC Buys (MWK)</th><th>ADMARC Sells (MWK)</th><th>Date</th>
+                            <th>Crop</th><th>Region</th><th>Market</th><th>Type</th><th>Price</th><th>Unit</th><th>Date</th>
                         </tr></thead>
-                        <tbody>${admarRows}</tbody>
+                        <tbody>${fewsRows}</tbody>
                     </table>
                     </div>
-                    <p style="margin-top:1rem;font-size:.8rem;color:var(--text-muted)">Source: ADMARC Malawi. Prices in MWK per kg.</p>
+                    <p style="margin-top:1rem;font-size:.8rem;color:var(--text-muted)">Source: FEWS NET Data Warehouse. Prices in MWK unless otherwise shown.</p>
                 </div>
 
                 <!-- Community Tab -->
                 <div id="pane-community" class="price-pane" style="display:none">
-                    <p style="color:var(--text-muted);font-size:.85rem;margin-bottom:1rem">Prices reported by farmers and traders at local markets in the last 30 days. Compare with ADMARC to spot the best deal.</p>
+                    <p style="color:var(--text-muted);font-size:.85rem;margin-bottom:1rem">Prices reported by farmers and traders at local markets in the last 30 days.</p>
                     <div style="overflow-x:auto">
                     <table class="data-table">
                         <thead><tr>
@@ -1881,7 +1883,7 @@ closeModal(modal) {
     }
 
     _priceTab(tab) {
-        ['admarc','community','report'].forEach(t => {
+        ['fews','community','report'].forEach(t => {
             document.getElementById('pane-'+t).style.display = t===tab ? 'block' : 'none';
             document.getElementById('tab-'+t).classList.toggle('active', t===tab);
         });

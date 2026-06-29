@@ -617,22 +617,19 @@ try {
             ]);
             break;
 
-        // ─── DUAL PRICE DATA ────────────────────────────────────────────────────
+        // ─── PRICE DATA ─────────────────────────────────────────────────────────
 
         case 'dual_crop_prices':
             $crop_id = isset($_GET['crop_id']) ? (int)$_GET['crop_id'] : null;
 
-            // ADMARC — live scrape with 6h file cache, no DB table needed
-            $admarc_cache = admarc_get_prices($mysqli);
-            $admarc = $admarc_cache['data'] ?? [];
+            $fews_cache = fews_get_prices($mysqli);
+            $fews = $fews_cache['data'] ?? [];
             if ($crop_id) {
-                $admarc = array_values(array_filter($admarc, function($r) use ($crop_id) {
+                $fews = array_values(array_filter($fews, function($r) use ($crop_id) {
                     return (int)$r['crop_id'] === $crop_id;
                 }));
             }
 
-            // Community prices — aggregated per crop + district
-            // Guard: crowdsourced_prices table may not exist on all deployments
             $community = [];
             $community_error = null;
             try {
@@ -679,19 +676,18 @@ try {
                 $r2 = $stmt2->get_result();
                 $community = $r2 ? $r2->fetch_all(MYSQLI_ASSOC) : [];
             } catch (Exception $ce) {
-                // Table missing or query error — return empty community, still show ADMARC prices
                 $community_error = $ce->getMessage();
             }
 
             echo json_encode([
                 'success'          => true,
-                'admarc'           => $admarc,
+                'fews'             => $fews,
                 'community'        => $community,
-                'admarc_count'     => count($admarc),
+                'fews_count'       => count($fews),
                 'community_count'  => count($community),
-                'admarc_source'    => $admarc_cache['source_url'] ?? null,
-                'admarc_cached_at' => $admarc_cache['fetched_at'] ?? null,
-                'admarc_error'     => $admarc_cache['error'] ?? null,
+                'fews_source'      => $fews_cache['source_url'] ?? null,
+                'fews_cached_at'   => $fews_cache['fetched_at'] ?? null,
+                'fews_error'       => $fews_cache['error'] ?? null,
                 'community_error'  => $community_error,
             ]);
             break;
@@ -729,16 +725,14 @@ try {
             ]);
             break;
 
-        case 'admarc_scrape':
-            // Force-refresh the ADMARC cache (admin-only)
+        case 'fews_prices_refresh':
             $adminToken = $_SERVER['HTTP_X_ADMIN_TOKEN'] ?? $_GET['token'] ?? '';
             if ($adminToken !== ($_ENV['ADMIN_TOKEN'] ?? 'agro_admin_2024')) {
                 throw new Exception('Unauthorized.');
             }
-            // Delete cache file so admarc_get_prices() fetches fresh
-            $cacheFile = __DIR__ . '/config/admarc_cache.json';
+            $cacheFile = __DIR__ . '/config/fews_prices_cache.json';
             if (file_exists($cacheFile)) unlink($cacheFile);
-            $result = admarc_get_prices($mysqli);
+            $result = fews_get_prices($mysqli);
             echo json_encode([
                 'success'       => true,
                 'rows'          => count($result['data'] ?? []),
@@ -749,7 +743,7 @@ try {
             break;
 
         default:
-            throw new Exception('Invalid action specified. Available actions: test, districts, crops, crop_prices, dual_crop_prices, submit_price, admarc_scrape, market_insights, sellers, buyers, pest_control, farming_tips, basic_info, submit_application, check_application, admin_applications, admin_review');
+            throw new Exception('Invalid action specified. Available actions: test, districts, crops, crop_prices, dual_crop_prices, submit_price, fews_prices_refresh, market_insights, sellers, buyers, pest_control, farming_tips, basic_info, submit_application, check_application, admin_applications, admin_review');
     }
 
 } catch (Exception $e) {
@@ -763,134 +757,125 @@ try {
     ]);
 }
 
-// ─── ADMARC LIVE FETCH + FILE CACHE ─────────────────────────────────────────
+// ─── FEWS NET PRICE FETCH + FILE CACHE ──────────────────────────────────────
 
-/**
- * Returns cached ADMARC prices (6h TTL). Fetches live if cache is stale.
- * Never touches the admarc_prices DB table.
- */
-function admarc_get_prices(mysqli $db): array {
-    $cacheFile = __DIR__ . '/config/admarc_cache.json';
-    $ttl       = 6 * 3600; // 6 hours
+function fews_get_prices(mysqli $db): array {
+    $cacheFile = __DIR__ . '/config/fews_prices_cache.json';
+    $ttl = 6 * 3600;
 
     if (file_exists($cacheFile)) {
         $cached = json_decode(file_get_contents($cacheFile), true);
-        if ($cached && (time() - (int)($cached['fetched_at'] ?? 0)) < $ttl) {
+        if ($cached && isset($cached['data']) && (time() - (int)($cached['fetched_at'] ?? 0)) < $ttl) {
             return $cached;
         }
     }
 
-    $fresh = admarc_scrape_live($db);
+    $fresh = fews_fetch_prices($db);
     $fresh['fetched_at'] = time();
     @file_put_contents($cacheFile, json_encode($fresh), LOCK_EX);
     return $fresh;
 }
 
-/**
- * Fetches ADMARC commodity prices from their public website and returns
- * a structured array. No DB writes — caller decides what to do with the data.
- *
- * Returns: ['data'=>[...rows], 'source_url'=>'...', 'error'=>null|string]
- */
-function admarc_scrape_live(mysqli $db): array {
-    $sources = [
-        'https://admarc.mw/commodity-prices',
-        'https://www.admarc.mw/commodity-prices',
-        'https://admarc.mw/prices',
-        'https://admarc.co.mw/commodity-prices',
-        'https://admarc.co.mw/prices',
-    ];
+function fews_fetch_prices(mysqli $db): array {
+    $sourceUrl = 'https://fdw.fews.net/api/marketpricefacts/?format=json&country_code=MW&ordering=-period_date&page_size=250';
     $ctx = stream_context_create(['http' => [
-        'timeout'         => 10,
-        'user_agent'      => 'Mozilla/5.0 (compatible; AgroBusiness-Malawi/1.0)',
-        'follow_location' => 1,
+        'timeout' => 20,
+        'user_agent' => 'AgroBusiness-Malawi/1.0',
     ]]);
-
-    $html = null; $usedUrl = null;
-    foreach ($sources as $url) {
-        $raw = @file_get_contents($url, false, $ctx);
-        if ($raw && strlen($raw) > 500) { $html = $raw; $usedUrl = $url; break; }
+    $raw = @file_get_contents($sourceUrl, false, $ctx);
+    if (!$raw) {
+        return ['data' => [], 'source_url' => $sourceUrl, 'error' => 'FEWS NET prices unavailable. Showing community prices only.'];
     }
 
-    if (!$html) {
-        return [
-            'data'       => [],
-            'source_url' => null,
-            'error'      => 'ADMARC website unreachable. Showing community prices only.',
-        ];
+    $json = json_decode($raw, true);
+    if (!is_array($json) || !isset($json['results']) || !is_array($json['results'])) {
+        return ['data' => [], 'source_url' => $sourceUrl, 'error' => 'FEWS NET returned an unexpected response.'];
     }
 
-    if (!class_exists('DOMDocument')) {
-        return [
-            'data'       => [],
-            'source_url' => $usedUrl,
-            'error'      => 'HTML parser unavailable on this server.',
-        ];
-    }
-
-    // Build crop name → id map
     $cropMap = [];
     $r = $db->query("SELECT id, name FROM crops");
     while ($row = $r->fetch_assoc()) {
-        $cropMap[strtolower($row['name'])] = ['id' => (int)$row['id'], 'name' => $row['name']];
+        $cropMap[] = ['id' => (int)$row['id'], 'name' => $row['name'], 'match' => strtolower($row['name'])];
     }
 
-    libxml_use_internal_errors(true);
-    $dom = new DOMDocument();
-    $dom->loadHTML($html);
-    libxml_clear_errors();
-    $xpath = new DOMXPath($dom);
+    $aliases = [
+        'maize' => ['maize', 'maize grain'],
+        'rice' => ['rice', 'rice milled'],
+        'beans' => ['beans', 'bean', 'cowpeas', 'cowpea'],
+        'groundnuts' => ['groundnut', 'groundnuts', 'peanut'],
+        'cassava' => ['cassava'],
+        'sorghum' => ['sorghum'],
+        'millet' => ['millet'],
+        'soybeans' => ['soybean', 'soybeans', 'soya'],
+        'tobacco' => ['tobacco'],
+    ];
 
-    $rows   = [];
-    $today  = date('Y-m-d');
+    $districtMap = fews_district_map($db);
 
-    foreach ($xpath->query('//table//tr') as $tr) {
-        $cells = $xpath->query('td', $tr);
-        if ($cells->length < 2) continue;
-        $cols = [];
-        foreach ($cells as $td) $cols[] = trim($td->textContent);
+    $rows = [];
+    $seen = [];
+    foreach ($json['results'] as $item) {
+        if (($item['country_code'] ?? '') !== 'MW' || !isset($item['value'])) continue;
 
-        // Match a crop name in any of the first two columns
+        $product = strtolower($item['product'] ?? '');
         $matched = null;
-        foreach ([0, 1] as $ci) {
-            $lower = strtolower($cols[$ci] ?? '');
-            foreach ($cropMap as $name => $info) {
-                if (strpos($lower, $name) !== false) { $matched = $info; break 2; }
+        foreach ($cropMap as $crop) {
+            $terms = $aliases[$crop['match']] ?? [$crop['match']];
+            foreach ($terms as $term) {
+                if (strpos($product, $term) !== false) {
+                    $matched = $crop;
+                    break 2;
+                }
             }
         }
         if (!$matched) continue;
 
-        // Extract all numeric values from the row
-        $prices = [];
-        foreach ($cols as $c) {
-            $n = (float)preg_replace('/[^\d.]/', '', $c);
-            if ($n > 10 && $n < 500000) $prices[] = $n;
-        }
-        if (empty($prices)) continue;
+        $key = $matched['id'] . '|' . ($item['market'] ?? '') . '|' . ($item['period_date'] ?? '');
+        if (isset($seen[$key])) continue;
+        $seen[$key] = true;
 
-        $buying  = $prices[0];
-        $selling = isset($prices[1]) ? $prices[1] : round($buying * 1.28, 2);
-        // Depot name: use first column if it doesn't look like a crop name,
-        // otherwise label generically
-        $depot = preg_match('/[a-z]{4,}/i', $cols[0]) ? trim($cols[0]) : 'ADMARC Depot';
+        $marketName = $item['market'] ?? '';
+        $district = fews_match_district($marketName, $districtMap);
 
         $rows[] = [
-            'crop_id'       => $matched['id'],
-            'crop_name'     => $matched['name'],
-            'depot_name'    => $depot,
-            'buying_price'  => $buying,
-            'selling_price' => $selling,
-            'unit'          => 'kg',
-            'price_date'    => $today,
-            'source_url'    => $usedUrl,
+            'crop_id' => $matched['id'],
+            'crop_name' => $matched['name'],
+            'district_id' => $district['id'],
+            'district_name' => $district['name'] ?: ($item['admin_1'] ?? ''),
+            'market_name' => $marketName,
+            'price' => (float)$item['value'],
+            'price_type' => $item['price_type'] ?? 'Retail',
+            'unit' => $item['unit'] ?? 'kg',
+            'currency' => $item['currency'] ?? 'MWK',
+            'price_date' => $item['period_date'] ?? null,
+            'source_organization' => $item['source_organization'] ?? 'FEWS NET',
         ];
     }
 
     return [
-        'data'       => $rows,
-        'source_url' => $usedUrl,
-        'error'      => empty($rows) ? 'Page fetched but no price table found on ADMARC site.' : null,
+        'data' => $rows,
+        'source_url' => $sourceUrl,
+        'error' => empty($rows) ? 'FEWS NET returned no Malawi crop prices matching local crops.' : null,
     ];
+}
+
+function fews_district_map(mysqli $db): array {
+    $map = [];
+    $r = $db->query("SELECT id, name FROM districts");
+    while ($row = $r->fetch_assoc()) {
+        $map[] = ['id' => (int)$row['id'], 'name' => $row['name'], 'match' => strtolower($row['name'])];
+    }
+    return $map;
+}
+
+function fews_match_district(string $marketName, array $districtMap): array {
+    $market = strtolower($marketName);
+    foreach ($districtMap as $district) {
+        if (strpos($market, $district['match']) !== false) {
+            return ['id' => $district['id'], 'name' => $district['name']];
+        }
+    }
+    return ['id' => null, 'name' => ''];
 }
 
 // Close database connection

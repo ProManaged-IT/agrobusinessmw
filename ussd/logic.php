@@ -107,15 +107,18 @@ function process_ussd(mysqli $mysqli, array $menu_texts, array $valid_options, a
         $main = $stack[1];
         switch ($main) {
             case '1': // Crop Prices — direct result, no further selection needed
-                $result = execute_query(
-                    $mysqli,
-                    "SELECT c.name, cp.min_price, cp.market_price, cp.unit
-                     FROM crop_prices cp JOIN crops c ON cp.crop_id = c.id",
-                    [], '',
-                    fn($row) => "{$row['name']}: Min MWK{$row['min_price']}/{$row['unit']}, Mkt MWK{$row['market_price']}/{$row['unit']}\n"
-                );
+                $result = get_fews_ussd_prices($mysqli, $language);
+                if (!$result) {
+                    $result = execute_query(
+                        $mysqli,
+                        "SELECT c.name, cp.min_price, cp.market_price, cp.unit
+                         FROM crop_prices cp JOIN crops c ON cp.crop_id = c.id",
+                        [], '',
+                        fn($row) => "{$row['name']}: Min MWK{$row['min_price']}/{$row['unit']}, Mkt MWK{$row['market_price']}/{$row['unit']}\n"
+                    );
+                }
                 $response = $result
-                    ? "CON " . $result . $menu_texts['back_option'][$language]
+                    ? "CON " . $result . "\n" . $menu_texts['back_option'][$language]
                     : $menu_texts['errors']['no_data'][$language];
                 break;
 
