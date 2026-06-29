@@ -622,7 +622,12 @@ try {
         case 'dual_crop_prices':
             $crop_id = isset($_GET['crop_id']) ? (int)$_GET['crop_id'] : null;
 
-            $fews_cache = fews_get_prices($mysqli);
+            $fews_cache = ['data' => [], 'source_url' => null, 'fetched_at' => null, 'error' => null];
+            try {
+                $fews_cache = fews_get_prices($mysqli);
+            } catch (Throwable $fe) {
+                $fews_cache['error'] = $fe->getMessage();
+            }
             $fews = $fews_cache['data'] ?? [];
             if ($crop_id) {
                 $fews = array_values(array_filter($fews, function($r) use ($crop_id) {
@@ -674,8 +679,12 @@ try {
                 }
                 $stmt2->execute();
                 $r2 = $stmt2->get_result();
-                $community = $r2 ? $r2->fetch_all(MYSQLI_ASSOC) : [];
-            } catch (Exception $ce) {
+                if ($r2) {
+                    while ($row = $r2->fetch_assoc()) {
+                        $community[] = $row;
+                    }
+                }
+            } catch (Throwable $ce) {
                 $community_error = $ce->getMessage();
             }
 
@@ -746,7 +755,7 @@ try {
             throw new Exception('Invalid action specified. Available actions: test, districts, crops, crop_prices, dual_crop_prices, submit_price, fews_prices_refresh, market_insights, sellers, buyers, pest_control, farming_tips, basic_info, submit_application, check_application, admin_applications, admin_review');
     }
 
-} catch (Exception $e) {
+} catch (Throwable $e) {
     ob_clean();
     http_response_code(200);
     echo json_encode([
