@@ -117,7 +117,6 @@ class AgroBusinessRevolution {
     }
 
     async initializeApp() {
-        console.log('🚀 Initializing AgroBusiness Revolution...');
         
         // Initialize loading animation with real data
         await this.initializeLoadingScreen();
@@ -148,9 +147,7 @@ class AgroBusinessRevolution {
             // Update progress text
             this.updateProgressText();
             
-            console.log('✅ Loading screen initialized with real data');
         } catch (error) {
-            console.log('⚠️ Loading screen fallback to default numbers');
             this.animateLoadingNumbers('loading-districts', 28);
             this.animateLoadingNumbers('loading-crops', 12);
         }
@@ -367,7 +364,6 @@ selectLanguageWithAnimation(card, lang) {
     }
 
     async initializeDashboard() {
-        console.log('📊 Initializing dashboard...');
         
         // Load and display real statistics
         await this.updateDashboardStats();
@@ -391,7 +387,6 @@ selectLanguageWithAnimation(card, lang) {
             this.animateNumber(document.getElementById('districts-count-hero'), districts.length);
             this.animateNumber(document.getElementById('crops-count-hero'), crops.length);
             
-            console.log(`📊 Updated stats: ${districts.length} districts, ${crops.length} crops`);
         } catch (error) {
             console.error('❌ Error updating dashboard stats:', error);
         }
@@ -766,7 +761,6 @@ updateTexts() {
                     url: window.location.href
                 });
             } catch (error) {
-                console.log('Share cancelled');
             }
         } else {
             // Fallback to clipboard
@@ -1251,7 +1245,6 @@ updateTexts() {
     
     showDistrictSelection(callback) {
         this.loadDistricts().then(districts => {
-            console.log('📍 Loading districts for selection:', districts.length);
             
             if (districts.length === 0) {
                 this.showError('No districts available');
@@ -1298,7 +1291,6 @@ updateTexts() {
             list.querySelectorAll('.district-item').forEach(item => {
                 item.addEventListener('click', () => {
                     this.selectedDistrict = item.dataset.id;
-                    console.log('📍 District selected:', this.selectedDistrict);
                     districtSelected = true;
 
                     item.style.background = 'var(--accent)';
@@ -1320,7 +1312,6 @@ updateTexts() {
     
     showCropSelection(callback) {
         this.loadCrops().then(crops => {
-            console.log('🌾 Loading crops for selection:', crops.length);
             
             if (crops.length === 0) {
                 this.showError('No crops available');
@@ -1367,7 +1358,6 @@ updateTexts() {
             list.querySelectorAll('.crop-item').forEach(item => {
                 item.addEventListener('click', () => {
                     this.selectedCrop = item.dataset.id;
-                    console.log('🌾 Crop selected:', this.selectedCrop);
                     cropSelected = true;
 
                     item.style.background = 'var(--accent)';
@@ -1497,7 +1487,6 @@ closeModal(modal) {
                 forecast_days: 7
             });
             
-            console.log('🌤️ Fetching weather from Open-Meteo for:', coords.name);
             
             const response = await fetch(apiUrl);
             if (!response.ok) {
@@ -1505,7 +1494,6 @@ closeModal(modal) {
             }
             
             const data = await response.json();
-            console.log('🌤️ Open-Meteo data received:', data);
             
             return this.processOpenMeteoData(data, coords.name);
         } catch (error) {
@@ -1928,7 +1916,6 @@ closeModal(modal) {
     
     async loadWeather(districtId) {
         try {
-            console.log('🌤️ Loading weather for district:', districtId);
             
             const weatherData = await this.getWeatherData(districtId);
             
@@ -2724,6 +2711,3 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // ─── END REGISTRATION MODULE ──────────────────────────────────────────────────
 
-console.log('🎉 AgroBusiness Revolution initialized successfully!');
-console.log('🚀 Features: Open-Meteo Weather API, Revolutionary UI, Smart Language Switching, Mobile-First Design');
-console.log('📱 Ready for all devices and browsers!');

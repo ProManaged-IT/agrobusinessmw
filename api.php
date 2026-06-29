@@ -56,7 +56,6 @@ if (!$is_local) {
     $host = 'localhost';
 }
 
-error_log('🌐 DB host: ' . $host . ' | env: ' . ($is_local ? 'local' : 'production'));
 
 // Connect to database
 try {
@@ -74,8 +73,6 @@ try {
 
     $mysqli->set_charset('utf8mb4');
     
-    // Log successful connection
-    error_log('✅ Database connected successfully');
     
 } catch (Exception $e) {
     ob_clean();
@@ -689,8 +686,10 @@ try {
                      ORDER BY c.name, report_count DESC"
                 );
             }
+            if (!$stmt2) throw new Exception('Community prices query failed: ' . $mysqli->error);
             $stmt2->execute();
-            $community = $stmt2->get_result()->fetch_all(MYSQLI_ASSOC);
+            $r2 = $stmt2->get_result();
+            $community = $r2 ? $r2->fetch_all(MYSQLI_ASSOC) : [];
 
             echo json_encode([
                 'success'         => true,
@@ -826,6 +825,14 @@ function admarc_scrape_live(mysqli $db): array {
             'data'       => [],
             'source_url' => null,
             'error'      => 'ADMARC website unreachable. Showing community prices only.',
+        ];
+    }
+
+    if (!class_exists('DOMDocument')) {
+        return [
+            'data'       => [],
+            'source_url' => $usedUrl,
+            'error'      => 'HTML parser unavailable on this server.',
         ];
     }
 
