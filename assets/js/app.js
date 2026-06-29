@@ -1,15 +1,7 @@
 // AgroBusiness Malawi - Revolutionary Final Version (COMPLETE)
 class AgroBusinessRevolution {
         constructor() {
-        // Load configuration
-        this.config = window.AppConfig?.getApiConfig() || { 
-            baseUrl: '/api.php',
-            environment: 'production'
-        };
-        this.environment = this.config.environment;
-        
-        console.log(`🚀 Starting in ${this.environment} environment`);
-        console.log(`🌐 API Base: ${this.config.baseUrl}`);
+        this.apiBase = 'api.php';
         
         
         // Enhanced translation dictionary
@@ -1457,83 +1449,40 @@ closeModal(modal) {
     }
 }
 
-    // Test database connection with environment info
     async testConnection() {
         try {
-            console.log('🔄 Testing connection in', this.environment, 'environment...');
             const response = await this.apiCall('api.php?action=test');
-            
             if (response.success) {
-                console.log('✅ Database connection successful:', response);
-                this.showNotification(`Connected to ${this.environment} database!`, 'success');
+                this.showNotification('Database connected', 'success');
             } else {
-                console.error('❌ Database connection failed:', response);
-                this.showNotification(`${this.environment} database connection failed`, 'error');
+                this.showNotification('Database connection failed', 'error');
             }
         } catch (error) {
-            console.error('❌ Connection test error:', error);
-            // Show environment-specific help
-            if (this.environment === 'local') {
-                console.warn('💡 Local Development Tip: Ensure your IP is whitelisted in cPanel Remote MySQL');
-            }
+            console.error('Connection test error:', error);
         }
     }
 
 
-    // Enhanced Smart API Communication
-    async apiCall(endpoint, params = {}) {
+    async apiCall(endpoint, options = {}) {
         try {
             let url;
-            
-            // Add environment parameter
-            params.env = this.environment;
-            
-            // 1. External APIs (like Open-Meteo)
             if (endpoint.startsWith('http')) {
-                url = new URL(endpoint);
-            } 
-            // 2. Use config baseUrl for our API
-            else if (this.config.baseUrl) {
-                const base = this.config.baseUrl;
-                // If it's a full URL
-                if (base.includes('http')) {
-                    url = new URL(endpoint, base);
-                } else {
-                    // Relative path
-                    url = new URL(endpoint, window.location.origin);
-                    if (!endpoint.startsWith('/')) {
-                        url = new URL(base + (base.endsWith('/') ? '' : '/') + endpoint, window.location.origin);
-                    }
-                }
-            } 
-            // 3. Fallback to relative path
-            else {
-                url = new URL(endpoint, window.location.origin);
+                // External API (Open-Meteo, etc.)
+                url = endpoint;
+            } else {
+                // Always relative — works on any domain
+                url = new URL(endpoint, window.location.href).toString();
             }
-            
-            // Add parameters
-            Object.entries(params).forEach(([key, value]) => {
-                if (value != null) url.searchParams.append(key, value);
-            });
-            
-            console.log(`🌐 ${this.environment.toUpperCase()} API Call:`, url.toString());
-            
-            const response = await fetch(url);
-            
+
+            const response = await fetch(url, options);
+
             if (!response.ok) {
-                const contentType = response.headers.get("content-type");
-                if (contentType && contentType.indexOf("application/json") === -1) {
-                    throw new Error(`Server returned HTML (${response.status})`);
-                }
                 throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             }
-            
-            const data = await response.json();
-            console.log(`✅ ${this.environment.toUpperCase()} API Response:`, data);
-            return data;
-            
+
+            return await response.json();
         } catch (error) {
-            console.error(`❌ ${this.environment.toUpperCase()} API Error:`, error);
+            console.error('API error:', endpoint, error.message);
             throw error;
         }
     }
@@ -2546,7 +2495,7 @@ AgroBusinessRevolution.prototype._regGotoStep = function(step) {
 AgroBusinessRevolution.prototype._regLoadDistricts = function() {
     const sel = document.getElementById('reg-district');
     if (!sel || sel.options.length > 1) return;
-    fetch(`${this.config.baseUrl}?action=districts`)
+    fetch(`api.php?action=districts`)
         .then(r => r.json())
         .then(data => {
             if (!data.success) return;
@@ -2562,7 +2511,7 @@ AgroBusinessRevolution.prototype._regLoadDistricts = function() {
 AgroBusinessRevolution.prototype._regLoadCrops = function() {
     const grid = document.getElementById('reg-crops-grid');
     if (!grid || grid.children.length > 0) return;
-    fetch(`${this.config.baseUrl}?action=crops`)
+    fetch(`api.php?action=crops`)
         .then(r => r.json())
         .then(data => {
             if (!data.success) return;
@@ -2674,7 +2623,7 @@ document.addEventListener('DOMContentLoaded', function() {
             };
 
             try {
-                const res = await fetch(`${window.app.config.baseUrl}?action=submit_application`, {
+                const res = await fetch(`api.php?action=submit_application`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
@@ -2736,7 +2685,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const result = document.getElementById('status-result');
 
             try {
-                const res = await fetch(`${window.app.config.baseUrl}?action=check_application&ref=${encodeURIComponent(ref)}`);
+                const res = await fetch(`api.php?action=check_application&ref=${encodeURIComponent(ref)}`);
                 const data = await res.json();
                 if (data.success && data.data) {
                     const d = data.data;
