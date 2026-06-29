@@ -55,6 +55,34 @@ CREATE TABLE IF NOT EXISTS `crowdsourced_prices` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 ";
 
+// ── Migration 002: onboarding_applications ──────────────────────────────────
+$migrations['002_onboarding_applications'] = "
+CREATE TABLE IF NOT EXISTS `onboarding_applications` (
+  `id`                int          NOT NULL AUTO_INCREMENT,
+  `application_ref`   varchar(30)  NOT NULL,
+  `user_type`         enum('farmer','seller','buyer') NOT NULL,
+  `full_name`         varchar(200) NOT NULL,
+  `phone_number`      varchar(50)  NOT NULL,
+  `email`             varchar(200) DEFAULT NULL,
+  `national_id`       varchar(100) DEFAULT NULL,
+  `district_id`       int          DEFAULT NULL,
+  `village`           varchar(200) DEFAULT NULL,
+  `crops_of_interest` text         DEFAULT NULL,
+  `business_name`     varchar(200) DEFAULT NULL,
+  `channel`           enum('web','ussd') NOT NULL DEFAULT 'web',
+  `status`            enum('pending','approved','denied') NOT NULL DEFAULT 'pending',
+  `admin_notes`       text         DEFAULT NULL,
+  `denial_reason`     text         DEFAULT NULL,
+  `created_at`        timestamp    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `reviewed_at`       datetime     DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_ref` (`application_ref`),
+  KEY `idx_status`  (`status`),
+  KEY `idx_phone`   (`phone_number`),
+  CONSTRAINT `oa_district_fk` FOREIGN KEY (`district_id`) REFERENCES `districts` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+";
+
 // ── Run ─────────────────────────────────────────────────────────────────────
 $errors = 0;
 foreach ($migrations as $name => $sql) {

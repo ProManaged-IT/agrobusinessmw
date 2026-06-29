@@ -19,6 +19,14 @@
 error_reporting(0);
 ini_set('display_errors', 0);
 
+define('PAGE_SIZE', 5);
+
+const REGION_DISTRICTS = [
+    1 => ['Chitipa','Karonga','Likoma','Mzimba','Nkhata Bay','Rumphi'],
+    2 => ['Dedza','Dowa','Kasungu','Lilongwe','Mchinji','Nkhotakota','Ntcheu','Ntchisi','Salima'],
+    3 => ['Balaka','Blantyre','Chikwawa','Chiradzulu','Machinga','Mangochi','Mulanje','Mwanza','Neno','Nsanje','Phalombe','Thyolo','Zomba'],
+];
+
 // ─── DB CONNECTION ────────────────────────────────────────────────────────────
 
 $envFile = dirname(__DIR__) . '/.env';
@@ -53,7 +61,11 @@ $nav     = [];
 foreach ($rawText === '' ? [] : explode('*', $rawText) as $in) {
     $in = trim($in);
     if ($in === '0') {
-        array_pop($nav);                    // back: remove last forward step
+        if (empty($nav)) {
+            $nav[] = '0';                   // exit from main menu
+        } else {
+            array_pop($nav);                // back: remove last forward step
+        }
     } elseif ($in !== '') {
         $nav[] = $in;                       // forward: record selection
     }
@@ -528,6 +540,7 @@ function svc_register($db, $nav, $pos, $callerPhone) {
     $phone = $callerPhone ?: 'unknown';
     $ref   = 'AGR-' . date('Ymd') . '-' . strtoupper(substr(bin2hex(random_bytes(3)), 0, 5));
 
+    $districtId = (int)$district['id'];
     $stmt = $db->prepare(
         "INSERT INTO onboarding_applications
          (application_ref, user_type, full_name, phone_number, national_id,
@@ -535,9 +548,9 @@ function svc_register($db, $nav, $pos, $callerPhone) {
          VALUES (?,?,?,?,?,?,?,'ussd')"
     );
     $stmt->bind_param(
-        'sssssss',
+        'sssssis',
         $ref, $userType, $fullName, $phone, $nationalId,
-        $district['id'], $village
+        $districtId, $village
     );
     $stmt->execute();
 
@@ -550,8 +563,6 @@ function svc_register($db, $nav, $pos, $callerPhone) {
 }
 
 // ─── NAVIGATION HELPERS ───────────────────────────────────────────────────────
-
-define('PAGE_SIZE', 5);
 
 /**
  * Read one navigation step from $nav starting at &$pos.
@@ -633,12 +644,6 @@ function list_page(array $items, int $page, string $title, ?callable $labelFn = 
 }
 
 // ─── DISTRICT HELPERS ─────────────────────────────────────────────────────────
-
-const REGION_DISTRICTS = [
-    1 => ['Chitipa','Karonga','Likoma','Mzimba','Nkhata Bay','Rumphi'],
-    2 => ['Dedza','Dowa','Kasungu','Lilongwe','Mchinji','Nkhotakota','Ntcheu','Ntchisi','Salima'],
-    3 => ['Balaka','Blantyre','Chikwawa','Chiradzulu','Machinga','Mangochi','Mulanje','Mwanza','Neno','Nsanje','Phalombe','Thyolo','Zomba'],
-];
 
 function region_districts($db, int $region): array {
     $names = REGION_DISTRICTS[$region] ?? [];

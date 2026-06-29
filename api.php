@@ -124,8 +124,6 @@ try {
                 $districts[] = $row;
             }
             
-            error_log('📍 Districts loaded: ' . count($districts));
-            
             echo json_encode([
                 'success' => true,
                 'data' => $districts,
@@ -147,8 +145,6 @@ try {
             while ($row = $result->fetch_assoc()) {
                 $crops[] = $row;
             }
-            
-            error_log('🌾 Crops loaded: ' . count($crops));
             
             echo json_encode([
                 'success' => true,
@@ -182,8 +178,6 @@ try {
             while ($row = $result->fetch_assoc()) {
                 $crops[] = $row;
             }
-            
-            error_log('💰 Crop prices loaded: ' . count($crops));
             
             echo json_encode([
                 'success' => true,
@@ -223,8 +217,6 @@ try {
             while ($row = $result->fetch_assoc()) {
                 $insights[] = $row;
             }
-            
-            error_log('📊 Market insights loaded: ' . count($insights) . ' for district ' . $district_id);
             
             echo json_encode([
                 'success' => true,
@@ -274,8 +266,6 @@ try {
                 $sellers[] = $row;
             }
             
-            error_log('👨‍🌾 Sellers loaded: ' . count($sellers) . ' for district ' . $district_id);
-            
             echo json_encode([
                 'success' => true,
                 'data' => $sellers,
@@ -322,8 +312,6 @@ try {
                 $buyers[] = $row;
             }
             
-            error_log('🏢 Buyers loaded: ' . count($buyers) . ' for district ' . $district_id);
-            
             echo json_encode([
                 'success' => true,
                 'data' => $buyers,
@@ -367,8 +355,6 @@ try {
                 $tips[] = $row;
             }
             
-            error_log('🐛 Pest control tips loaded: ' . count($tips) . ' for crop ' . $crop_id . ', district ' . $district_id);
-            
             echo json_encode([
                 'success' => true,
                 'data' => $tips,
@@ -409,8 +395,6 @@ try {
                 $practices[] = $row;
             }
             
-            error_log('🌾 Farming tips loaded: ' . count($practices) . ' for crop ' . $crop_id);
-            
             echo json_encode([
                 'success' => true,
                 'data' => $practices,
@@ -441,8 +425,6 @@ try {
             while ($row = $result->fetch_assoc()) {
                 $info[] = $row;
             }
-            
-            error_log('📚 Basic info loaded: ' . count($info));
             
             echo json_encode([
                 'success' => true,
@@ -507,7 +489,6 @@ try {
                     "From: noreply@agrobusinessmw.com\r\nContent-Type: text/plain; charset=utf-8");
             }
 
-            error_log("📝 New application: {$ref} ({$userType}) from {$channel}");
             echo json_encode([
                 'success'   => true,
                 'message'   => 'Application submitted successfully',
@@ -551,19 +532,20 @@ try {
             $status = $_GET['status'] ?? 'pending';
             if (!in_array($status, ['pending','approved','denied','all'])) $status = 'pending';
 
-            $where = $status === 'all' ? '' : "WHERE a.status = '{$status}'";
-            $result = $mysqli->query(
-                "SELECT a.id, a.application_ref, a.user_type, a.full_name, a.phone_number,
-                        a.email, a.national_id, a.channel, a.status, a.created_at, a.reviewed_at,
-                        d.name as district_name
-                 FROM onboarding_applications a
-                 LEFT JOIN districts d ON a.district_id = d.id
-                 {$where}
-                 ORDER BY a.created_at DESC
-                 LIMIT 100"
-            );
-            $apps = [];
-            while ($row = $result->fetch_assoc()) $apps[] = $row;
+            $sql = "SELECT a.id, a.application_ref, a.user_type, a.full_name, a.phone_number,
+                           a.email, a.national_id, a.channel, a.status, a.created_at, a.reviewed_at,
+                           d.name as district_name
+                    FROM onboarding_applications a
+                    LEFT JOIN districts d ON a.district_id = d.id";
+            if ($status !== 'all') {
+                $stmt3 = $mysqli->prepare($sql . " WHERE a.status = ? ORDER BY a.created_at DESC LIMIT 100");
+                $stmt3->bind_param('s', $status);
+                $stmt3->execute();
+                $apps = $stmt3->get_result()->fetch_all(MYSQLI_ASSOC);
+            } else {
+                $result = $mysqli->query($sql . " ORDER BY a.created_at DESC LIMIT 100");
+                $apps = $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
+            }
 
             echo json_encode(['success' => true, 'data' => $apps, 'count' => count($apps), 'timestamp' => date('c')]);
             break;
@@ -627,7 +609,6 @@ try {
                     "From: noreply@agrobusinessmw.com\r\nContent-Type: text/plain; charset=utf-8");
             }
 
-            error_log("✅ Application {$appId} {$newStatus} by admin");
             echo json_encode([
                 'success'   => true,
                 'message'   => "Application {$newStatus}",
@@ -760,7 +741,6 @@ try {
     }
 
 } catch (Exception $e) {
-    error_log('❌ API Error: ' . $e->getMessage());
     ob_clean();
     http_response_code(200);
     echo json_encode([

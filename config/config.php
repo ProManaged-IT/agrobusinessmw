@@ -1,71 +1,40 @@
 <?php
-// === Web App Configuration with Console Debug Logs ===
-
-// Disable PHP error display
 ini_set('display_errors', 0);
 error_reporting(E_ALL);
-
-// Log errors to file
 ini_set('log_errors', 1);
 ini_set('error_log', __DIR__ . '/webapp_errors.log');
 
-// Load credentials from .env
+header('Content-Type: application/json; charset=utf-8');
+header('Access-Control-Allow-Origin: *');
+
 $envFile = dirname(__DIR__) . '/.env';
 if (file_exists($envFile)) {
     foreach (file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) as $line) {
-        if ($line[0] === '#' || strpos($line, '=') === false) continue;
+        if (empty($line) || $line[0] === '#' || strpos($line, '=') === false) continue;
         [$k, $v] = explode('=', $line, 2);
         $_ENV[trim($k)] = trim($v);
     }
 }
 
-$host    = $_ENV['DB_HOST'] ?? 'promanaged-it.com';
-$user    = $_ENV['DB_USER'] ?? '';
-$pass    = $_ENV['DB_PASS'] ?? '';
-$db      = $_ENV['DB_NAME'] ?? '';
-$charset = 'utf8mb4';
+$host = $_ENV['DB_HOST'] ?? 'promanaged-it.com';
+$mysqli = @new mysqli($host, $_ENV['DB_USER'] ?? '', $_ENV['DB_PASS'] ?? '', $_ENV['DB_NAME'] ?? '');
 
-// Send HTML+JSON headers so console.log works before JSON
-header('Content-Type: text/html; charset=utf-8');
-
-// Attempt DB connection
-$mysqli = @new mysqli($host, $user, $pass, $db);
-
-if ($mysqli && !$mysqli->connect_error) {
-    $mysqli->set_charset($charset);
-    // Log success in browser console
-    echo '<script>console.log("✅ DB connected successfully");</script>';
-} else {
-    $err = $mysqli->connect_error ?? 'Unknown';
-    echo '<script>console.error("❌ DB connect failed: '. addslashes($err) .'");</script>';
-    // Output JSON error and exit
+if ($mysqli->connect_error) {
     echo json_encode([
         'success' => false,
         'error'   => 'DB connection failed',
-        'message' => $err
+        'timestamp' => date('c'),
     ]);
     exit;
 }
 
-// Fetch a sample of districts to confirm data
-$result = $mysqli->query("SELECT id, name FROM districts LIMIT 5");
-$sample = [];
-if ($result) {
-    while ($row = $result->fetch_assoc()) {
-        $sample[] = $row;
-    }
-}
-// Log sample data in console
-echo '<script>console.log("📋 Sample districts:", '. json_encode($sample) .');</script>';
+$mysqli->set_charset('utf8mb4');
+$result = $mysqli->query("SELECT COUNT(*) as count FROM districts");
+$count  = $result ? $result->fetch_assoc()['count'] : 0;
 
-// Now send JSON header and proceed as API
-header('Content-Type: application/json; charset=utf-8');
-
-// Example JSON response
 echo json_encode([
-    'success' => true,
-    'sample_districts' => $sample,
-    'timestamp' => date('c')
+    'success'          => true,
+    'message'          => 'DB connected',
+    'districts_count'  => (int)$count,
+    'timestamp'        => date('c'),
 ]);
-exit;
-?>

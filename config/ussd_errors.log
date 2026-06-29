@@ -6,3 +6,175 @@
 Stack trace:
 #0 {main}
   thrown in /home/p601229/public_html/agrobusinessmw/api/districts.php on line 22
+[29-Jun-2026 09:45:55] nav=[] text=
+[29-Jun-2026 09:45:55] CON: AgroBusiness Malawi
+1.Crop Prices
+2.Weather
+3.Market Insights
+4.Find Sellers
+5.F
+[29-Jun-2026 09:46:01] nav=[1] text=1
+[29-Jun-2026 09:46:01] CON: Crop Prices
+1.ADMARC Official
+2.Community Reports
+3.Report a Price
+0.Back
+[29-Jun-2026 09:46:01] nav=[1,1] text=1*1
+[29-Jun-2026 09:46:08] nav=[1,1] text=1*1
+[29-Jun-2026 09:46:30] nav=[1,1] text=1*1
+[29-Jun-2026 09:47:22] nav=[] text=
+[29-Jun-2026 09:47:22] CON: AgroBusiness Malawi
+1.Crop Prices
+2.Weather
+3.Market Insights
+4.Find Sellers
+5.F
+[29-Jun-2026 09:47:40] nav=[1,1] text=1*1
+[29-Jun-2026 09:48:04] nav=[1,1] text=1*1
+[29-Jun-2026 09:48:20] nav=[1,1] text=1*1
+[29-Jun-2026 09:49:10] nav=[] text=
+[29-Jun-2026 09:49:10] CON: AgroBusiness Malawi
+1.Crop Prices
+2.Weather
+3.Market Insights
+4.Find Sellers
+5.F
+[29-Jun-2026 09:49:10] nav=[1] text=1
+[29-Jun-2026 09:49:10] CON: Crop Prices
+1.ADMARC Official
+2.Community Reports
+3.Report a Price
+0.Back
+[29-Jun-2026 09:49:11] nav=[1,1] text=1*1
+[29-Jun-2026 09:49:11] CON: ADMARC Prices - Crop (1/2)
+1.Beans
+2.Coffee
+3.Cotton
+4.Groundnuts
+5.Maize
+99.Mor
+[29-Jun-2026 09:49:20] nav=[1,1,5] text=1*1*5
+[29-Jun-2026 09:49:20] END: No ADMARC data for Maize.
+Cache: 0h ago.
+Try option 2 for community prices.
+[29-Jun-2026 09:49:20] nav=[1,2] text=1*2
+[29-Jun-2026 09:49:20] CON: Community Prices - Crop (1/2)
+1.Beans
+2.Coffee
+3.Cotton
+4.Groundnuts
+5.Maize
+99.
+[29-Jun-2026 09:49:21] nav=[1,2,5] text=1*2*5
+[29-Jun-2026 09:49:21] END: Community: Maize
+Avg:MK248 (3 reports)
+Range:MK240.00-MK255.00
+- MK255.00 at Are
+[29-Jun-2026 09:49:29] nav=[2] text=2
+[29-Jun-2026 09:49:29] CON: Weather
+1.Northern
+2.Central
+3.Southern
+0.Back
+[29-Jun-2026 09:49:30] nav=[2,1] text=2*1
+[29-Jun-2026 09:49:30] nav=[2,1,2] text=2*1*2
+[29-Jun-2026 09:49:48] nav=[2,1] text=2*1
+[29-Jun-2026 09:50:36] nav=[2,1] text=2*1
+[29-Jun-2026 09:50:36] CON: Weather - District (1/2)
+1.Chitipa
+2.Karonga
+3.Likoma
+4.Mzimba
+5.Nkhata Bay
+99.M
+[29-Jun-2026 09:50:36] nav=[2,1,2] text=2*1*2
+[29-Jun-2026 09:50:36] END: Weather: Karonga
+Mon 29/06: 18-25C, Rain:0mm
+Tue 30/06: 18-25C, Rain:0mm
+Wed 01/
+[29-Jun-2026 09:50:44] nav=[3,2,4] text=3*2*4
+[29-Jun-2026 09:50:44] END: Market: Lilongwe
+- Lilongwe maize demand is high due to urban population growth
+[29-Jun-2026 09:50:45] nav=[4,3,2] text=4*3*2
+[29-Jun-2026 09:50:45] CON: Sellers: Blantyre
+1.Esther Phiri +265 992 234 567
+0.Back
+[29-Jun-2026 09:50:45] nav=[5,3,2] text=5*3*2
+[29-Jun-2026 09:50:45] CON: Buyers: Blantyre
+1.Jane Phiri +987654321
+0.Back
+[29-Jun-2026 09:50:52] nav=[6,1,1,5] text=6*1*1*5
+[29-Jun-2026 09:50:52] END: No pest tips for Maize in Chitipa.
+[29-Jun-2026 09:50:52] nav=[7,5] text=7*5
+[29-Jun-2026 09:50:52] END: Tips: Maize
+- Harvest when husks dry
+- Plant at 75cm spacing in rows.
+- Water de
+[29-Jun-2026 09:50:52] nav=[8,1] text=8*1
+[29-Jun-2026 09:50:52] END: Soil Preparation:
+Till soil to 30cm depth before planting.
+[29-Jun-2026 09:50:52] nav=[] text=0
+[29-Jun-2026 09:50:52] CON: AgroBusiness Malawi
+1.Crop Prices
+2.Weather
+3.Market Insights
+4.Find Sellers
+5.F
+[29-Jun-2026 09:51:31] nav=[0] text=0
+[29-Jun-2026 09:51:31] END: Thank you for using AgroBusiness Malawi. Goodbye!
+[29-Jun-2026 09:51:31] nav=[] text=1*0
+[29-Jun-2026 09:51:31] CON: AgroBusiness Malawi
+1.Crop Prices
+2.Weather
+3.Market Insights
+4.Find Sellers
+5.F
+[29-Jun-2026 09:51:38] nav=[9] text=9
+[29-Jun-2026 09:51:38] CON: Register
+I am a:
+1.Farmer
+2.Seller
+3.Buyer
+0.Back
+[29-Jun-2026 09:51:38] nav=[9,1] text=9*1
+[29-Jun-2026 09:51:38] CON: Register (Farmer)
+Enter your full name:
+[29-Jun-2026 09:51:45] nav=[9,1,John Banda,SKIP,2,4,Ntcheu Village,1] text=9*1*John Banda*SKIP*2*4*Ntcheu Village*1
+[29-Jun-2026 09:51:45] END: Registration submitted!
+Ref: AGR-20260629-E2E8F
+We will review and notify you.
+S
+[29-Jun-2026 09:52:17] nav=[99] text=99
+[29-Jun-2026 09:52:17] END: Invalid option. Please dial again.
+[29-Jun-2026 09:52:17] nav=[7,99] text=7*99
+[29-Jun-2026 09:52:17] CON: Farming Tips - Crop (2/2)
+1.Rice
+2.Soybeans
+3.Tea
+4.Tobacco
+98.Prev 0.Back
+[29-Jun-2026 09:56:17] nav=[] text=1*0
+[29-Jun-2026 09:56:17] CON: AgroBusiness Malawi
+1.Crop Prices
+2.Weather
+3.Market Insights
+4.Find Sellers
+5.F
+[29-Jun-2026 09:56:17] nav=[1] text=1*1*0
+[29-Jun-2026 09:56:17] CON: Crop Prices
+1.ADMARC Official
+2.Community Reports
+3.Report a Price
+0.Back
+[29-Jun-2026 09:56:17] nav=[1] text=1*2*0
+[29-Jun-2026 09:56:17] CON: Crop Prices
+1.ADMARC Official
+2.Community Reports
+3.Report a Price
+0.Back
+[29-Jun-2026 09:56:18] nav=[1] text=1*3*0
+[29-Jun-2026 09:56:18] CON: Crop Prices
+1.ADMARC Official
+2.Community Reports
+3.Report a Price
+0.Back
