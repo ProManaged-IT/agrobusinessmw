@@ -1779,8 +1779,27 @@ class AgroBusinessRevolution {
                 return d === 0 ? 'Today' : d === 1 ? 'Yesterday' : `${d}d ago`;
             };
 
-            const rows = [
-                ...fews.map(r => ({
+            // Combine FEWS and community reports, dedupe by crop + district and keep the latest report only
+            const combinedMap = Object.create(null);
+
+            const normalizeKey = (cropName, districtName) => `${(cropName||'').toLowerCase()}::${(districtName||'').toLowerCase()}`;
+
+            // Helper to add candidate record into map if it's newer
+            const addCandidate = (rec) => {
+                const key = normalizeKey(rec.crop_name, rec.district);
+                const existing = combinedMap[key];
+                const existingTs = existing && existing._ts ? existing._ts : 0;
+                const candidateTs = rec._ts || 0;
+                if (!existing || candidateTs >= existingTs) {
+                    combinedMap[key] = rec;
+                }
+            };
+
+            // FEWS entries
+            fews.forEach(r => {
+                const ts = r.price_date ? new Date(r.price_date).getTime() : 0;
+                addCandidate({
+                    _ts: ts,
                     source: 'fews',
                     sourceLabel: 'FEWS NET',
                     crop_id: r.crop_id,
@@ -1792,8 +1811,14 @@ class AgroBusinessRevolution {
                     reports: r.price_date ? new Date(r.price_date).toLocaleDateString() : '—',
                     unit: r.unit || 'kg',
                     type: r.price_type || 'Retail reference'
-                })),
-                ...community.map(r => ({
+                });
+            });
+
+            // Community entries
+            community.forEach(r => {
+                const ts = r.last_reported ? new Date(r.last_reported).getTime() : 0;
+                addCandidate({
+                    _ts: ts,
                     source: 'community',
                     sourceLabel: 'Community',
                     crop_id: r.crop_id,
@@ -1805,8 +1830,10 @@ class AgroBusinessRevolution {
                     reports: `${r.report_count} report${Number(r.report_count) === 1 ? '' : 's'} · ${ago(r.last_reported)}`,
                     unit: r.unit || 'kg',
                     type: 'Farmer/trader report'
-                }))
-            ].sort((a, b) => (a.crop_name || '').localeCompare(b.crop_name || '') || a.source.localeCompare(b.source));
+                });
+            });
+
+            const rows = Object.values(combinedMap).sort((a, b) => (a.crop_name || '').localeCompare(b.crop_name || '') || (b._ts || 0) - (a._ts || 0));
 
             const cropSeen = new Set();
             const allCrops = rows
@@ -1817,13 +1844,36 @@ class AgroBusinessRevolution {
             const cropFilterOptions = allCrops.map(c => `<option value="${esc(c.name.toLowerCase())}">${esc(c.name)}</option>`).join('');
 
             const priceRows = rows.map((r, i) => {
-                const searchText = [r.sourceLabel, r.crop_name, r.district, r.market, r.type, r.fewsPrice, r.communityPrice, r.reports, r.unit].join(' ').toLowerCase();
+                const searchText = [r.sourceLabel, r.crop_name, r.district, r.market, r.type, r.fewsPrice || '', r.communityPrice || '', r.reports, r.unit].join(' ').toLowerCase();
+
+                // Helpers to compute per-50g price when numeric values are available
+                const per50From = (val) => {
+                    const n = Number(val);
+                    if (!n || isNaN(n)) return null;
+                    return Math.round(n * 0.05);
+                };
+
+                const fewsVal = r.fews_value ?? null;
+                const fewsPer50 = per50From(fewsVal);
+                const communityMin = r.community_min_val ?? null;
+                const communityAvg = r.community_avg_val ?? null;
+                const communityMax = r.community_max_val ?? null;
+
+                const fewsDisplay = fewsVal ? fmt(fewsVal) : (r.fewsPrice || '—');
+                const fewsPer50Display = fewsPer50 ? ` (${'MK ' + fewsPer50.toLocaleString()} /50g)` : '';
+
+                const communityDisplay = (communityMin || communityAvg || communityMax) ?
+                    `${communityMin ? fmt(communityMin) : '—'} / ${communityAvg ? fmt(communityAvg) : '—'} / ${communityMax ? fmt(communityMax) : '—'}` : (r.communityPrice || '—');
+
+                const communityPer50Display = (communityMin || communityAvg || communityMax) ?
+                    ` (${communityMin ? 'MK ' + per50From(communityMin)?.toLocaleString() : '—'} / ${communityAvg ? 'MK ' + per50From(communityAvg)?.toLocaleString() : '—'} / ${communityMax ? 'MK ' + per50From(communityMax)?.toLocaleString() : '—'} /50g)` : '';
+
                 return `
-                <tr class="price-data-row" data-source="${esc(r.source)}" data-crop="${esc((r.crop_name || '').toLowerCase())}" data-district="${esc((r.district || '').toLowerCase())}" data-search="${esc(searchText)}" style="animation:serviceReveal .3s ease ${i * .03}s both">
+                <tr class="price-data-row" data-source="${esc(r.source)}" data-crop="${esc((r.crop_name || '').toLowerCase())}" data-district="${esc((r.district||'').toLowerCase())}" data-search="${esc(searchText)}" style="animation:serviceReveal .3s ease ${i * .03}s both">
                     <td><span style="font-size:1.3rem">${this.getCropIcon(r.crop_name)}</span> <strong>${esc(r.crop_name || 'Unknown crop')}</strong><br><small style="color:var(--text-muted)">${esc(r.type)}</small></td>
                     <td>${esc(r.district)}<br><small style="color:var(--text-muted)">${esc(r.market)}</small></td>
-                    <td><span class="price-badge ${r.source === 'fews' ? 'price-high' : ''}">${esc(r.fewsPrice)}</span></td>
-                    <td><span class="price-badge ${r.source === 'community' ? 'price-high' : ''}">${esc(r.communityPrice)}</span></td>
+                    <td><span class="price-badge ${r.source === 'fews' ? 'price-high' : ''}">${esc(fewsDisplay)}</span><div style="font-size:.78rem;color:var(--text-muted);margin-top:.25rem">${esc(fewsPer50Display)}</div></td>
+                    <td><span class="price-badge ${r.source === 'community' ? 'price-high' : ''}">${esc(communityDisplay)}</span><div style="font-size:.78rem;color:var(--text-muted);margin-top:.25rem">${esc(communityPer50Display)}</div></td>
                     <td>${esc(r.unit)}</td>
                     <td style="color:var(--text-muted);font-size:.8rem">${esc(r.reports)}</td>
                     <td><span class="price-badge" style="background:${r.source === 'fews' ? 'rgba(22,163,74,.12)' : 'rgba(200,164,90,.12)'};color:${r.source === 'fews' ? 'var(--primary)' : 'var(--accent)'}">${esc(r.sourceLabel)}</span></td>
