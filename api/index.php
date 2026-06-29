@@ -455,7 +455,7 @@ function svc_basic_info($db, $nav, $pos) {
     $topics    = db_all($db, "SELECT id, topic, info_en FROM basic_farming_info ORDER BY id");
     $topicStep = nav_step($nav, $pos);
     if ($topicStep === null || $topicStep['action'] === 'page') {
-        list_page($topics, $topicStep['page'] ?? 1, "Basic Info");
+        list_page($topics, $topicStep['page'] ?? 1, "Basic Info", fn($t) => $t['topic']);
     }
 
     $topic = $topics[$topicStep['idx']] ?? null;
