@@ -1782,7 +1782,7 @@ class AgroBusinessRevolution {
             // Combine FEWS and community reports, dedupe by crop + district and keep the latest report only
             const combinedMap = Object.create(null);
 
-            const normalizeKey = (cropName, districtName) => `${(cropName||'').toLowerCase()}::${(districtName||'').toLowerCase()}`;
+            const normalizeKey = (cropName, districtName) => `${(cropName || '').toLowerCase()}::${(districtName || '').toLowerCase()}`;
 
             // Helper to add candidate record into map if it's newer
             const addCandidate = (rec) => {
@@ -1869,7 +1869,7 @@ class AgroBusinessRevolution {
                     ` (${communityMin ? 'MK ' + per50From(communityMin)?.toLocaleString() : '—'} / ${communityAvg ? 'MK ' + per50From(communityAvg)?.toLocaleString() : '—'} / ${communityMax ? 'MK ' + per50From(communityMax)?.toLocaleString() : '—'} /50g)` : '';
 
                 return `
-                <tr class="price-data-row" data-source="${esc(r.source)}" data-crop="${esc((r.crop_name || '').toLowerCase())}" data-district="${esc((r.district||'').toLowerCase())}" data-search="${esc(searchText)}" style="animation:serviceReveal .3s ease ${i * .03}s both">
+                <tr class="price-data-row" data-source="${esc(r.source)}" data-crop="${esc((r.crop_name || '').toLowerCase())}" data-district="${esc((r.district || '').toLowerCase())}" data-search="${esc(searchText)}" style="animation:serviceReveal .3s ease ${i * .03}s both">
                     <td><span style="font-size:1.3rem">${this.getCropIcon(r.crop_name)}</span> <strong>${esc(r.crop_name || 'Unknown crop')}</strong><br><small style="color:var(--text-muted)">${esc(r.type)}</small></td>
                     <td>${esc(r.district)}<br><small style="color:var(--text-muted)">${esc(r.market)}</small></td>
                     <td><span class="price-badge ${r.source === 'fews' ? 'price-high' : ''}">${esc(fewsDisplay)}</span><div style="font-size:.78rem;color:var(--text-muted);margin-top:.25rem">${esc(fewsPer50Display)}</div></td>
