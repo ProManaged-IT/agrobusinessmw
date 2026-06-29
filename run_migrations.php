@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Migration runner — idempotent, safe to run multiple times.
  * Usage: php run_migrations.php

@@ -5,14 +5,14 @@
 // --- CRITICAL FIX 1: ERROR CATCHING & JSON HEADERS ---
 // This ensures even a crash returns readable JSON
 http_response_code(200); // Force OK so frontend can read the error message
-register_shutdown_function(function() {
+register_shutdown_function(function () {
     $error = error_get_last();
     // Catch hard crashes (Fatal Errors)
     if ($error && ($error['type'] === E_ERROR || $error['type'] === E_PARSE || $error['type'] === E_CORE_ERROR)) {
         if (ob_get_length()) ob_clean(); // Clear any partial HTML output
         header('Content-Type: application/json');
         echo json_encode([
-            'success' => false, 
+            'success' => false,
             'error' => 'Fatal PHP Error: ' . $error['message'],
             'file' => $error['file'],
             'line' => $error['line']
@@ -22,14 +22,15 @@ register_shutdown_function(function() {
 });
 
 // Disable HTML error printing (breaks JSON)
-ini_set('display_errors', 0); 
+ini_set('display_errors', 0);
 error_reporting(E_ALL);
 
 // Start output buffering
 ob_start();
 
 // ── Compatibility helpers: get_result() requires mysqlnd which may not be available ──
-function stmt_fetch_all(mysqli_stmt $stmt): array {
+function stmt_fetch_all(mysqli_stmt $stmt): array
+{
     $meta = $stmt->result_metadata();
     if (!$meta) return [];
     $fields = [];
@@ -47,7 +48,8 @@ function stmt_fetch_all(mysqli_stmt $stmt): array {
     $stmt->free_result();
     return $rows;
 }
-function stmt_fetch_one(mysqli_stmt $stmt): ?array {
+function stmt_fetch_one(mysqli_stmt $stmt): ?array
+{
     $rows = stmt_fetch_all($stmt);
     return $rows[0] ?? null;
 }
@@ -85,15 +87,13 @@ try {
 
     $mysqli = mysqli_init();
     $mysqli->options(MYSQLI_OPT_CONNECT_TIMEOUT, 10); // 10s Timeout
-    
+
     // Suppress warnings to handle errors manually
     if (!@$mysqli->real_connect($host, $username, $password, $database, $port)) {
         throw new Exception("Connect Failed: " . mysqli_connect_error());
     }
 
     $mysqli->set_charset('utf8mb4');
-    
-    
 } catch (Exception $e) {
     ob_clean();
     // Return 200 OK with error details so the App can display it
@@ -129,21 +129,21 @@ try {
                 throw new Exception('Test query failed');
             }
             break;
-            
+
         case 'districts':
             // Get all districts
             $query = "SELECT id, name FROM districts ORDER BY name ASC";
             $result = $mysqli->query($query);
-            
+
             if (!$result) {
                 throw new Exception('Districts query failed: ' . $mysqli->error);
             }
-            
+
             $districts = [];
             while ($row = $result->fetch_assoc()) {
                 $districts[] = $row;
             }
-            
+
             echo json_encode([
                 'success' => true,
                 'data' => $districts,
@@ -151,21 +151,21 @@ try {
                 'timestamp' => date('c')
             ]);
             break;
-            
+
         case 'crops':
             // Get all crops
             $query = "SELECT id, name FROM crops ORDER BY name ASC";
             $result = $mysqli->query($query);
-            
+
             if (!$result) {
                 throw new Exception('Crops query failed: ' . $mysqli->error);
             }
-            
+
             $crops = [];
             while ($row = $result->fetch_assoc()) {
                 $crops[] = $row;
             }
-            
+
             echo json_encode([
                 'success' => true,
                 'data' => $crops,
@@ -173,11 +173,11 @@ try {
                 'timestamp' => date('c')
             ]);
             break;
-            
+
         case 'crop_prices':
             // Get crop prices
             $query = "
-                SELECT 
+                SELECT
                     c.id,
                     c.name,
                     COALESCE(cp.min_price, '') AS min_price,
@@ -187,18 +187,18 @@ try {
                 LEFT JOIN crop_prices cp ON c.id = cp.crop_id
                 ORDER BY c.name ASC
             ";
-            
+
             $result = $mysqli->query($query);
-            
+
             if (!$result) {
                 throw new Exception('Crop prices query failed: ' . $mysqli->error);
             }
-            
+
             $crops = [];
             while ($row = $result->fetch_assoc()) {
                 $crops[] = $row;
             }
-            
+
             echo json_encode([
                 'success' => true,
                 'data' => $crops,
@@ -206,17 +206,17 @@ try {
                 'timestamp' => date('c')
             ]);
             break;
-            
+
         case 'market_insights':
             // Get market insights for a district
             $district_id = (int)($_GET['district_id'] ?? 0);
-            
+
             if (!$district_id) {
                 throw new Exception('District ID is required');
             }
-            
+
             $query = "
-                SELECT 
+                SELECT
                     mi.id,
                     mi.district_id,
                     d.name as district_name,
@@ -227,12 +227,12 @@ try {
                 WHERE mi.district_id = ?
                 ORDER BY mi.id DESC
             ";
-            
+
             $stmt = $mysqli->prepare($query);
             $stmt->bind_param('i', $district_id);
             $stmt->execute();
             $insights = stmt_fetch_all($stmt);
-            
+
             echo json_encode([
                 'success' => true,
                 'data' => $insights,
@@ -240,7 +240,7 @@ try {
                 'timestamp' => date('c')
             ]);
             break;
-            
+
         case 'sellers':
             $district_id = (int)($_GET['district_id'] ?? 0);
             $crop        = trim($_GET['crop'] ?? '');
@@ -320,18 +320,18 @@ try {
 
             echo json_encode(['success' => true, 'data' => $buyers, 'count' => count($buyers), 'timestamp' => date('c')]);
             break;
-            
+
         case 'pest_control':
             // Get pest control tips
             $crop_id = (int)($_GET['crop_id'] ?? 0);
             $district_id = (int)($_GET['district_id'] ?? 0);
-            
+
             if (!$crop_id || !$district_id) {
                 throw new Exception('Crop ID and District ID are required');
             }
-            
+
             $query = "
-                SELECT 
+                SELECT
                     pct.id,
                     pct.crop_id,
                     pct.district_id,
@@ -345,12 +345,12 @@ try {
                 WHERE pct.crop_id = ? AND pct.district_id = ?
                 ORDER BY pct.id ASC
             ";
-            
+
             $stmt = $mysqli->prepare($query);
             $stmt->bind_param('ii', $crop_id, $district_id);
             $stmt->execute();
             $tips = stmt_fetch_all($stmt);
-            
+
             echo json_encode([
                 'success' => true,
                 'data' => $tips,
@@ -358,17 +358,17 @@ try {
                 'timestamp' => date('c')
             ]);
             break;
-            
+
         case 'farming_tips':
             // Get farming tips for a crop
             $crop_id = (int)($_GET['crop_id'] ?? 0);
-            
+
             if (!$crop_id) {
                 throw new Exception('Crop ID is required');
             }
-            
+
             $query = "
-                SELECT 
+                SELECT
                     fbp.id,
                     fbp.crop_id,
                     c.name as crop_name,
@@ -380,12 +380,12 @@ try {
                 WHERE fbp.crop_id = ?
                 ORDER BY fbp.practice_type ASC
             ";
-            
+
             $stmt = $mysqli->prepare($query);
             $stmt->bind_param('i', $crop_id);
             $stmt->execute();
             $practices = stmt_fetch_all($stmt);
-            
+
             echo json_encode([
                 'success' => true,
                 'data' => $practices,
@@ -393,11 +393,11 @@ try {
                 'timestamp' => date('c')
             ]);
             break;
-            
+
         case 'basic_info':
             // Get basic farming information
             $query = "
-                SELECT 
+                SELECT
                     id,
                     topic,
                     info_en,
@@ -405,18 +405,18 @@ try {
                 FROM basic_farming_info
                 ORDER BY id ASC
             ";
-            
+
             $result = $mysqli->query($query);
-            
+
             if (!$result) {
                 throw new Exception('Basic info query failed: ' . $mysqli->error);
             }
-            
+
             $info = [];
             while ($row = $result->fetch_assoc()) {
                 $info[] = $row;
             }
-            
+
             echo json_encode([
                 'success' => true,
                 'data' => $info,
@@ -424,7 +424,7 @@ try {
                 'timestamp' => date('c')
             ]);
             break;
-            
+
         // ── ONBOARDING: Submit application ──────────────────────────
         case 'submit_application':
             if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -441,9 +441,9 @@ try {
             $village   = trim($body['village']      ?? '');
             $crops     = trim($body['crops_of_interest'] ?? '');
             $business  = trim($body['business_name'] ?? '');
-            $channel   = in_array($body['channel'] ?? '', ['web','ussd']) ? $body['channel'] : 'web';
+            $channel   = in_array($body['channel'] ?? '', ['web', 'ussd']) ? $body['channel'] : 'web';
 
-            if (!in_array($userType, ['farmer','seller','buyer'])) {
+            if (!in_array($userType, ['farmer', 'seller', 'buyer'])) {
                 throw new Exception('Invalid user type');
             }
             if (strlen($fullName) < 2) {
@@ -461,7 +461,7 @@ try {
             if (!$village || strlen($village) < 2) {
                 throw new Exception('Village / town is required');
             }
-            if (in_array($userType, ['seller','buyer']) && $business === '') {
+            if (in_array($userType, ['seller', 'buyer']) && $business === '') {
                 throw new Exception('Business name is required for sellers and buyers');
             }
 
@@ -487,8 +487,17 @@ try {
             );
             $stmt->bind_param(
                 'ssssssissss',
-                $ref, $userType, $fullName, $phone, $email, $nationalId,
-                $districtId, $village, $crops, $business, $channel
+                $ref,
+                $userType,
+                $fullName,
+                $phone,
+                $email,
+                $nationalId,
+                $districtId,
+                $village,
+                $crops,
+                $business,
+                $channel
             );
             $stmt->execute();
 
@@ -496,11 +505,15 @@ try {
             if ($email) {
                 $subject = "AgroBusiness Malawi — Application Received ({$ref})";
                 $message = "Dear {$fullName},\n\nYour application has been received.\n"
-                         . "Reference: {$ref}\nType: " . ucfirst($userType) . "\n\n"
-                         . "We will review and notify you within 2-3 business days.\n\n"
-                         . "AgroBusiness Malawi Team";
-                @mail($email, $subject, $message,
-                    "From: noreply@agrobusinessmw.com\r\nContent-Type: text/plain; charset=utf-8");
+                    . "Reference: {$ref}\nType: " . ucfirst($userType) . "\n\n"
+                    . "We will review and notify you within 2-3 business days.\n\n"
+                    . "AgroBusiness Malawi Team";
+                @mail(
+                    $email,
+                    $subject,
+                    $message,
+                    "From: noreply@agrobusinessmw.com\r\nContent-Type: text/plain; charset=utf-8"
+                );
             }
 
             echo json_encode([
@@ -544,7 +557,7 @@ try {
             }
 
             $status = $_GET['status'] ?? 'pending';
-            if (!in_array($status, ['pending','approved','denied','all'])) $status = 'pending';
+            if (!in_array($status, ['pending', 'approved', 'denied', 'all'])) $status = 'pending';
 
             $sql = "SELECT a.id, a.application_ref, a.user_type, a.full_name, a.phone_number,
                            a.email, a.national_id, a.channel, a.status, a.created_at, a.reviewed_at,
@@ -581,7 +594,7 @@ try {
             $action  = $body['action'] ?? '';
             $notes   = trim($body['notes'] ?? '');
 
-            if (!$appId || !in_array($action, ['approve','deny'])) {
+            if (!$appId || !in_array($action, ['approve', 'deny'])) {
                 throw new Exception('application_id and action (approve/deny) are required');
             }
 
@@ -609,18 +622,22 @@ try {
                 if ($action === 'approve') {
                     $subject = "AgroBusiness Malawi — Application Approved! ({$app['application_ref']})";
                     $msg     = "Dear {$app['full_name']},\n\nGreat news! Your application ({$app['application_ref']}) "
-                             . "has been APPROVED.\n\nYou can now use all features of AgroBusiness Malawi.\n\n"
-                             . ($notes ? "Admin notes: {$notes}\n\n" : '')
-                             . "Welcome to the platform!\nAgroBusiness Malawi Team";
+                        . "has been APPROVED.\n\nYou can now use all features of AgroBusiness Malawi.\n\n"
+                        . ($notes ? "Admin notes: {$notes}\n\n" : '')
+                        . "Welcome to the platform!\nAgroBusiness Malawi Team";
                 } else {
                     $subject = "AgroBusiness Malawi — Application Update ({$app['application_ref']})";
                     $msg     = "Dear {$app['full_name']},\n\nUnfortunately, your application ({$app['application_ref']}) "
-                             . "could not be approved at this time.\n\n"
-                             . ($notes ? "Reason: {$notes}\n\n" : '')
-                             . "Please contact us if you have questions.\nAgroBusiness Malawi Team";
+                        . "could not be approved at this time.\n\n"
+                        . ($notes ? "Reason: {$notes}\n\n" : '')
+                        . "Please contact us if you have questions.\nAgroBusiness Malawi Team";
                 }
-                @mail($app['email'], $subject, $msg,
-                    "From: noreply@agrobusinessmw.com\r\nContent-Type: text/plain; charset=utf-8");
+                @mail(
+                    $app['email'],
+                    $subject,
+                    $msg,
+                    "From: noreply@agrobusinessmw.com\r\nContent-Type: text/plain; charset=utf-8"
+                );
             }
 
             echo json_encode([
@@ -644,7 +661,7 @@ try {
             }
             $fews = $fews_cache['data'] ?? [];
             if ($crop_id) {
-                $fews = array_values(array_filter($fews, function($r) use ($crop_id) {
+                $fews = array_values(array_filter($fews, function ($r) use ($crop_id) {
                     return (int)$r['crop_id'] === $crop_id;
                 }));
             }
@@ -720,12 +737,12 @@ try {
             // Farmer submits a crowdsourced price
             $body = json_decode(file_get_contents('php://input'), true) ?? [];
             $crop_id    = (int)($body['crop_id']    ?? 0);
-            $district_id= isset($body['district_id']) ? (int)$body['district_id'] : null;
+            $district_id = isset($body['district_id']) ? (int)$body['district_id'] : null;
             $price      = (float)($body['price_per_kg'] ?? 0);
             $unit       = preg_replace('/[^a-zA-Z\/]/', '', $body['unit'] ?? 'kg');
             $market     = mb_substr(trim($body['market_name'] ?? ''), 0, 200);
             $phone      = mb_substr(trim($body['phone'] ?? 'anonymous'), 0, 50);
-            $channel    = in_array($body['channel'] ?? 'web', ['web','ussd']) ? ($body['channel'] ?? 'web') : 'web';
+            $channel    = in_array($body['channel'] ?? 'web', ['web', 'ussd']) ? ($body['channel'] ?? 'web') : 'web';
 
             if (!$crop_id || $price <= 0) {
                 throw new Exception('crop_id and price_per_kg are required.');
@@ -770,7 +787,6 @@ try {
         default:
             throw new Exception('Invalid action specified. Available actions: test, districts, crops, crop_prices, dual_crop_prices, submit_price, fews_prices_refresh, market_insights, sellers, buyers, pest_control, farming_tips, basic_info, submit_application, check_application, admin_applications, admin_review');
     }
-
 } catch (Throwable $e) {
     ob_clean();
     http_response_code(200);
@@ -784,7 +800,8 @@ try {
 
 // ─── FEWS NET PRICE FETCH + FILE CACHE ──────────────────────────────────────
 
-function fews_get_prices($db) {
+function fews_get_prices($db)
+{
     $cacheFile = __DIR__ . '/config/fews_prices_cache.json';
     $ttl = 6 * 3600;
 
@@ -801,7 +818,8 @@ function fews_get_prices($db) {
     return $fresh;
 }
 
-function fews_fetch_prices($db) {
+function fews_fetch_prices($db)
+{
     $sourceUrl = 'https://fdw.fews.net/api/marketpricefacts/?format=json&country_code=MW&ordering=-period_date&page_size=250';
     $ctx = stream_context_create(['http' => [
         'timeout' => 20,
@@ -884,7 +902,8 @@ function fews_fetch_prices($db) {
     ];
 }
 
-function fews_district_map($db) {
+function fews_district_map($db)
+{
     $map = [];
     $r = $db->query("SELECT id, name FROM districts");
     while ($row = $r->fetch_assoc()) {
@@ -893,7 +912,8 @@ function fews_district_map($db) {
     return $map;
 }
 
-function fews_match_district($marketName, $districtMap) {
+function fews_match_district($marketName, $districtMap)
+{
     $market = strtolower($marketName);
     foreach ($districtMap as $district) {
         if (strpos($market, $district['match']) !== false) {
@@ -907,4 +927,3 @@ function fews_match_district($marketName, $districtMap) {
 if (isset($mysqli)) {
     $mysqli->close();
 }
-?>
