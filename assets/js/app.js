@@ -297,7 +297,7 @@ bindFocusManagement() {
     });
 }
     bindLanguageSelection() {
-        document.querySelectorAll('.language-card-modern').forEach(card => {
+        document.querySelectorAll('.lang-card').forEach(card => {
             card.addEventListener('click', (e) => {
                 const lang = card.dataset.lang;
                 if (lang) {
@@ -415,7 +415,7 @@ selectLanguageWithAnimation(card, lang) {
 
 // Update bindServiceCards method
 bindServiceCards() {
-    document.querySelectorAll('.service-card-revolution').forEach(card => {
+    document.querySelectorAll('.service-card').forEach(card => {
         // Click event
         card.addEventListener('click', (e) => {
             const service = card.dataset.service;
@@ -1005,7 +1005,7 @@ updateTexts() {
                 <div class="error-message" style="text-align: center; padding: 4rem 2rem;">
                     <div style="font-size: 4rem; margin-bottom: 1rem;">⚠️</div>
                     <p style="font-size: 1.3rem; margin-bottom: 2rem; color: var(--text-secondary);">${message || this.texts[this.currentLang].error}</p>
-                    <button class="cta-button-revolution" onclick="app.showScreen('dashboard')" style="margin: 0 auto;">
+                    <button class="btn-primary" onclick="app.showScreen('dashboard')" style="margin: 0 auto;">
                         <span class="cta-text">Back to Home</span>
                         <span class="cta-icon">🏠</span>
                     </button>
@@ -1021,7 +1021,7 @@ updateTexts() {
                 <div class="no-data" style="text-align: center; padding: 4rem 2rem;">
                     <div style="font-size: 4rem; margin-bottom: 1rem;">📭</div>
                     <p style="font-size: 1.3rem; margin-bottom: 2rem; color: var(--text-secondary);">${this.texts[this.currentLang].no_data}</p>
-                    <button class="cta-button-revolution" onclick="app.showScreen('dashboard')" style="margin: 0 auto;">
+                    <button class="btn-primary" onclick="app.showScreen('dashboard')" style="margin: 0 auto;">
                         <span class="cta-text">Back to Home</span>
                         <span class="cta-icon">🏠</span>
                     </button>
@@ -1156,8 +1156,8 @@ updateTexts() {
                     <h2 style="margin-bottom: 2rem; color: var(--primary);">📍 ${district.name}</h2>
                     <p style="margin-bottom: 3rem; color: var(--text-secondary);">What would you like to know about ${district.name}?</p>
                     
-                    <div class="services-grid-revolution" style="max-width: 800px; margin: 0 auto;">
-                        <div class="service-card-revolution" onclick="app.loadWeather(${districtId})" style="cursor: pointer;">
+                    <div class="services-grid" style="max-width: 800px; margin: 0 auto;">
+                        <div class="service-card" onclick="app.loadWeather(${districtId})" style="cursor: pointer;">
                             <div class="service-icon-3d">🌤️</div>
                             <div class="service-content-modern">
                                 <h3>Weather Forecast</h3>
@@ -1165,7 +1165,7 @@ updateTexts() {
                             </div>
                         </div>
                         
-                        <div class="service-card-revolution" onclick="app.loadMarketInsights(${districtId})" style="cursor: pointer;">
+                        <div class="service-card" onclick="app.loadMarketInsights(${districtId})" style="cursor: pointer;">
                             <div class="service-icon-3d">📊</div>
                             <div class="service-content-modern">
                                 <h3>Market Insights</h3>
@@ -1173,7 +1173,7 @@ updateTexts() {
                             </div>
                         </div>
                         
-                        <div class="service-card-revolution" onclick="app.loadSellers(${districtId})" style="cursor: pointer;">
+                        <div class="service-card" onclick="app.loadSellers(${districtId})" style="cursor: pointer;">
                             <div class="service-icon-3d">👨‍🌾</div>
                             <div class="service-content-modern">
                                 <h3>Find Sellers</h3>
@@ -1181,7 +1181,7 @@ updateTexts() {
                             </div>
                         </div>
                         
-                        <div class="service-card-revolution" onclick="app.loadBuyers(${districtId})" style="cursor: pointer;">
+                        <div class="service-card" onclick="app.loadBuyers(${districtId})" style="cursor: pointer;">
                             <div class="service-icon-3d">🏢</div>
                             <div class="service-content-modern">
                                 <h3>Find Buyers</h3>
@@ -1210,8 +1210,8 @@ updateTexts() {
                         <h2 style="margin-bottom: 2rem; color: var(--primary);">${this.getCropIcon(crop.name)} ${crop.name}</h2>
                         <p style="margin-bottom: 3rem; color: var(--text-secondary);">What would you like to know about ${crop.name}?</p>
                         
-                        <div class="services-grid-revolution" style="max-width: 800px; margin: 0 auto;">
-                            <div class="service-card-revolution" onclick="app.showCropPrices('${crop.name}')" style="cursor: pointer;">
+                        <div class="services-grid" style="max-width: 800px; margin: 0 auto;">
+                            <div class="service-card" onclick="app.showCropPrices('${crop.name}')" style="cursor: pointer;">
                                 <div class="service-icon-3d">💰</div>
                                 <div class="service-content-modern">
                                     <h3>Current Prices</h3>
@@ -1219,7 +1219,7 @@ updateTexts() {
                                 </div>
                             </div>
                             
-                            <div class="service-card-revolution" onclick="app.loadFarmingTips(${cropId})" style="cursor: pointer;">
+                            <div class="service-card" onclick="app.loadFarmingTips(${cropId})" style="cursor: pointer;">
                                 <div class="service-icon-3d">🌾</div>
                                 <div class="service-content-modern">
                                     <h3>Farming Tips</h3>
@@ -1227,7 +1227,7 @@ updateTexts() {
                                 </div>
                             </div>
                             
-                            <div class="service-card-revolution" onclick="app.showCropPestControl(${cropId})" style="cursor: pointer;">
+                            <div class="service-card" onclick="app.showCropPestControl(${cropId})" style="cursor: pointer;">
                                 <div class="service-icon-3d">🐛</div>
                                 <div class="service-content-modern">
                                     <h3>Pest Control</h3>
@@ -1272,15 +1272,13 @@ updateTexts() {
             if (searchBox) searchBox.value = '';
             if (searchStats) searchStats.textContent = `${districts.length} districts available`;
             
-            // Create revolutionary district grid
+            // Create district list
             list.innerHTML = districts.map((district, index) => {
                 const coords = this.districtCoords[district.id];
                 return `
-                    <div class="district-item-revolution" data-id="${district.id}" style="--delay: ${index * 0.05}s">
-                        <div class="district-icon">📍</div>
-                        <div class="district-name">${district.name}</div>
-                        <div class="district-region">${coords ? coords.region + ' Region' : 'Malawi'}</div>
-                    </div>
+                    <button class="district-item" data-id="${district.id}" type="button">
+                        📍 <strong>${district.name}</strong> — ${coords ? coords.region : 'Malawi'}
+                    </button>
                 `;
             }).join('');
             
@@ -1297,16 +1295,14 @@ updateTexts() {
             modal.addEventListener('modalclosed', onDistrictModalClose);
 
             // Add click handlers
-            list.querySelectorAll('.district-item-revolution').forEach(item => {
+            list.querySelectorAll('.district-item').forEach(item => {
                 item.addEventListener('click', () => {
                     this.selectedDistrict = item.dataset.id;
                     console.log('📍 District selected:', this.selectedDistrict);
                     districtSelected = true;
 
-                    item.style.background = 'var(--primary)';
-                    item.style.color = 'white';
-                    item.style.transform = 'scale(1.1)';
-                    item.style.boxShadow = 'var(--shadow-glow)';
+                    item.style.background = 'var(--accent)';
+                    item.style.color = 'var(--surface)';
 
                     setTimeout(() => {
                         this.closeModal(modal);
@@ -1345,15 +1341,13 @@ updateTexts() {
             if (searchBox) searchBox.value = '';
             if (searchStats) searchStats.textContent = `${crops.length} crops available`;
             
-            // Create revolutionary crop grid
+            // Create crop list
             list.innerHTML = crops.map((crop, index) => {
                 const category = this.getCropCategory(crop.name);
                 return `
-                    <div class="crop-item-revolution" data-id="${crop.id}" style="--delay: ${index * 0.05}s">
-                        <div class="crop-emoji">${this.getCropIcon(crop.name)}</div>
-                        <div class="crop-name">${crop.name}</div>
-                        <div class="crop-category">${category}</div>
-                    </div>
+                    <button class="crop-item" data-id="${crop.id}" type="button">
+                        ${this.getCropIcon(crop.name)} <strong>${crop.name}</strong> — ${category}
+                    </button>
                 `;
             }).join('');
             
@@ -1370,16 +1364,14 @@ updateTexts() {
             modal.addEventListener('modalclosed', onCropModalClose);
 
             // Add click handlers
-            list.querySelectorAll('.crop-item-revolution').forEach(item => {
+            list.querySelectorAll('.crop-item').forEach(item => {
                 item.addEventListener('click', () => {
                     this.selectedCrop = item.dataset.id;
                     console.log('🌾 Crop selected:', this.selectedCrop);
                     cropSelected = true;
 
-                    item.style.background = 'var(--success)';
-                    item.style.color = 'white';
-                    item.style.transform = 'scale(1.1)';
-                    item.style.boxShadow = 'var(--shadow-glow)';
+                    item.style.background = 'var(--accent)';
+                    item.style.color = 'var(--surface)';
 
                     setTimeout(() => {
                         this.closeModal(modal);
@@ -1402,7 +1394,7 @@ openModal(modal) {
         document.body.style.overflow = 'hidden';
         
         // Enhanced modal animation
-        const content = modal.querySelector('.modal-content-revolution');
+        const content = modal.querySelector('.modal-content');
         if (content) {
             content.style.transform = 'scale(0.7) translateY(200px)';
             content.style.opacity = '0';
@@ -1429,7 +1421,7 @@ openModal(modal) {
 // Update closeModal method
 closeModal(modal) {
     if (modal) {
-        const content = modal.querySelector('.modal-content-revolution');
+        const content = modal.querySelector('.modal-content');
         if (content) {
             content.style.transform = 'scale(0.8) translateY(-100px)';
             content.style.opacity = '0';
@@ -1829,7 +1821,7 @@ closeModal(modal) {
                             <label>Your Phone (optional)</label>
                             <input type="tel" id="pr-phone" placeholder="+265...">
                         </div>
-                        <button type="submit" class="cta-button-revolution" style="align-self:flex-start">Submit Price Report</button>
+                        <button type="submit" class="btn-primary" style="align-self:flex-start">Submit Price Report</button>
                         <p id="pr-msg" style="display:none;padding:.75rem 1rem;border-radius:8px;font-weight:600"></p>
                     </form>
                 </div>
@@ -1888,8 +1880,8 @@ closeModal(modal) {
                     <h2 style="margin-bottom: 2rem; color: var(--primary);">${this.getCropIcon(cropName)} ${cropName} Details</h2>
                     <p style="margin-bottom: 3rem; color: var(--text-secondary);">Learn more about ${cropName}</p>
                     
-                    <div class="services-grid-revolution" style="max-width: 800px; margin: 0 auto;">
-                        <div class="service-card-revolution" onclick="app.loadCropPrices('${cropName}')" style="cursor: pointer;">
+                    <div class="services-grid" style="max-width: 800px; margin: 0 auto;">
+                        <div class="service-card" onclick="app.loadCropPrices('${cropName}')" style="cursor: pointer;">
                             <div class="service-icon-3d">💰</div>
                             <div class="service-content-modern">
                                 <h3>Price History</h3>
@@ -1897,7 +1889,7 @@ closeModal(modal) {
                             </div>
                         </div>
                         
-                        <div class="service-card-revolution" onclick="app.getCropFarmingTips('${cropName}')" style="cursor: pointer;">
+                        <div class="service-card" onclick="app.getCropFarmingTips('${cropName}')" style="cursor: pointer;">
                             <div class="service-icon-3d">🌾</div>
                             <div class="service-content-modern">
                                 <h3>Growing Guide</h3>
@@ -1905,7 +1897,7 @@ closeModal(modal) {
                             </div>
                         </div>
                         
-                        <div class="service-card-revolution" onclick="app.getCropMarkets('${cropName}')" style="cursor: pointer;">
+                        <div class="service-card" onclick="app.getCropMarkets('${cropName}')" style="cursor: pointer;">
                             <div class="service-icon-3d">🏪</div>
                             <div class="service-content-modern">
                                 <h3>Find Markets</h3>
