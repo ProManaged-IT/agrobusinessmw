@@ -391,9 +391,10 @@
             <div class="modal-body">
                 <div class="search-box">
                     <span class="search-icon material-symbols-rounded">search</span>
-                    <input type="text" id="district-search" placeholder="Search districts..." aria-label="Search">
+                    <input type="text" id="district-search" placeholder="Search district or region..." aria-label="Search districts">
                 </div>
-                <div id="district-list" class="item-list" aria-live="polite">
+                <p id="search-stats" class="selection-count">Districts loading</p>
+                <div id="district-list" class="item-list district-picker" aria-live="polite">
                     <!-- Populated by JS -->
                 </div>
             </div>
@@ -414,8 +415,9 @@
             <div class="modal-body">
                 <div class="search-box">
                     <span class="search-icon material-symbols-rounded">search</span>
-                    <input type="text" id="crop-search" placeholder="Search crops..." aria-label="Search">
+                    <input type="text" id="crop-search" placeholder="Search crops..." aria-label="Search crops">
                 </div>
+                <p id="crop-search-stats" class="selection-count">Crops loading</p>
                 <div id="crop-list" class="item-list" aria-live="polite">
                     <!-- Populated by JS -->
                 </div>

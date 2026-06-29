@@ -223,97 +223,93 @@ try {
             break;
             
         case 'sellers':
-            // Get sellers for a district
             $district_id = (int)($_GET['district_id'] ?? 0);
-            
+            $crop        = trim($_GET['crop'] ?? '');
+
             if (!$district_id) {
                 throw new Exception('District ID is required');
             }
-            
+
             $query = "
-                SELECT 
-                    s.id,
-                    s.name,
-                    s.district_id,
-                    d.name as district_name,
-                    scd.phone_number,
-                    scd.email,
-                    scd.address,
-                    GROUP_CONCAT(c.name SEPARATOR ', ') as crops_display,
-                    ROUND(AVG(r.rating_value), 1) as rating
+                SELECT s.id, s.name, s.district_id, d.name as district_name,
+                       scd.phone_number, scd.email, scd.address,
+                       GROUP_CONCAT(c.name ORDER BY c.name SEPARATOR ', ') as crops_display,
+                       ROUND(AVG(r.rating_value), 1) as rating
                 FROM sellers s
                 JOIN districts d ON s.district_id = d.id
                 JOIN seller_contact_details scd ON s.contact_id = scd.id
                 LEFT JOIN seller_crops sc ON s.id = sc.seller_id
                 LEFT JOIN crops c ON sc.crop_id = c.id
                 LEFT JOIN ratings r ON s.id = r.seller_id
-                WHERE s.district_id = ?
-                GROUP BY s.id
-                ORDER BY s.name ASC
-            ";
-            
+                WHERE s.district_id = ?";
+
+            if ($crop !== '') {
+                $query .= " AND s.id IN (
+                    SELECT sc2.seller_id FROM seller_crops sc2
+                    JOIN crops c2 ON sc2.crop_id = c2.id WHERE c2.name = ?)";
+            }
+
+            $query .= " GROUP BY s.id ORDER BY ROUND(AVG(r.rating_value), 1) DESC, s.name ASC";
+
             $stmt = $mysqli->prepare($query);
-            $stmt->bind_param('i', $district_id);
+            if ($crop !== '') {
+                $stmt->bind_param('is', $district_id, $crop);
+            } else {
+                $stmt->bind_param('i', $district_id);
+            }
             $stmt->execute();
             $result = $stmt->get_result();
-            
+
             $sellers = [];
             while ($row = $result->fetch_assoc()) {
                 $sellers[] = $row;
             }
-            
-            echo json_encode([
-                'success' => true,
-                'data' => $sellers,
-                'count' => count($sellers),
-                'timestamp' => date('c')
-            ]);
+
+            echo json_encode(['success' => true, 'data' => $sellers, 'count' => count($sellers), 'timestamp' => date('c')]);
             break;
-            
+
         case 'buyers':
-            // Get buyers for a district
             $district_id = (int)($_GET['district_id'] ?? 0);
-            
+            $crop        = trim($_GET['crop'] ?? '');
+
             if (!$district_id) {
                 throw new Exception('District ID is required');
             }
-            
+
             $query = "
-                SELECT 
-                    b.id,
-                    b.name,
-                    b.district_id,
-                    d.name as district_name,
-                    bcd.phone_number,
-                    bcd.email,
-                    bcd.address,
-                    GROUP_CONCAT(c.name SEPARATOR ', ') as crops_display
+                SELECT b.id, b.name, b.district_id, d.name as district_name,
+                       bcd.phone_number, bcd.email, bcd.address,
+                       GROUP_CONCAT(c.name ORDER BY c.name SEPARATOR ', ') as crops_display
                 FROM buyers b
                 JOIN districts d ON b.district_id = d.id
                 JOIN buyer_contact_details bcd ON b.contact_id = bcd.id
                 LEFT JOIN buyer_crops bc ON b.id = bc.buyer_id
                 LEFT JOIN crops c ON bc.crop_id = c.id
-                WHERE b.district_id = ?
-                GROUP BY b.id
-                ORDER BY b.name ASC
-            ";
-            
+                WHERE b.district_id = ?";
+
+            if ($crop !== '') {
+                $query .= " AND b.id IN (
+                    SELECT bc2.buyer_id FROM buyer_crops bc2
+                    JOIN crops c2 ON bc2.crop_id = c2.id WHERE c2.name = ?)";
+            }
+
+            $query .= " GROUP BY b.id ORDER BY b.name ASC";
+
             $stmt = $mysqli->prepare($query);
-            $stmt->bind_param('i', $district_id);
+            if ($crop !== '') {
+                $stmt->bind_param('is', $district_id, $crop);
+            } else {
+                $stmt->bind_param('i', $district_id);
+            }
             $stmt->execute();
             $result = $stmt->get_result();
-            
+
             $buyers = [];
             while ($row = $result->fetch_assoc()) {
                 $buyers[] = $row;
             }
-            
-            echo json_encode([
-                'success' => true,
-                'data' => $buyers,
-                'count' => count($buyers),
-                'timestamp' => date('c')
-            ]);
+
+            echo json_encode(['success' => true, 'data' => $buyers, 'count' => count($buyers), 'timestamp' => date('c')]);
             break;
             
         case 'pest_control':

@@ -673,54 +673,38 @@ updateTexts() {
     }
 
     filterDistricts(searchTerm) {
-        const items = document.querySelectorAll('.district-item-revolution');
+        const items = document.querySelectorAll('.district-item');
+        const term = searchTerm.toLowerCase().trim();
         let visibleCount = 0;
-        
-        items.forEach((item, index) => {
-            const name = item.querySelector('.district-name')?.textContent.toLowerCase() || '';
-            const region = item.querySelector('.district-region')?.textContent.toLowerCase() || '';
-            const matches = name.includes(searchTerm.toLowerCase()) || 
-                          region.includes(searchTerm.toLowerCase());
-            
-            if (matches) {
-                item.style.display = 'block';
-                item.style.animation = `districtItemReveal 0.3s ease ${index * 0.05}s both`;
-                visibleCount++;
-            } else {
-                item.style.display = 'none';
-            }
+
+        items.forEach(item => {
+            const haystack = `${item.dataset.name || ''} ${item.dataset.region || ''}`.toLowerCase();
+            const matches = haystack.includes(term);
+            item.hidden = !matches;
+            if (matches) visibleCount++;
         });
-        
-        // Update search stats
+
         const searchStats = document.getElementById('search-stats');
         if (searchStats) {
-            searchStats.textContent = `${visibleCount} districts found`;
+            searchStats.textContent = term ? `${visibleCount} districts found` : `${items.length} districts available`;
         }
     }
 
     filterCrops(searchTerm) {
-        const items = document.querySelectorAll('.crop-item-revolution');
+        const items = document.querySelectorAll('.crop-item');
+        const term = searchTerm.toLowerCase().trim();
         let visibleCount = 0;
-        
-        items.forEach((item, index) => {
-            const name = item.querySelector('.crop-name')?.textContent.toLowerCase() || '';
-            const category = item.querySelector('.crop-category')?.textContent.toLowerCase() || '';
-            const matches = name.includes(searchTerm.toLowerCase()) || 
-                          category.includes(searchTerm.toLowerCase());
-            
-            if (matches) {
-                item.style.display = 'block';
-                item.style.animation = `cropItemReveal 0.3s ease ${index * 0.05}s both`;
-                visibleCount++;
-            } else {
-                item.style.display = 'none';
-            }
+
+        items.forEach(item => {
+            const haystack = `${item.dataset.name || ''} ${item.dataset.category || ''}`.toLowerCase();
+            const matches = haystack.includes(term);
+            item.hidden = !matches;
+            if (matches) visibleCount++;
         });
-        
-        // Update search stats
+
         const cropSearchStats = document.getElementById('crop-search-stats');
         if (cropSearchStats) {
-            cropSearchStats.textContent = `${visibleCount} crops found`;
+            cropSearchStats.textContent = term ? `${visibleCount} crops found` : `${items.length} crops available`;
         }
     }
 
@@ -1292,15 +1276,39 @@ updateTexts() {
             if (searchBox) searchBox.value = '';
             if (searchStats) searchStats.textContent = `${districts.length} districts available`;
             
-            // Create district list
-            list.innerHTML = districts.map((district, index) => {
-                const coords = this.districtCoords[district.id];
-                return `
-                    <button class="district-item" data-id="${district.id}" type="button">
-                        📍 <strong>${district.name}</strong> — ${coords ? coords.region : 'Malawi'}
-                    </button>
-                `;
+            const regions = ['Central', 'Northern', 'Southern'];
+            const regionSummary = regions.map(region => {
+                const count = districts.filter(district => (this.districtCoords[district.id]?.region || 'Malawi') === region).length;
+                return `<span>${region}: ${count}</span>`;
             }).join('');
+            const popularDistricts = districts.filter(district => ['Lilongwe', 'Blantyre', 'Mzuzu', 'Zomba'].includes(district.name));
+            const quickPicks = popularDistricts.length ? `
+                <div class="district-quick-picks" aria-label="Common district choices">
+                    ${popularDistricts.map(district => `<button type="button" class="district-chip" data-id="${district.id}">${district.name}</button>`).join('')}
+                </div>
+            ` : '';
+
+            list.innerHTML = `
+                <div class="district-picker-intro">
+                    <p>Choose where you want to trade. Search by district or region, then tap one result.</p>
+                    <div class="district-region-summary">${regionSummary}</div>
+                    ${quickPicks}
+                </div>
+                ${districts.map(district => {
+                    const coords = this.districtCoords[district.id];
+                    const region = coords ? coords.region : 'Malawi';
+                    return `
+                        <button class="district-item" data-id="${district.id}" data-name="${district.name}" data-region="${region}" type="button">
+                            <span class="district-pin" aria-hidden="true"></span>
+                            <span class="district-copy">
+                                <strong>${district.name}</strong>
+                                <small>${region} Region</small>
+                            </span>
+                            <span class="district-action">Select</span>
+                        </button>
+                    `;
+                }).join('')}
+            `;
             
             // Track whether user selected before closing
             let districtSelected = false;
@@ -1314,20 +1322,15 @@ updateTexts() {
             };
             modal.addEventListener('modalclosed', onDistrictModalClose);
 
-            // Add click handlers
-            list.querySelectorAll('.district-item').forEach(item => {
-                item.addEventListener('click', () => {
-                    this.selectedDistrict = item.dataset.id;
-                    districtSelected = true;
+            const selectDistrict = (districtId) => {
+                this.selectedDistrict = districtId;
+                districtSelected = true;
+                this.closeModal(modal);
+                if (callback) callback();
+            };
 
-                    item.style.background = 'var(--accent)';
-                    item.style.color = 'var(--surface)';
-
-                    setTimeout(() => {
-                        this.closeModal(modal);
-                        if (callback) callback();
-                    }, 300);
-                });
+            list.querySelectorAll('.district-item, .district-chip').forEach(item => {
+                item.addEventListener('click', () => selectDistrict(item.dataset.id));
             });
 
             this.openModal(modal);
@@ -1363,7 +1366,7 @@ updateTexts() {
             list.innerHTML = crops.map((crop, index) => {
                 const category = this.getCropCategory(crop.name);
                 return `
-                    <button class="crop-item" data-id="${crop.id}" type="button">
+                    <button class="crop-item" data-id="${crop.id}" data-name="${crop.name}" data-category="${category}" type="button">
                         ${this.getCropIcon(crop.name)} <strong>${crop.name}</strong> — ${category}
                     </button>
                 `;
@@ -1723,10 +1726,7 @@ closeModal(modal) {
     
     async loadCropPrices(specificCrop = null) {
         try {
-            const url = specificCrop
-                ? `api.php?action=dual_crop_prices`
-                : `api.php?action=dual_crop_prices`;
-            const response = await this.apiCall(url);
+            const response = await this.apiCall('api.php?action=dual_crop_prices');
 
             if (!response.success) {
                 this.showError(response.error || 'Failed to load crop prices');
@@ -1738,84 +1738,109 @@ closeModal(modal) {
 
             if (specificCrop) {
                 const lc = specificCrop.toLowerCase();
-                fews      = fews.filter(r => r.crop_name.toLowerCase().includes(lc));
-                community = community.filter(r => r.crop_name.toLowerCase().includes(lc));
+                fews      = fews.filter(r => (r.crop_name || '').toLowerCase().includes(lc));
+                community = community.filter(r => (r.crop_name || '').toLowerCase().includes(lc));
             }
 
-            const fmt = n => n ? 'MK ' + parseFloat(n).toLocaleString() : 'N/A';
+            const esc = value => String(value ?? '').replace(/[&<>'"]/g, char => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+            }[char]));
+            const fmt = n => n ? 'MK ' + parseFloat(n).toLocaleString() : '—';
             const ago = dt => {
+                if (!dt) return '—';
                 const d = Math.floor((Date.now() - new Date(dt)) / 86400000);
                 return d === 0 ? 'Today' : d === 1 ? 'Yesterday' : `${d}d ago`;
             };
 
-            // Build crop options list for report form (deduplicated by id)
-            const _seen = new Set();
-            const allCrops = [...fews, ...community]
+            const rows = [
+                ...fews.map(r => ({
+                    source: 'fews',
+                    sourceLabel: 'FEWS NET',
+                    crop_id: r.crop_id,
+                    crop_name: r.crop_name,
+                    district: r.district_name || r.region || '—',
+                    market: r.market_name || r.market || '—',
+                    fewsPrice: fmt(r.price ?? r.value),
+                    communityPrice: '—',
+                    reports: r.price_date ? new Date(r.price_date).toLocaleDateString() : '—',
+                    unit: r.unit || 'kg',
+                    type: r.price_type || 'Retail reference'
+                })),
+                ...community.map(r => ({
+                    source: 'community',
+                    sourceLabel: 'Community',
+                    crop_id: r.crop_id,
+                    crop_name: r.crop_name,
+                    district: r.district_name || '—',
+                    market: r.market_name || '—',
+                    fewsPrice: '—',
+                    communityPrice: `${fmt(r.min_price)} / ${fmt(r.avg_price)} / ${fmt(r.max_price)}`,
+                    reports: `${r.report_count} report${Number(r.report_count) === 1 ? '' : 's'} · ${ago(r.last_reported)}`,
+                    unit: r.unit || 'kg',
+                    type: 'Farmer/trader report'
+                }))
+            ].sort((a, b) => (a.crop_name || '').localeCompare(b.crop_name || '') || a.source.localeCompare(b.source));
+
+            const cropSeen = new Set();
+            const allCrops = rows
                 .map(r => ({ id: r.crop_id, name: r.crop_name }))
-                .filter(c => { if (_seen.has(c.id)) return false; _seen.add(c.id); return true; })
+                .filter(c => c.id && c.name && !cropSeen.has(c.id) && cropSeen.add(c.id))
                 .sort((a, b) => a.name.localeCompare(b.name));
-            const cropOptions = allCrops.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+            const cropOptions = allCrops.map(c => `<option value="${esc(c.id)}">${esc(c.name)}</option>`).join('');
+            const cropFilterOptions = allCrops.map(c => `<option value="${esc(c.name.toLowerCase())}">${esc(c.name)}</option>`).join('');
 
-            const fewsRows = fews.map((r, i) => `
-                <tr style="animation:serviceReveal .3s ease ${i*.04}s both">
-                    <td><span style="font-size:1.3rem">${this.getCropIcon(r.crop_name)}</span> <strong>${r.crop_name}</strong></td>
-                    <td>${r.district_name || '—'}</td>
-                    <td>${r.market_name || '—'}</td>
-                    <td>${r.price_type || 'Retail'}</td>
-                    <td><span class="price-badge price-high">${fmt(r.price)}</span></td>
-                    <td>${r.unit || 'kg'}</td>
-                    <td style="color:var(--text-muted);font-size:.8rem">${r.price_date ? new Date(r.price_date).toLocaleDateString() : '—'}</td>
-                </tr>`).join('') || `<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:2rem">No FEWS NET data yet</td></tr>`;
-
-            const commRows = community.map((r, i) => `
-                <tr style="animation:serviceReveal .3s ease ${i*.04}s both">
-                    <td><span style="font-size:1.3rem">${this.getCropIcon(r.crop_name)}</span> <strong>${r.crop_name}</strong></td>
-                    <td>${r.district_name || '—'}</td>
-                    <td>${r.market_name || '—'}</td>
-                    <td><span class="price-badge">${fmt(r.min_price)}</span></td>
-                    <td><span class="price-badge price-high">${fmt(r.avg_price)}</span></td>
-                    <td><span class="price-badge" style="background:rgba(200,164,90,.12);color:var(--accent)">${fmt(r.max_price)}</span></td>
-                    <td style="color:var(--text-muted);font-size:.8rem">${r.report_count} report${r.report_count>1?'s':''}<br>${ago(r.last_reported)}</td>
-                </tr>`).join('') || `<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:2rem">No community reports yet — be the first!</td></tr>`;
+            const priceRows = rows.map((r, i) => {
+                const searchText = [r.sourceLabel, r.crop_name, r.district, r.market, r.type, r.fewsPrice, r.communityPrice, r.reports, r.unit].join(' ').toLowerCase();
+                return `
+                <tr class="price-data-row" data-source="${esc(r.source)}" data-crop="${esc((r.crop_name || '').toLowerCase())}" data-search="${esc(searchText)}" style="animation:serviceReveal .3s ease ${i*.03}s both">
+                    <td><span style="font-size:1.3rem">${this.getCropIcon(r.crop_name)}</span> <strong>${esc(r.crop_name || 'Unknown crop')}</strong><br><small style="color:var(--text-muted)">${esc(r.type)}</small></td>
+                    <td>${esc(r.district)}<br><small style="color:var(--text-muted)">${esc(r.market)}</small></td>
+                    <td><span class="price-badge ${r.source === 'fews' ? 'price-high' : ''}">${esc(r.fewsPrice)}</span></td>
+                    <td><span class="price-badge ${r.source === 'community' ? 'price-high' : ''}">${esc(r.communityPrice)}</span></td>
+                    <td>${esc(r.unit)}</td>
+                    <td style="color:var(--text-muted);font-size:.8rem">${esc(r.reports)}</td>
+                    <td><span class="price-badge" style="background:${r.source === 'fews' ? 'rgba(22,163,74,.12)' : 'rgba(200,164,90,.12)'};color:${r.source === 'fews' ? 'var(--primary)' : 'var(--accent)'}">${esc(r.sourceLabel)}</span></td>
+                </tr>`;
+            }).join('');
 
             const area = document.getElementById('content-area');
             area.innerHTML = `
-                <h2 style="font-family:'DM Serif Display',serif;margin-bottom:1.5rem;color:var(--text-primary)">Crop Prices</h2>
+                <h2 style="font-family:'DM Serif Display',serif;margin-bottom:1rem;color:var(--text-primary)">Crop Prices</h2>
+                <p style="color:var(--text-muted);font-size:.9rem;margin-bottom:1.25rem">FEWS NET reference prices and community market reports are shown side by side in one searchable table.</p>
 
-                <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:1.5rem">
-                    <button class="price-tab active" id="tab-fews" onclick="app._priceTab('fews')">FEWS NET Prices <span style="background:var(--accent);color:#fff;border-radius:20px;padding:.1rem .5rem;font-size:.75rem;margin-left:.3rem">${fews.length}</span></button>
-                    <button class="price-tab" id="tab-community" onclick="app._priceTab('community')">Community Reports <span style="background:var(--accent);color:#fff;border-radius:20px;padding:.1rem .5rem;font-size:.75rem;margin-left:.3rem">${community.length}</span></button>
+                <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:1.5rem;flex-wrap:wrap">
+                    <button class="price-tab active" id="tab-prices" onclick="app._priceTab('prices')">All Prices <span style="background:var(--accent);color:#fff;border-radius:20px;padding:.1rem .5rem;font-size:.75rem;margin-left:.3rem">${rows.length}</span></button>
                     <button class="price-tab" id="tab-report" onclick="app._priceTab('report')" style="margin-left:auto;background:var(--primary);color:#fff;border-color:var(--primary)">+ Report a Price</button>
                 </div>
 
-                <!-- FEWS NET Tab -->
-                <div id="pane-fews" class="price-pane">
-                    <p style="color:var(--text-muted);font-size:.85rem;margin-bottom:1rem">Retail market prices for Malawi from the FEWS NET Data Warehouse.</p>
+                <div id="pane-prices" class="price-pane">
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:.75rem;margin-bottom:1rem">
+                        <input id="price-search" type="search" placeholder="Search crop, district, market, source, price..." style="padding:.75rem;border:1px solid var(--border);border-radius:8px">
+                        <select id="price-source-filter" style="padding:.75rem;border:1px solid var(--border);border-radius:8px">
+                            <option value="all">All sources</option>
+                            <option value="fews">FEWS NET only</option>
+                            <option value="community">Community only</option>
+                        </select>
+                        <select id="price-crop-filter" style="padding:.75rem;border:1px solid var(--border);border-radius:8px">
+                            <option value="all">All crops</option>
+                            ${cropFilterOptions}
+                        </select>
+                    </div>
+                    <p id="price-filter-stats" style="color:var(--text-muted);font-size:.85rem;margin-bottom:.75rem">Showing ${rows.length} price records: ${fews.length} FEWS NET, ${community.length} community.</p>
                     <div style="overflow-x:auto">
-                    <table class="data-table">
+                    <table class="data-table" id="price-combined-table">
                         <thead><tr>
-                            <th>Crop</th><th>Region</th><th>Market</th><th>Type</th><th>Price</th><th>Unit</th><th>Date</th>
+                            <th>Crop</th><th>District / Market</th><th>FEWS NET Price</th><th>Community Min / Avg / Max</th><th>Unit</th><th>Date / Reports</th><th>Source</th>
                         </tr></thead>
-                        <tbody>${fewsRows}</tbody>
+                        <tbody>
+                            ${priceRows || `<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:2rem">No price data yet.</td></tr>`}
+                            <tr id="price-no-results" style="display:none"><td colspan="7" style="text-align:center;color:var(--text-muted);padding:2rem">No prices match your filters.</td></tr>
+                        </tbody>
                     </table>
                     </div>
-                    <p style="margin-top:1rem;font-size:.8rem;color:var(--text-muted)">Source: FEWS NET Data Warehouse. Prices in MWK unless otherwise shown.</p>
+                    <p style="margin-top:1rem;font-size:.8rem;color:var(--text-muted)">FEWS NET prices are external reference prices. Community prices are farmer/trader reports from the local database.</p>
                 </div>
 
-                <!-- Community Tab -->
-                <div id="pane-community" class="price-pane" style="display:none">
-                    <p style="color:var(--text-muted);font-size:.85rem;margin-bottom:1rem">Prices reported by farmers and traders at local markets in the last 30 days.</p>
-                    <div style="overflow-x:auto">
-                    <table class="data-table">
-                        <thead><tr>
-                            <th>Crop</th><th>District</th><th>Market</th><th>Min (MWK)</th><th>Avg (MWK)</th><th>Max (MWK)</th><th>Reports</th>
-                        </tr></thead>
-                        <tbody>${commRows}</tbody>
-                    </table>
-                    </div>
-                </div>
-
-                <!-- Report Tab -->
                 <div id="pane-report" class="price-pane" style="display:none">
                     <p style="color:var(--text-muted);font-size:.85rem;margin-bottom:1.5rem">Seen a price at your local market? Report it to help other farmers make better decisions.</p>
                     <form id="price-report-form" style="max-width:480px;display:flex;flex-direction:column;gap:1rem">
@@ -1844,7 +1869,27 @@ closeModal(modal) {
                 </div>
             `;
 
-            // Tab switching
+            const applyPriceFilters = () => {
+                const term = document.getElementById('price-search').value.trim().toLowerCase();
+                const source = document.getElementById('price-source-filter').value;
+                const crop = document.getElementById('price-crop-filter').value;
+                let visible = 0;
+                area.querySelectorAll('.price-data-row').forEach(row => {
+                    const matchesTerm = !term || row.dataset.search.includes(term);
+                    const matchesSource = source === 'all' || row.dataset.source === source;
+                    const matchesCrop = crop === 'all' || row.dataset.crop === crop;
+                    const show = matchesTerm && matchesSource && matchesCrop;
+                    row.style.display = show ? '' : 'none';
+                    if (show) visible++;
+                });
+                document.getElementById('price-no-results').style.display = visible ? 'none' : '';
+                document.getElementById('price-filter-stats').textContent = `Showing ${visible} of ${rows.length} price records`;
+            };
+            ['price-search', 'price-source-filter', 'price-crop-filter'].forEach(id => {
+                document.getElementById(id).addEventListener('input', applyPriceFilters);
+                document.getElementById(id).addEventListener('change', applyPriceFilters);
+            });
+
             area.querySelector('#price-report-form').addEventListener('submit', async e => {
                 e.preventDefault();
                 const btn = e.target.querySelector('button[type=submit]');
@@ -1883,7 +1928,7 @@ closeModal(modal) {
     }
 
     _priceTab(tab) {
-        ['fews','community','report'].forEach(t => {
+        ['prices','report'].forEach(t => {
             document.getElementById('pane-'+t).style.display = t===tab ? 'block' : 'none';
             document.getElementById('tab-'+t).classList.toggle('active', t===tab);
         });
@@ -2100,145 +2145,199 @@ closeModal(modal) {
         }
     }
     
+    renderStars(rating) {
+        const r     = parseFloat(rating) || 0;
+        const full  = Math.floor(r);
+        const half  = r - full >= 0.5 ? 1 : 0;
+        const empty = 5 - full - half;
+        const stars = '★'.repeat(full) + (half ? '½' : '') + '☆'.repeat(empty);
+        return `<span class="trade-stars" title="${r}/5">${stars}</span><span class="trade-rating-num">${r}/5</span>`;
+    }
+
+    contactSearchHtml(type, count, districtName, crops = [], districtId = null) {
+        const t        = this.texts[this.currentLang];
+        const isSeller = type === 'seller';
+        const title    = isSeller ? t.find_sellers : t.find_buyers;
+        const ph       = this.currentLang === 'ci'
+            ? (isSeller ? 'Sakani ogulitsa, mbewu, nambala...' : 'Sakani ogula, mbewu, nambala...')
+            : (isSeller ? 'Search sellers, crops, phone...'    : 'Search buyers, crops, phone...');
+
+        const toggle = districtId !== null ? `
+            <div class="trade-type-toggle">
+                <button class="trade-toggle-btn ${isSeller ? 'active' : ''}" onclick="app.loadSellers(${districtId})">${t.find_sellers}</button>
+                <button class="trade-toggle-btn ${!isSeller ? 'active' : ''}" onclick="app.loadBuyers(${districtId})">${t.find_buyers}</button>
+            </div>` : '';
+
+        const chipHtml = crops.length ? `
+            <div class="trade-chips" role="group" aria-label="Filter by crop">
+                <button class="trade-chip active" data-crop-filter="">All</button>
+                ${crops.map(c => `<button class="trade-chip" data-crop-filter="${c.toLowerCase()}">${c}</button>`).join('')}
+            </div>` : '';
+
+        return `
+            <div class="trade-hero trade-hero-${type}">
+                <div class="trade-hero-inner">
+                    <span class="trade-kicker">${districtName}</span>
+                    <h2>${title}</h2>
+                    <p>${count} ${isSeller ? 'seller' : 'buyer'}${count === 1 ? '' : 's'} found — tap to call directly</p>
+                </div>
+                ${toggle}
+            </div>
+            <div class="trade-controls">
+                <label class="trade-filter">
+                    <span class="material-symbols-rounded">search</span>
+                    <input type="search" data-contact-filter placeholder="${ph}" aria-label="${ph}">
+                </label>
+                ${chipHtml}
+            </div>
+            <p class="trade-filter-count" data-contact-count>${count} showing</p>`;
+    }
+
+    bindContactFilter() {
+        const input   = document.querySelector('[data-contact-filter]');
+        const countEl = document.querySelector('[data-contact-count]');
+        const cards   = Array.from(document.querySelectorAll('[data-contact-card]'));
+        const chips   = document.querySelectorAll('[data-crop-filter]');
+        if (!input || !countEl || !cards.length) return;
+
+        let activeCrop = '';
+
+        const applyFilter = () => {
+            const term = input.value.toLowerCase().trim();
+            let visible = 0;
+            cards.forEach(card => {
+                const show = (!term || card.dataset.search.includes(term))
+                          && (!activeCrop || (card.dataset.crops || '').includes(activeCrop));
+                card.hidden = !show;
+                if (show) visible++;
+            });
+            countEl.textContent = (term || activeCrop)
+                ? `${visible} match${visible === 1 ? '' : 'es'}`
+                : `${cards.length} showing`;
+        };
+
+        chips.forEach(chip => {
+            chip.addEventListener('click', () => {
+                chips.forEach(c => c.classList.remove('active'));
+                chip.classList.add('active');
+                activeCrop = chip.dataset.cropFilter;
+                applyFilter();
+            });
+        });
+
+        input.addEventListener('input', applyFilter);
+    }
+
     async loadSellers(districtId, specificCrop = null) {
         try {
             let endpoint = `api.php?action=sellers&district_id=${districtId}`;
-            if (specificCrop) {
-                endpoint += `&crop=${encodeURIComponent(specificCrop)}`;
-            }
-            
+            if (specificCrop) endpoint += `&crop=${encodeURIComponent(specificCrop)}`;
             const response = await this.apiCall(endpoint);
-            
-            if (!response.success) {
-                this.showError(response.error || 'Failed to load sellers');
-                return;
-            }
-            
+            if (!response.success) { this.showError(response.error || 'Failed to load sellers'); return; }
             const sellers = response.data || [];
-            
-            if (sellers.length === 0) {
-                this.showNoData();
-                return;
-            }
-            
+            if (!sellers.length) { this.showNoData(); return; }
+
+            const districtName = sellers[0]?.district_name || 'Selected district';
+            const cropSet = new Set();
+            sellers.forEach(s => (s.crops_display || '').split(', ').forEach(c => c.trim() && cropSet.add(c.trim())));
+            const crops = [...cropSet].sort();
+
             const html = `
-                <h2 style="margin-bottom: 2rem; color: var(--primary);">👨‍🌾 ${this.texts[this.currentLang].find_sellers}${specificCrop ? ` - ${specificCrop}` : ''}</h2>
-                <div class="sellers-grid" style="display: grid; gap: 1.5rem;">
-                    ${sellers.map((seller, index) => `
-                        <div class="contact-card" style="background: var(--white); border: 1px solid var(--gray-200); border-radius: var(--radius-xl); padding: 2rem; display: flex; align-items: center; gap: 2rem; transition: var(--transition-normal); animation: serviceReveal 0.4s ease ${index * 0.1}s both; cursor: pointer;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='var(--shadow-lg)'; this.style.borderColor='var(--primary)'" onmouseout="this.style.transform=''; this.style.boxShadow=''; this.style.borderColor='var(--gray-200)'">
-                            <div style="position: absolute; top: 0; left: 0; width: 100%; height: 3px; background: var(--gradient-accent);"></div>
-                            <div class="contact-icon" style="font-size: 4rem; width: 80px; height: 80px; background: var(--gradient-primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; flex-shrink: 0; position: relative; overflow: hidden;">
-                                👨‍🌾
-                                <div style="position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent); animation: iconShine 3s ease-in-out infinite;"></div>
-                            </div>
-                            <div class="contact-info" style="flex: 1;">
-                                <h4 style="font-size: 1.4rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--text-primary);">${seller.name}</h4>
-                                <p class="location" style="display: flex; align-items: center; gap: 0.5rem; color: var(--text-secondary); margin-bottom: 0.75rem;">
-                                    <span style="font-size: 1.2rem;">📍</span>
-                                    ${seller.district_name}
-                                </p>
-                                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem;">
-                                    <a href="tel:${seller.phone_number}" class="contact-phone" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; background: var(--primary-glow); color: var(--primary); text-decoration: none; border-radius: var(--radius-md); font-weight: 500; transition: var(--transition-fast);" onmouseover="this.style.background='var(--primary)'; this.style.color='white'" onmouseout="this.style.background='var(--primary-glow)'; this.style.color='var(--primary)'">
-                                        <span style="font-size: 1rem;">📞</span>
-                                        ${seller.phone_number}
-                                    </a>
-                                    ${seller.email ? `
-                                        <a href="mailto:${seller.email}" class="contact-email" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; background: var(--accent-glow); color: var(--accent); text-decoration: none; border-radius: var(--radius-md); font-weight: 500; transition: var(--transition-fast);" onmouseover="this.style.background='var(--accent)'; this.style.color='white'" onmouseout="this.style.background='var(--accent-glow)'; this.style.color='var(--accent)'">
-                                            <span style="font-size: 1rem;">✉️</span>
-                                            Email
+                ${this.contactSearchHtml('seller', sellers.length, districtName, crops, districtId)}
+                <div class="trade-list">
+                    ${sellers.map(seller => {
+                        const cropStr  = seller.crops_display || '';
+                        const cropTags = cropStr
+                            ? cropStr.split(', ').map(c => `<span class="trade-crop-tag">${c.trim()}</span>`).join('')
+                            : '<span class="trade-crop-tag muted">No crops listed</span>';
+                        const ratingNum  = parseFloat(seller.rating);
+                        const ratingHtml = ratingNum ? this.renderStars(ratingNum) : '<span class="trade-new-badge">New</span>';
+                        const searchStr  = `${seller.name} ${seller.district_name} ${seller.phone_number || ''} ${seller.email || ''} ${seller.address || ''} ${cropStr}`.toLowerCase();
+                        return `
+                            <article class="trade-card seller-card" data-contact-card data-search="${searchStr}" data-crops="${cropStr.toLowerCase()}">
+                                <div class="trade-card-accent"></div>
+                                <div>
+                                    <div class="trade-card-body">
+                                        <div class="trade-card-header">
+                                            <div>
+                                                <h3 class="trade-card-name">${seller.name}</h3>
+                                                <p class="trade-location">${seller.district_name}${seller.address ? ` · ${seller.address}` : ''}</p>
+                                            </div>
+                                            <div class="trade-rating">${ratingHtml}</div>
+                                        </div>
+                                        <div class="trade-crop-tags">${cropTags}</div>
+                                    </div>
+                                    <div class="trade-actions">
+                                        <a href="tel:${seller.phone_number}" class="trade-call">
+                                            <span class="material-symbols-rounded">call</span>${seller.phone_number}
                                         </a>
-                                    ` : ''}
+                                        ${seller.email ? `<a href="mailto:${seller.email}" class="trade-email"><span class="material-symbols-rounded">mail</span>Email</a>` : ''}
+                                    </div>
                                 </div>
-                                ${seller.crops_display ? `
-                                    <div class="crops-info" style="display: flex; align-items: center; gap: 0.5rem; color: var(--text-secondary); margin-top: 1rem; padding: 0.75rem 1rem; background: var(--gray-50); border-radius: var(--radius-md);">
-                                        <span style="font-size: 1.2rem;">🌾</span>
-                                        <span><strong>Crops:</strong> ${seller.crops_display}</span>
-                                    </div>
-                                ` : ''}
-                                ${seller.rating ? `
-                                    <div class="rating" style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.75rem;">
-                                        <span class="stars" style="color: #fbbf24;">${'⭐'.repeat(Math.floor(seller.rating))}</span>
-                                        <span class="rating-value" style="color: var(--text-secondary); font-size: 0.9rem;">${seller.rating}/5 rating</span>
-                                    </div>
-                                ` : ''}
-                            </div>
-                        </div>
-                    `).join('')}
-                </div>
-            `;
-            
+                            </article>`;
+                    }).join('')}
+                </div>`;
             document.getElementById('content-area').innerHTML = html;
-            
+            this.bindContactFilter();
         } catch (error) {
-            console.error('❌ Error loading sellers:', error);
+            console.error('Error loading sellers:', error);
             this.showError('Failed to load sellers');
         }
     }
-    
+
     async loadBuyers(districtId) {
         try {
-            const response = await this.apiCall('api.php?action=buyers&district_id=' + districtId);
-            
-            if (!response.success) {
-                this.showError(response.error || 'Failed to load buyers');
-                return;
-            }
-            
+            const response = await this.apiCall(`api.php?action=buyers&district_id=${districtId}`);
+            if (!response.success) { this.showError(response.error || 'Failed to load buyers'); return; }
             const buyers = response.data || [];
-            
-            if (buyers.length === 0) {
-                this.showNoData();
-                return;
-            }
-            
+            if (!buyers.length) { this.showNoData(); return; }
+
+            const districtName = buyers[0]?.district_name || 'Selected district';
+            const cropSet = new Set();
+            buyers.forEach(b => (b.crops_display || '').split(', ').forEach(c => c.trim() && cropSet.add(c.trim())));
+            const crops = [...cropSet].sort();
+
             const html = `
-                <h2 style="margin-bottom: 2rem; color: var(--primary);">🏢 ${this.texts[this.currentLang].find_buyers}</h2>
-                <div class="buyers-grid" style="display: grid; gap: 1.5rem;">
-                    ${buyers.map((buyer, index) => `
-                        <div class="contact-card" style="background: var(--white); border: 1px solid var(--gray-200); border-radius: var(--radius-xl); padding: 2rem; display: flex; align-items: center; gap: 2rem; transition: var(--transition-normal); animation: serviceReveal 0.4s ease ${index * 0.1}s both; cursor: pointer;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='var(--shadow-lg)'; this.style.borderColor='var(--primary)'" onmouseout="this.style.transform=''; this.style.boxShadow=''; this.style.borderColor='var(--gray-200)'">
-                            <div style="position: absolute; top: 0; left: 0; width: 100%; height: 3px; background: var(--gradient-cool);"></div>
-                            <div class="contact-icon" style="font-size: 4rem; width: 80px; height: 80px; background: var(--gradient-cool); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; flex-shrink: 0; position: relative; overflow: hidden;">
-                                🏢
-                                <div style="position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent); animation: iconShine 3s ease-in-out infinite;"></div>
-                            </div>
-                            <div class="contact-info" style="flex: 1;">
-                                <h4 style="font-size: 1.4rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--text-primary);">${buyer.name}</h4>
-                                <p class="location" style="display: flex; align-items: center; gap: 0.5rem; color: var(--text-secondary); margin-bottom: 0.75rem;">
-                                    <span style="font-size: 1.2rem;">📍</span>
-                                    ${buyer.district_name}
-                                </p>
-                                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem;">
-                                    <a href="tel:${buyer.phone_number}" class="contact-phone" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; background: rgba(6, 182, 212, 0.1); color: #0891b2; text-decoration: none; border-radius: var(--radius-md); font-weight: 500; transition: var(--transition-fast);" onmouseover="this.style.background='#0891b2'; this.style.color='white'" onmouseout="this.style.background='rgba(6, 182, 212, 0.1)'; this.style.color='#0891b2'">
-                                        <span style="font-size: 1rem;">📞</span>
-                                        ${buyer.phone_number}
-                                    </a>
-                                    ${buyer.email ? `
-                                        <a href="mailto:${buyer.email}" class="contact-email" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; background: var(--accent-glow); color: var(--accent); text-decoration: none; border-radius: var(--radius-md); font-weight: 500; transition: var(--transition-fast);" onmouseover="this.style.background='var(--accent)'; this.style.color='white'" onmouseout="this.style.background='var(--accent-glow)'; this.style.color='var(--accent)'">
-                                            <span style="font-size: 1rem;">✉️</span>
-                                            Email
-                                        </a>
-                                    ` : ''}
-                                </div>
-                                ${buyer.crops_display ? `
-                                    <div class="crops-info" style="display: flex; align-items: center; gap: 0.5rem; color: var(--text-secondary); margin-top: 1rem; padding: 0.75rem 1rem; background: var(--gray-50); border-radius: var(--radius-md);">
-                                        <span style="font-size: 1.2rem;">🛒</span>
-                                        <span><strong>Buying:</strong> ${buyer.crops_display}</span>
+                ${this.contactSearchHtml('buyer', buyers.length, districtName, crops, districtId)}
+                <div class="trade-list">
+                    ${buyers.map(buyer => {
+                        const cropStr  = buyer.crops_display || '';
+                        const cropTags = cropStr
+                            ? cropStr.split(', ').map(c => `<span class="trade-crop-tag">${c.trim()}</span>`).join('')
+                            : '<span class="trade-crop-tag muted">No crops listed</span>';
+                        const searchStr = `${buyer.name} ${buyer.district_name} ${buyer.phone_number || ''} ${buyer.email || ''} ${buyer.address || ''} ${cropStr}`.toLowerCase();
+                        return `
+                            <article class="trade-card buyer-card" data-contact-card data-search="${searchStr}" data-crops="${cropStr.toLowerCase()}">
+                                <div class="trade-card-accent"></div>
+                                <div>
+                                    <div class="trade-card-body">
+                                        <div class="trade-card-header">
+                                            <div>
+                                                <h3 class="trade-card-name">${buyer.name}</h3>
+                                                <p class="trade-location">${buyer.district_name}${buyer.address ? ` · ${buyer.address}` : ''}</p>
+                                            </div>
+                                            <div class="trade-rating"><span class="trade-new-badge">Buying</span></div>
+                                        </div>
+                                        <div class="trade-crop-tags">${cropTags}</div>
                                     </div>
-                                ` : ''}
-                            </div>
-                        </div>
-                    `).join('')}
-                </div>
-            `;
-            
+                                    <div class="trade-actions">
+                                        <a href="tel:${buyer.phone_number}" class="trade-call">
+                                            <span class="material-symbols-rounded">call</span>${buyer.phone_number}
+                                        </a>
+                                        ${buyer.email ? `<a href="mailto:${buyer.email}" class="trade-email"><span class="material-symbols-rounded">mail</span>Email</a>` : ''}
+                                    </div>
+                                </div>
+                            </article>`;
+                    }).join('')}
+                </div>`;
             document.getElementById('content-area').innerHTML = html;
-            
+            this.bindContactFilter();
         } catch (error) {
-            console.error('❌ Error loading buyers:', error);
+            console.error('Error loading buyers:', error);
             this.showError('Failed to load buyers');
         }
     }
-    
+
     async loadPestControl(cropId, districtId) {
         try {
             const response = await this.apiCall(`api.php?action=pest_control&crop_id=${cropId}&district_id=${districtId}`);

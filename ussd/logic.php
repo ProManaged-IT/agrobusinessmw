@@ -37,26 +37,35 @@ function parse_navigation(string $text, array $district_map): array {
 
         if ($input === '0') {
             if (!empty($stack)) {
-                // Reset the page counter for the menu we are leaving
-                if ($level >= 2) {
-                    if (in_array($main, ['2', '5', '7', '8'])) $pages['district'] = 1;
-                    elseif ($main === '9')                       $pages['weather']  = 1;
+                // Reset page counters only when leaving the paginated menu itself.
+                // When backing out of a result, keep the page so users return to the
+                // same district/weather page they selected from.
+                if ($level === 2) {
+                    if (in_array($main, ['2', '3', '5', '7', '8'])) $pages['district'] = 1;
+                    elseif ($main === '9')                            $pages['weather']  = 1;
                 }
-                // Pest control district sub-menu (level 3 branch)
-                if ($level >= 3 && $main === '3') $pages['district'] = 1;
+                if ($level === 3 && $main === '3') $pages['district'] = 1;
                 array_pop($stack);
             }
         } elseif ($input === '9') {
-            // '9' = next page ONLY when inside a paginated district/weather menu.
-            // At level 1 (main menu) '9' is the Weather option — push it normally.
+            // At level 1 (main menu) '9' is Weather. Deeper levels use '9' for
+            // Next Page while pages remain, then Main Menu from page 3/results.
             if ($level === 2) {
-                if (in_array($main, ['2', '5', '7', '8'])) $pages['district'] = min($pages['district'] + 1, 3);
-                elseif ($main === '9')                      $pages['weather']  = min($pages['weather']  + 1, 3);
-                else                                        $stack[] = $input; // push at level 2 if not a paginated menu
+                if (in_array($main, ['2', '5', '7', '8'])) {
+                    if ($pages['district'] < 3) $pages['district']++;
+                    else $stack = array_slice($stack, 0, 1);
+                } elseif ($main === '9') {
+                    if ($pages['weather'] < 3) $pages['weather']++;
+                    else $stack = array_slice($stack, 0, 1);
+                } else {
+                    $stack = array_slice($stack, 0, 1);
+                }
             } elseif ($level === 3 && $main === '3') {
-                $pages['district'] = min($pages['district'] + 1, 3);
+                if ($pages['district'] < 3) $pages['district']++;
+                else $stack = array_slice($stack, 0, 1);
+            } elseif ($level >= 3) {
+                $stack = array_slice($stack, 0, 1);
             } else {
-                // Level 0, 1, or any other level: '9' is a regular menu selection
                 $stack[] = $input;
             }
         } else {

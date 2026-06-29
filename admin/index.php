@@ -94,12 +94,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['review_id'])) {
 $filterStatus = in_array($_GET['status'] ?? 'pending', ['pending','approved','denied','all'])
     ? ($_GET['status'] ?? 'pending') : 'pending';
 
-$where  = $filterStatus === 'all' ? '' : "WHERE a.status = '{$filterStatus}'";
 $result = $db->query(
     "SELECT a.*, d.name as district_name
      FROM onboarding_applications a
      LEFT JOIN districts d ON a.district_id = d.id
-     {$where}
      ORDER BY a.created_at DESC
      LIMIT 200"
 );
@@ -148,10 +146,14 @@ a:hover { color: #7a6448; }
 .pending-color  { color: #f59e0b; }
 .approved-color { color: #22c55e; }
 .denied-color   { color: #ef4444; }
-.filter-tabs { display: flex; gap: .5rem; margin-bottom: 1.5rem; }
+.filter-tabs { display: flex; gap: .5rem; margin-bottom: 1rem; flex-wrap: wrap; }
 .tab { padding: .6rem 1.2rem; border-radius: 8px; background: #f5f2eb; color: #6b5f52; font-size: .85rem; font-weight: 600; border: 1px solid #e8e2d9; transition: all 0.18s ease; cursor: pointer; }
 .tab.active { background: #8B7355; color: #fff; border-color: #8B7355; }
 .tab:hover:not(.active) { background: #faf8f4; border-color: #d5cfc4; }
+.table-tools { display: grid; grid-template-columns: minmax(220px, 1fr) repeat(3, minmax(140px, 180px)); gap: .75rem; margin-bottom: 1rem; }
+.table-tools input, .table-tools select { padding: .7rem .85rem; border: 1px solid #d5cfc4; border-radius: 8px; background: #fff; color: #3e3930; font-size: .86rem; }
+.table-tools input:focus, .table-tools select:focus { outline: none; border-color: #8B7355; box-shadow: 0 0 0 3px rgba(139,115,85,0.1); }
+.table-stats { color: #6b5f52; font-size: .85rem; margin-bottom: .75rem; }
 .msg { padding: 1rem 1.25rem; background: rgba(74,124,89,.1); border: 1px solid rgba(74,124,89,.3); border-radius: 8px; color: #4a7c59; margin-bottom: 1.5rem; font-weight: 600; }
 table { width: 100%; border-collapse: separate; border-spacing: 0; background: #fff; border-radius: 12px; overflow: hidden; border: 1px solid #e8e2d9; }
 th { background: #f5f2eb; padding: .875rem 1rem; text-align: left; font-size: .78rem; color: #6b5f52; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; border-bottom: 2px solid #d5cfc4; }
@@ -217,17 +219,39 @@ tr:hover td { background: #f0ece4; transition: background 0.15s ease; }
     <!-- Filters -->
     <div class="filter-tabs">
         <?php foreach (['pending','approved','denied','all'] as $s): ?>
-        <a href="?status=<?= $s ?>" class="tab <?= $filterStatus === $s ? 'active' : '' ?>">
+        <button type="button" class="tab <?= $filterStatus === $s ? 'active' : '' ?>" data-status="<?= $s ?>">
             <?= ucfirst($s) ?> <?= $s !== 'all' ? "({$counts[$s]})" : '' ?>
-        </a>
+        </button>
         <?php endforeach; ?>
     </div>
+
+    <div class="table-tools">
+        <input type="search" id="table-search" placeholder="Search ref, name, phone, district, channel...">
+        <select id="type-filter">
+            <option value="all">All types</option>
+            <option value="farmer">Farmer</option>
+            <option value="seller">Seller</option>
+            <option value="buyer">Buyer</option>
+        </select>
+        <select id="channel-filter">
+            <option value="all">All channels</option>
+            <option value="web">Web</option>
+            <option value="ussd">USSD</option>
+        </select>
+        <select id="district-filter">
+            <option value="all">All districts</option>
+            <?php foreach (array_unique(array_filter(array_column($apps, 'district_name'))) as $district): ?>
+            <option value="<?= htmlspecialchars(strtolower($district)) ?>"><?= htmlspecialchars($district) ?></option>
+            <?php endforeach; ?>
+        </select>
+    </div>
+    <div class="table-stats" id="table-stats">Showing <?= count($apps) ?> applications</div>
 
     <!-- Applications table -->
     <?php if (empty($apps)): ?>
     <div class="empty">No applications found.</div>
     <?php else: ?>
-    <table>
+    <table id="applications-table">
         <thead>
             <tr>
                 <th>Ref</th>
@@ -239,14 +263,12 @@ tr:hover td { background: #f0ece4; transition: background 0.15s ease; }
                 <th>Channel</th>
                 <th>Date</th>
                 <th>Status</th>
-                <?php if ($filterStatus === 'pending' || $filterStatus === 'all'): ?>
                 <th>Actions</th>
-                <?php endif; ?>
             </tr>
         </thead>
         <tbody>
         <?php foreach ($apps as $a): ?>
-        <tr>
+        <tr data-type="<?= htmlspecialchars(strtolower($a['user_type'])) ?>" data-channel="<?= htmlspecialchars(strtolower($a['channel'])) ?>" data-district="<?= htmlspecialchars(strtolower($a['district_name'] ?? '')) ?>" data-status="<?= htmlspecialchars($a['status']) ?>" data-search="<?= htmlspecialchars(strtolower(implode(' ', [$a['application_ref'], $a['user_type'], $a['full_name'], $a['email'], $a['phone_number'], $a['national_id'], $a['district_name'], $a['channel'], $a['status']]))) ?>">
             <td><span class="ref"><?= htmlspecialchars($a['application_ref']) ?></span></td>
             <td><?= htmlspecialchars(ucfirst($a['user_type'])) ?></td>
             <td><?= htmlspecialchars($a['full_name']) ?><br>
@@ -263,7 +285,6 @@ tr:hover td { background: #f0ece4; transition: background 0.15s ease; }
                 <br><small style="color:#6b6b6b;font-size:.72rem"><?= htmlspecialchars(mb_substr($a['denial_reason'], 0, 50)) ?></small>
                 <?php endif; ?>
             </td>
-            <?php if ($filterStatus === 'pending' || $filterStatus === 'all'): ?>
             <td class="actions">
                 <?php if ($a['status'] === 'pending'): ?>
                 <form method="post">
@@ -276,7 +297,6 @@ tr:hover td { background: #f0ece4; transition: background 0.15s ease; }
                 <span style="color:#6b6b6b;font-size:.8rem">Reviewed</span>
                 <?php endif; ?>
             </td>
-            <?php endif; ?>
         </tr>
         <?php endforeach; ?>
         </tbody>
@@ -284,6 +304,53 @@ tr:hover td { background: #f0ece4; transition: background 0.15s ease; }
     <?php endif; ?>
 
 </div>
+<script>
+const rows = Array.from(document.querySelectorAll('#applications-table tbody tr'));
+const search = document.getElementById('table-search');
+const typeFilter = document.getElementById('type-filter');
+const channelFilter = document.getElementById('channel-filter');
+const districtFilter = document.getElementById('district-filter');
+const tabs = document.querySelectorAll('.filter-tabs .tab');
+const stats = document.getElementById('table-stats');
+let activeStatus = '<?= $filterStatus ?>';
+
+function applyTableFilters() {
+    const term = search.value.trim().toLowerCase();
+    const type = typeFilter.value;
+    const channel = channelFilter.value;
+    const district = districtFilter.value;
+    let visible = 0;
+
+    rows.forEach(row => {
+        const show = (!term || row.dataset.search.includes(term))
+            && (type === 'all' || row.dataset.type === type)
+            && (channel === 'all' || row.dataset.channel === channel)
+            && (district === 'all' || row.dataset.district === district)
+            && (activeStatus === 'all' || row.dataset.status === activeStatus);
+        row.style.display = show ? '' : 'none';
+        if (show) visible++;
+    });
+
+    stats.textContent = `Showing ${visible} of ${rows.length} applications`;
+}
+
+tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+        tabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        activeStatus = tab.dataset.status;
+        applyTableFilters();
+    });
+});
+
+[search, typeFilter, channelFilter, districtFilter].forEach(control => {
+    if (!control) return;
+    control.addEventListener('input', applyTableFilters);
+    control.addEventListener('change', applyTableFilters);
+});
+
+applyTableFilters();
+</script>
 </body>
 </html>
 

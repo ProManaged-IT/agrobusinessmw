@@ -11,7 +11,7 @@ function get_fews_ussd_prices($mysqli, $language) {
         $cached = json_decode(file_get_contents($cacheFile), true);
     }
 
-    if (!$cached || !isset($cached['data']) || (time() - (int)($cached['fetched_at'] ?? 0)) >= $ttl) {
+    if (!$cached || !isset($cached['fews']) || (time() - (int)($cached['fetched_at'] ?? 0)) >= $ttl) {
         $host = $_SERVER['HTTP_HOST'] ?? '';
         $json = null;
         if ($host) {
@@ -21,14 +21,15 @@ function get_fews_ussd_prices($mysqli, $language) {
             $raw = @file_get_contents($url, false, $ctx);
             $json = $raw ? json_decode($raw, true) : null;
         }
-        if (is_array($json) && !empty($json['fews'])) {
-            $cached = ['data' => $json['fews'], 'fetched_at' => time()];
+        if (is_array($json) && (!empty($json['fews']) || !empty($json['community']))) {
+            $cached = ['fews' => $json['fews'] ?? [], 'community' => $json['community'] ?? [], 'fetched_at' => time()];
             @file_put_contents($cacheFile, json_encode($cached), LOCK_EX);
         }
     }
 
-    $rows = is_array($cached) ? ($cached['data'] ?? []) : [];
-    if (!$rows) return '';
+    $fewsRows = is_array($cached) ? ($cached['fews'] ?? $cached['data'] ?? []) : [];
+    $communityRows = is_array($cached) ? ($cached['community'] ?? []) : [];
+    if (!$fewsRows && !$communityRows) return '';
 
     $cropMap = [];
     $r = $mysqli->query("SELECT id, name FROM crops");
@@ -44,9 +45,9 @@ function get_fews_ussd_prices($mysqli, $language) {
         'soybeans' => ['soybean', 'soybeans', 'soya'],
     ];
 
-    $lines = [];
+    $fewsLines = [];
     $seen = [];
-    foreach ($rows as $row) {
+    foreach ($fewsRows as $row) {
         $product = strtolower($row['product'] ?? $row['crop_name'] ?? '');
         $matched = null;
         foreach ($cropMap as $crop) {
@@ -64,11 +65,27 @@ function get_fews_ussd_prices($mysqli, $language) {
         if ($price === null) continue;
         $market = $row['market'] ?? $row['market_name'] ?? '';
         $unit = $row['unit'] ?? 'kg';
-        $lines[] = $matched . ': MWK' . round((float)$price) . '/' . $unit . ($market ? ' - ' . $market : '');
-        if (count($lines) >= 8) break;
+        $fewsLines[] = $matched . ': MWK' . round((float)$price) . '/' . $unit . ($market ? ' - ' . $market : '');
+        if (count($fewsLines) >= 5) break;
     }
 
-    return $lines ? "FEWS NET prices:\n" . implode("\n", $lines) : '';
+    $communityLines = [];
+    foreach ($communityRows as $row) {
+        $crop = $row['crop_name'] ?? '';
+        $avg = $row['avg_price'] ?? null;
+        if (!$crop || $avg === null) continue;
+        $market = $row['market_name'] ?? $row['district_name'] ?? '';
+        $unit = $row['unit'] ?? 'kg';
+        $reports = (int)($row['report_count'] ?? 0);
+        $communityLines[] = $crop . ': Avg MWK' . round((float)$avg) . '/' . $unit . ($market ? ' - ' . $market : '') . ($reports ? ' (' . $reports . ' reports)' : '');
+        if (count($communityLines) >= 5) break;
+    }
+
+    $sections = [];
+    if ($fewsLines) $sections[] = "FEWS NET reference prices:\n" . implode("\n", $fewsLines);
+    if ($communityLines) $sections[] = "Community prices from farmers/traders:\n" . implode("\n", $communityLines);
+
+    return $sections ? implode("\n\n", $sections) : '';
 }
 
 function execute_query($mysqli, $query, $params = [], $types = '', $format_callback) {
