@@ -1,46 +1,46 @@
 {
   "name": "AgroBusiness Malawi - Smart Agricultural Platform",
   "short_name": "AgroBusiness",
-  "description": "Complete agricultural platform for Malawi farmers with weather forecasts, crop prices, and market insights",
-  "start_url": "/",
+  "description": "Agricultural platform for Malawi farmers — live crop prices, weather, market insights, pest control, and more.",
+  "start_url": "./",
+  "scope": "./",
   "display": "standalone",
   "background_color": "#16a34a",
   "theme_color": "#16a34a",
   "orientation": "portrait-primary",
-  "categories": ["agriculture", "business", "productivity", "education"],
+  "categories": ["agriculture", "business", "productivity"],
   "lang": "en",
   "dir": "ltr",
-  "scope": "/",
   "icons": [
     {
       "src": "assets/icons/icon-72x72.png",
       "sizes": "72x72",
       "type": "image/png",
-      "purpose": "maskable any"
+      "purpose": "any"
     },
     {
       "src": "assets/icons/icon-96x96.png",
       "sizes": "96x96",
       "type": "image/png",
-      "purpose": "maskable any"
+      "purpose": "any"
     },
     {
       "src": "assets/icons/icon-128x128.png",
       "sizes": "128x128",
       "type": "image/png",
-      "purpose": "maskable any"
+      "purpose": "any"
     },
     {
       "src": "assets/icons/icon-144x144.png",
       "sizes": "144x144",
       "type": "image/png",
-      "purpose": "maskable any"
+      "purpose": "any"
     },
     {
       "src": "assets/icons/icon-152x152.png",
       "sizes": "152x152",
       "type": "image/png",
-      "purpose": "maskable any"
+      "purpose": "any"
     },
     {
       "src": "assets/icons/icon-192x192.png",
@@ -52,84 +52,46 @@
       "src": "assets/icons/icon-384x384.png",
       "sizes": "384x384",
       "type": "image/png",
-      "purpose": "maskable any"
+      "purpose": "any"
     },
     {
       "src": "assets/icons/icon-512x512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable any"
+    },
+    {
+      "src": "assets/icons/agro-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
     }
   ],
   "shortcuts": [
     {
-      "name": "Weather Forecast",
-      "short_name": "Weather",
-      "description": "Check weather forecasts for farming",
-      "url": "/?service=weather",
-      "icons": [
-        {
-          "src": "assets/icons/weather-96x96.png",
-          "sizes": "96x96"
-        }
-      ]
-    },
-    {
       "name": "Crop Prices",
       "short_name": "Prices",
-      "description": "View current crop market prices",
-      "url": "/?service=crop-prices",
-      "icons": [
-        {
-          "src": "assets/icons/prices-96x96.png",
-          "sizes": "96x96"
-        }
-      ]
+      "url": "./?service=crop-prices",
+      "icons": [{ "src": "assets/icons/icon-96x96.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Weather Forecast",
+      "short_name": "Weather",
+      "url": "./?service=weather",
+      "icons": [{ "src": "assets/icons/icon-96x96.png", "sizes": "96x96" }]
     },
     {
       "name": "Find Sellers",
       "short_name": "Sellers",
-      "description": "Connect with crop suppliers",
-      "url": "/?service=sellers",
-      "icons": [
-        {
-          "src": "assets/icons/sellers-96x96.png",
-          "sizes": "96x96"
-        }
-      ]
+      "url": "./?service=sellers",
+      "icons": [{ "src": "assets/icons/icon-96x96.png", "sizes": "96x96" }]
     },
     {
       "name": "Find Buyers",
       "short_name": "Buyers",
-      "description": "Find markets for your produce",
-      "url": "/?service=buyers",
-      "icons": [
-        {
-          "src": "assets/icons/buyers-96x96.png",
-          "sizes": "96x96"
-        }
-      ]
+      "url": "./?service=buyers",
+      "icons": [{ "src": "assets/icons/icon-96x96.png", "sizes": "96x96" }]
     }
   ],
-  "screenshots": [
-    {
-      "src": "assets/screenshots/desktop-1.png",
-      "sizes": "1280x720",
-      "type": "image/png",
-      "form_factor": "wide",
-      "label": "AgroBusiness Dashboard on Desktop"
-    },
-    {
-      "src": "assets/screenshots/mobile-1.png",
-      "sizes": "375x812",
-      "type": "image/png",
-      "form_factor": "narrow",
-      "label": "AgroBusiness on Mobile"
-    }
-  ],
-  "prefer_related_applications": false,
-  "related_applications": [],
-  "edge_side_panel": {
-    "preferred_width": 400
-  }
+  "prefer_related_applications": false
 }

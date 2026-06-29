@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Green rounded-square background -->
+  <rect width="512" height="512" rx="96" fill="#16a34a"/>
+  <!-- Stem -->
+  <rect x="240" y="170" width="32" height="230" rx="16" fill="#ffffff"/>
+  <!-- Wheat ear – stacked grains -->
+  <ellipse cx="256" cy="148" rx="26" ry="40" fill="#ffffff"/>
+  <ellipse cx="220" cy="168" rx="20" ry="30" fill="#ffffff" transform="rotate(-20 220 168)"/>
+  <ellipse cx="292" cy="168" rx="20" ry="30" fill="#ffffff" transform="rotate(20 292 168)"/>
+  <ellipse cx="208" cy="198" rx="18" ry="26" fill="#ffffff" transform="rotate(-30 208 198)"/>
+  <ellipse cx="304" cy="198" rx="18" ry="26" fill="#ffffff" transform="rotate(30 304 198)"/>
+  <!-- Left leaf -->
+  <path d="M248 295 Q190 255 165 280 Q175 320 248 320 Z" fill="#ffffff"/>
+  <!-- Right leaf -->
+  <path d="M264 250 Q320 210 345 235 Q335 275 264 272 Z" fill="#ffffff"/>
+  <!-- Roots -->
+  <line x1="248" y1="396" x2="210" y2="440" stroke="#ffffff" stroke-width="22" stroke-linecap="round"/>
+  <line x1="264" y1="396" x2="302" y2="440" stroke="#ffffff" stroke-width="22" stroke-linecap="round"/>
+</svg>

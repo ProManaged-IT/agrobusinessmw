@@ -435,6 +435,17 @@ body {
 .service-icon {
     font-size: 2rem;
     line-height: 1;
+    color: var(--primary, #16a34a);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.service-icon svg {
+    width: 2.4rem;
+    height: 2.4rem;
+    display: block;
+    flex-shrink: 0;
 }
 
 .service-card h3 {
@@ -1024,6 +1035,11 @@ body {
 
     .service-icon {
         font-size: 1.75rem;
+    }
+
+    .service-icon svg {
+        width: 2rem;
+        height: 2rem;
     }
 
     .reg-nav {

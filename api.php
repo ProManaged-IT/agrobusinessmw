@@ -630,59 +630,67 @@ try {
             }
 
             // Community prices — aggregated per crop + district
+            // Guard: crowdsourced_prices table may not exist on all deployments
             $community = [];
-            if ($crop_id) {
-                $stmt2 = $mysqli->prepare(
-                    "SELECT cp.crop_id, c.name as crop_name,
-                            d.name as district_name, cp.district_id,
-                            cp.market_name,
-                            ROUND(AVG(cp.price_per_kg),0) as avg_price,
-                            MIN(cp.price_per_kg) as min_price,
-                            MAX(cp.price_per_kg) as max_price,
-                            COUNT(*) as report_count,
-                            MAX(cp.created_at) as last_reported,
-                            cp.unit
-                     FROM crowdsourced_prices cp
-                     JOIN crops c ON cp.crop_id = c.id
-                     LEFT JOIN districts d ON cp.district_id = d.id
-                     WHERE cp.crop_id = ?
-                     GROUP BY cp.crop_id, cp.district_id, cp.market_name
-                     ORDER BY report_count DESC, last_reported DESC"
-                );
-                if (!$stmt2) throw new Exception('Community prices query failed: ' . $mysqli->error);
-                $stmt2->bind_param('i', $crop_id);
-            } else {
-                $stmt2 = $mysqli->prepare(
-                    "SELECT cp.crop_id, c.name as crop_name,
-                            d.name as district_name, cp.district_id,
-                            cp.market_name,
-                            ROUND(AVG(cp.price_per_kg),0) as avg_price,
-                            MIN(cp.price_per_kg) as min_price,
-                            MAX(cp.price_per_kg) as max_price,
-                            COUNT(*) as report_count,
-                            MAX(cp.created_at) as last_reported,
-                            cp.unit
-                     FROM crowdsourced_prices cp
-                     JOIN crops c ON cp.crop_id = c.id
-                     LEFT JOIN districts d ON cp.district_id = d.id
-                     GROUP BY cp.crop_id, cp.district_id, cp.market_name
-                     ORDER BY c.name, report_count DESC"
-                );
-                if (!$stmt2) throw new Exception('Community prices query failed: ' . $mysqli->error);
+            $community_error = null;
+            try {
+                if ($crop_id) {
+                    $stmt2 = $mysqli->prepare(
+                        "SELECT cp.crop_id, c.name as crop_name,
+                                d.name as district_name, cp.district_id,
+                                cp.market_name,
+                                ROUND(AVG(cp.price_per_kg),0) as avg_price,
+                                MIN(cp.price_per_kg) as min_price,
+                                MAX(cp.price_per_kg) as max_price,
+                                COUNT(*) as report_count,
+                                MAX(cp.created_at) as last_reported,
+                                cp.unit
+                         FROM crowdsourced_prices cp
+                         JOIN crops c ON cp.crop_id = c.id
+                         LEFT JOIN districts d ON cp.district_id = d.id
+                         WHERE cp.crop_id = ?
+                         GROUP BY cp.crop_id, cp.district_id, cp.market_name
+                         ORDER BY report_count DESC, last_reported DESC"
+                    );
+                    if (!$stmt2) throw new Exception($mysqli->error);
+                    $stmt2->bind_param('i', $crop_id);
+                } else {
+                    $stmt2 = $mysqli->prepare(
+                        "SELECT cp.crop_id, c.name as crop_name,
+                                d.name as district_name, cp.district_id,
+                                cp.market_name,
+                                ROUND(AVG(cp.price_per_kg),0) as avg_price,
+                                MIN(cp.price_per_kg) as min_price,
+                                MAX(cp.price_per_kg) as max_price,
+                                COUNT(*) as report_count,
+                                MAX(cp.created_at) as last_reported,
+                                cp.unit
+                         FROM crowdsourced_prices cp
+                         JOIN crops c ON cp.crop_id = c.id
+                         LEFT JOIN districts d ON cp.district_id = d.id
+                         GROUP BY cp.crop_id, cp.district_id, cp.market_name
+                         ORDER BY c.name, report_count DESC"
+                    );
+                    if (!$stmt2) throw new Exception($mysqli->error);
+                }
+                $stmt2->execute();
+                $r2 = $stmt2->get_result();
+                $community = $r2 ? $r2->fetch_all(MYSQLI_ASSOC) : [];
+            } catch (Exception $ce) {
+                // Table missing or query error — return empty community, still show ADMARC prices
+                $community_error = $ce->getMessage();
             }
-            $stmt2->execute();
-            $r2 = $stmt2->get_result();
-            $community = $r2 ? $r2->fetch_all(MYSQLI_ASSOC) : [];
 
             echo json_encode([
-                'success'         => true,
-                'admarc'          => $admarc,
-                'community'       => $community,
-                'admarc_count'    => count($admarc),
-                'community_count' => count($community),
-                'admarc_source'   => $admarc_cache['source_url'] ?? null,
-                'admarc_cached_at'=> $admarc_cache['fetched_at'] ?? null,
-                'admarc_error'    => $admarc_cache['error'] ?? null,
+                'success'          => true,
+                'admarc'           => $admarc,
+                'community'        => $community,
+                'admarc_count'     => count($admarc),
+                'community_count'  => count($community),
+                'admarc_source'    => $admarc_cache['source_url'] ?? null,
+                'admarc_cached_at' => $admarc_cache['fetched_at'] ?? null,
+                'admarc_error'     => $admarc_cache['error'] ?? null,
+                'community_error'  => $community_error,
             ]);
             break;
 
