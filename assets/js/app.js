@@ -23,6 +23,8 @@ class AgroBusinessRevolution {
                 pest_control_desc: 'Combat pests effectively',
                 farming_tips: 'Farming Tips',
                 farming_tips_desc: 'Expert farming practices',
+                farming_guide: 'Farming Guide',
+                farming_guide_desc: 'Step-by-step planting and care',
                 basic_info: 'Basic Information',
                 basic_info_desc: 'Essential farming knowledge',
                 select_district: 'Select Your District',
@@ -50,6 +52,8 @@ class AgroBusinessRevolution {
                 pest_control_desc: 'Menyana ndi tizirombo bwino',
                 farming_tips: 'Malangizo Alimi',
                 farming_tips_desc: 'Njira zabwino za ulimi',
+                farming_guide: 'Malangizo Ulimi',
+                farming_guide_desc: 'Zosintha sitepe ndi sitepe za kulima',
                 basic_info: 'Zidziwitso Zoyambira',
                 basic_info_desc: 'Zidziwitso zofunikira za ulimi',
                 select_district: 'Sankhani Chigawo Chanu',
@@ -374,7 +378,7 @@ class AgroBusinessRevolution {
         await this.updateDashboardStats();
 
         // Show language switcher in header now that language is selected
-        const langSwitcher = document.getElementById('lang-switcher');
+        const langSwitcher = document.querySelector('.lang-switcher-smart');
         if (langSwitcher) {
             langSwitcher.style.opacity = '1';
             langSwitcher.style.transform = 'translateY(0)';
@@ -491,7 +495,6 @@ class AgroBusinessRevolution {
     bindLanguageSwitching() {
         const langCurrent = document.getElementById('current-lang-btn');
         const langDropdown = document.getElementById('lang-dropdown');
-        const langSwitcher = document.getElementById('lang-switcher');
 
         if (langCurrent) {
             // Click event
@@ -551,17 +554,16 @@ class AgroBusinessRevolution {
 
     // Update toggleLanguageDropdown method
     toggleLanguageDropdown() {
-        const langSwitcher = document.getElementById('lang-switcher');
-        const langDropdown = document.getElementById('lang-dropdown');
         const langCurrent = document.getElementById('current-lang-btn');
+        const langDropdown = document.getElementById('lang-dropdown');
 
-        if (langSwitcher && langDropdown && langCurrent) {
-            const isActive = langSwitcher.classList.contains('active');
+        if (langCurrent && langDropdown) {
+            const isActive = langCurrent.classList.contains('active');
 
             if (isActive) {
                 this.closeLanguageDropdown();
             } else {
-                langSwitcher.classList.add('active');
+                langCurrent.classList.add('active');
                 langDropdown.classList.add('active');
                 langCurrent.setAttribute('aria-expanded', 'true');
 
@@ -572,12 +574,13 @@ class AgroBusinessRevolution {
     }
 
     closeLanguageDropdown() {
-        const langSwitcher = document.getElementById('lang-switcher');
+        const langCurrent = document.getElementById('current-lang-btn');
         const langDropdown = document.getElementById('lang-dropdown');
 
-        if (langSwitcher && langDropdown) {
-            langSwitcher.classList.remove('active');
+        if (langCurrent && langDropdown) {
+            langCurrent.classList.remove('active');
             langDropdown.classList.remove('active');
+            langCurrent.setAttribute('aria-expanded', 'false');
         }
     }
 
@@ -1004,6 +1007,9 @@ class AgroBusinessRevolution {
             case 'farming-tips':
                 this.showCropSelection(() => this.loadFarmingTips(this.selectedCrop));
                 break;
+            case 'farming-guide':
+                this.loadFarmingGuide();
+                break;
             case 'basic-info':
                 this.loadBasicInfo();
                 break;
@@ -1041,6 +1047,107 @@ class AgroBusinessRevolution {
                 </div>
             `;
         }
+    }
+
+    loadFarmingGuide() {
+        const area = document.getElementById('content-area');
+        if (!area) return;
+
+        const isCi = this.currentLang === 'ci';
+        const guide = isCi ? {
+            label: 'Malangizo Ulimi',
+            intro: 'Njira yosavuta ya ulimi yotsogoleredwa sitepe ndi sitepe, yopangidwa kuti alimi oyamba azitha kuchita bwino.',
+            story: 'Kuyambira kusankha mbeu mpaka kukonza malo, kuteteza tizirombo, ndi kugulitsa bwino.',
+            steps: [
+                {
+                    title: 'Sankhani Mbeu Yoyenera',
+                    text: "Onetsetsani kuti mbeu yanu ili yoyenera kwambiri pa nthaka yanu komanso nyengo ya m'dera lanu.",
+                    icon: '<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="24" cy="24" r="10" fill="currentColor" opacity=".15"/><path d="M24 14v20M14 24h20" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>'
+                },
+                {
+                    title: 'Konzani Nthaka',
+                    text: 'Chotsa udzu wa weed ndi miyala, onjezerani udzu wabwino, ndi kuyang anzira zoyenera kuti madzi azigwira bwino.',
+                    icon: '<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="10" y="18" width="28" height="16" rx="2" fill="currentColor" opacity=".15"/><path d="M14 22h20M14 26h20M14 30h20" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>'
+                },
+                {
+                    title: 'Dzipondere Mbeu',
+                    text: 'Dzipondani mbeu mu mizere yofanana pa mtunda wabwino, ndi kuzilima mosamala kuti zizikulirapo bwino.',
+                    icon: '<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M16 34h16" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><path d="M20 34v-8c0-2 1.5-4 4-4s4 2 4 4v8" stroke="currentColor" stroke-width="3" stroke-linecap="round" fill="none"/><circle cx="24" cy="18" r="3" fill="currentColor"/></svg>'
+                },
+                {
+                    title: 'Tetezani ndi Madzi',
+                    text: 'Madzifupi akhale pafupi ndi mbeu ndi ndondomeko yokhazikika yokonza madzi, musakhale ndi madzi ambiri.',
+                    icon: '<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M24 14c-4 4-6 6-6 9a6 6 0 0 0 12 0c0-3-2-5-6-9Z" fill="currentColor" opacity=".2"/><path d="M24 14c-4 4-6 6-6 9a6 6 0 0 0 12 0c0-3-2-5-6-9Z" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M24 28v6" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>'
+                },
+                {
+                    title: 'Gulitsani Mzitini',
+                    text: 'Mukamaloledwa zidzakulire, gwirani mzitini pogwiritsa ntchito ndalama zochepa komanso mugulitse malo oyenera.',
+                    icon: '<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="12" y="18" width="24" height="16" rx="3" fill="currentColor" opacity=".15"/><path d="M18 24h12M18 30h12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><path d="M24 18v-4" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>'
+                }
+            ]
+        } : {
+            label: 'Farming Guide',
+            intro: 'A simple step-by-step farming story built for every beginner. Follow the field journey from seed to market with clear actions and friendly visuals.',
+            story: 'Start with crop choice, move into soil preparation, plant carefully, protect your field, and harvest with confidence.',
+            steps: [
+                {
+                    title: 'Choose the Right Crop',
+                    text: 'Pick a crop that matches your soil, weather, and available tools. Start with what grows well in your area.',
+                    icon: '<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="24" cy="24" r="10" fill="currentColor" opacity=".15"/><path d="M24 14v20M14 24h20" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>'
+                },
+                {
+                    title: 'Prepare the Soil',
+                    text: 'Clear weeds and stones, then add organic matter so water drains well and roots have room to grow.',
+                    icon: '<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="10" y="18" width="28" height="16" rx="2" fill="currentColor" opacity=".15"/><path d="M14 22h20M14 26h20M14 30h20" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>'
+                },
+                {
+                    title: 'Plant with Care',
+                    text: 'Plant seeds at the right depth and spacing. Use straight rows so you can water, weed, and harvest easily.',
+                    icon: '<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M16 34h16" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><path d="M20 34v-8c0-2 1.5-4 4-4s4 2 4 4v8" stroke="currentColor" stroke-width="3" stroke-linecap="round" fill="none"/><circle cx="24" cy="18" r="3" fill="currentColor"/></svg>'
+                },
+                {
+                    title: 'Protect and Water',
+                    text: 'Keep pests away, water on schedule, and check your plants often. Healthy crops need both care and balance.',
+                    icon: '<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M24 14c-4 4-6 6-6 9a6 6 0 0 0 12 0c0-3-2-5-6-9Z" fill="currentColor" opacity=".2"/><path d="M24 14c-4 4-6 6-6 9a6 6 0 0 0 12 0c0-3-2-5-6-9Z" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M24 28v6" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>'
+                },
+                {
+                    title: 'Harvest and Sell',
+                    text: 'Pick crops when they are ready, keep them clean, and choose buyers who pay fairly for quality produce.',
+                    icon: '<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="12" y="18" width="24" height="16" rx="3" fill="currentColor" opacity=".15"/><path d="M18 24h12M18 30h12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><path d="M24 18v-4" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>'
+                }
+            ]
+        };
+
+        area.innerHTML = `
+            <section class="guide-hero">
+                <div>
+                    <p class="eyebrow">${guide.label}</p>
+                    <h2>${guide.intro}</h2>
+                    <p class="guide-subtitle">${guide.story}</p>
+                </div>
+                <div class="guide-hero-illustration" aria-hidden="true">
+                    <svg viewBox="0 0 360 220" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="0" y="84" width="360" height="136" fill="#f5f2eb"/>
+                        <path d="M0 140h360" stroke="#8B7355" stroke-width="4"/>
+                        <path d="M48 140c16-22 42-26 72-24 28 2 46 14 68 24 18 8 40 10 58 2 14-6 28-18 42-20 16-2 34 6 50 16" stroke="#C8A45A" stroke-width="5" fill="none"/>
+                        <path d="M180 64c-14 0-26 8-32 18-4 8-4 18 2 24 6 8 18 10 30 8 10-2 18-8 22-16 4-8 4-18-2-24-6-8-16-10-20-10Z" fill="#3e3930" opacity=".15"/>
+                        <circle cx="40" cy="40" r="20" fill="#C8A45A" opacity=".35"/>
+                        <circle cx="320" cy="30" r="16" fill="#8B7355" opacity=".4"/>
+                    </svg>
+                </div>
+            </section>
+            <section class="guide-steps">
+                ${guide.steps.map((step, index) => `
+                    <article class="guide-step-card">
+                        <div class="guide-step-icon" aria-hidden="true">${step.icon}</div>
+                        <div>
+                            <h3>${index + 1}. ${step.title}</h3>
+                            <p>${step.text}</p>
+                        </div>
+                    </article>
+                `).join('')}
+            </section>
+        `;
     }
 
     showNoData() {
@@ -1807,6 +1914,7 @@ class AgroBusinessRevolution {
                     district: r.district_name || r.region || '—',
                     market: r.market_name || r.market || '—',
                     fewsPrice: fmt(r.price ?? r.value),
+                    fews_price_num: Number(r.price ?? r.value) || null,
                     communityPrice: '—',
                     reports: r.price_date ? new Date(r.price_date).toLocaleDateString() : '—',
                     unit: r.unit || 'kg',
@@ -1827,6 +1935,12 @@ class AgroBusinessRevolution {
                     market: r.market_name || '—',
                     fewsPrice: '—',
                     communityPrice: `${fmt(r.min_price)} / ${fmt(r.avg_price)} / ${fmt(r.max_price)}`,
+                    community_min_num: Number(r.min_price) || null,
+                    community_avg_num: Number(r.avg_price) || null,
+                    community_max_num: Number(r.max_price) || null,
+                    community_min_bag: Number(r.min_price_bag) || null,
+                    community_avg_bag: Number(r.avg_price_bag) || null,
+                    community_max_bag: Number(r.max_price_bag) || null,
                     reports: `${r.report_count} report${Number(r.report_count) === 1 ? '' : 's'} · ${ago(r.last_reported)}`,
                     unit: r.unit || 'kg',
                     type: 'Farmer/trader report'
@@ -1846,34 +1960,28 @@ class AgroBusinessRevolution {
             const priceRows = rows.map((r, i) => {
                 const searchText = [r.sourceLabel, r.crop_name, r.district, r.market, r.type, r.fewsPrice || '', r.communityPrice || '', r.reports, r.unit].join(' ').toLowerCase();
 
-                // Helpers to compute per-50g price when numeric values are available
-                const per50From = (val) => {
-                    const n = Number(val);
-                    if (!n || isNaN(n)) return null;
-                    return Math.round(n * 0.05);
-                };
+                const fewsNum = r.fews_price_num ?? null;
+                const fewsPer50Display = fewsNum ? `Bag: MK ${Math.round(fewsNum * 50).toLocaleString()}` : '';
+                const fewsDisplay = fewsNum ? fmt(fewsNum) : (r.fewsPrice || '—');
 
-                const fewsVal = r.fews_value ?? null;
-                const fewsPer50 = per50From(fewsVal);
-                const communityMin = r.community_min_val ?? null;
-                const communityAvg = r.community_avg_val ?? null;
-                const communityMax = r.community_max_val ?? null;
-
-                const fewsDisplay = fewsVal ? fmt(fewsVal) : (r.fewsPrice || '—');
-                const fewsPer50Display = fewsPer50 ? ` (${'MK ' + fewsPer50.toLocaleString()} /50g)` : '';
+                const communityMin = r.community_min_num ?? null;
+                const communityAvg = r.community_avg_num ?? null;
+                const communityMax = r.community_max_num ?? null;
+                const communityMinBag = r.community_min_bag ?? (communityMin ? Math.round(communityMin * 50) : null);
+                const communityAvgBag = r.community_avg_bag ?? (communityAvg ? Math.round(communityAvg * 50) : null);
+                const communityMaxBag = r.community_max_bag ?? (communityMax ? Math.round(communityMax * 50) : null);
 
                 const communityDisplay = (communityMin || communityAvg || communityMax) ?
                     `${communityMin ? fmt(communityMin) : '—'} / ${communityAvg ? fmt(communityAvg) : '—'} / ${communityMax ? fmt(communityMax) : '—'}` : (r.communityPrice || '—');
-
-                const communityPer50Display = (communityMin || communityAvg || communityMax) ?
-                    ` (${communityMin ? 'MK ' + per50From(communityMin)?.toLocaleString() : '—'} / ${communityAvg ? 'MK ' + per50From(communityAvg)?.toLocaleString() : '—'} / ${communityMax ? 'MK ' + per50From(communityMax)?.toLocaleString() : '—'} /50g)` : '';
+                const communityBagDisplay = (communityMinBag || communityAvgBag || communityMaxBag) ?
+                    `Bag: ${communityMinBag ? 'MK ' + communityMinBag.toLocaleString() : '—'} / ${communityAvgBag ? 'MK ' + communityAvgBag.toLocaleString() : '—'} / ${communityMaxBag ? 'MK ' + communityMaxBag.toLocaleString() : '—'}` : '';
 
                 return `
                 <tr class="price-data-row" data-source="${esc(r.source)}" data-crop="${esc((r.crop_name || '').toLowerCase())}" data-district="${esc((r.district || '').toLowerCase())}" data-search="${esc(searchText)}" style="animation:serviceReveal .3s ease ${i * .03}s both">
                     <td><span style="font-size:1.3rem">${this.getCropIcon(r.crop_name)}</span> <strong>${esc(r.crop_name || 'Unknown crop')}</strong><br><small style="color:var(--text-muted)">${esc(r.type)}</small></td>
                     <td>${esc(r.district)}<br><small style="color:var(--text-muted)">${esc(r.market)}</small></td>
                     <td><span class="price-badge ${r.source === 'fews' ? 'price-high' : ''}">${esc(fewsDisplay)}</span><div style="font-size:.78rem;color:var(--text-muted);margin-top:.25rem">${esc(fewsPer50Display)}</div></td>
-                    <td><span class="price-badge ${r.source === 'community' ? 'price-high' : ''}">${esc(communityDisplay)}</span><div style="font-size:.78rem;color:var(--text-muted);margin-top:.25rem">${esc(communityPer50Display)}</div></td>
+                    <td><span class="price-badge ${r.source === 'community' ? 'price-high' : ''}">${esc(communityDisplay)}</span><div style="font-size:.78rem;color:var(--text-muted);margin-top:.25rem">${esc(communityBagDisplay)}</div></td>
                     <td>${esc(r.unit)}</td>
                     <td style="color:var(--text-muted);font-size:.8rem">${esc(r.reports)}</td>
                     <td><span class="price-badge" style="background:${r.source === 'fews' ? 'rgba(22,163,74,.12)' : 'rgba(200,164,90,.12)'};color:${r.source === 'fews' ? 'var(--primary)' : 'var(--accent)'}">${esc(r.sourceLabel)}</span></td>
@@ -2701,6 +2809,25 @@ AgroBusinessRevolution.prototype.openRegistrationModal = function () {
     const modal = document.getElementById('register-modal');
     if (!modal) return;
     this._regState = { step: 1, userType: null, selectedCrops: [] };
+    document.querySelectorAll('.reg-option').forEach(b => b.classList.remove('selected'));
+    const bizField = document.getElementById('reg-business-field');
+    if (bizField) bizField.style.display = 'none';
+
+    ['reg-full-name', 'reg-phone', 'reg-email', 'reg-national-id', 'reg-village', 'reg-business-name'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+    });
+
+    const district = document.getElementById('reg-district');
+    if (district) district.value = '';
+    document.querySelectorAll('#reg-crops-grid input[type="checkbox"]').forEach(cb => cb.checked = false);
+
+    const successEl = document.getElementById('reg-step-success');
+    if (successEl) successEl.style.display = 'none';
+    document.querySelectorAll('.reg-step-content').forEach(el => el.style.display = 'none');
+    const step1 = document.getElementById('reg-step-1');
+    if (step1) step1.style.display = '';
+
     this._regGotoStep(1);
     this._regLoadDistricts();
     this._regLoadCrops();
@@ -2773,7 +2900,7 @@ AgroBusinessRevolution.prototype._regBuildReview = function () {
         <strong>Email:</strong> ${document.getElementById('reg-email').value || 'Not provided'}<br>
         <strong>National ID:</strong> ${document.getElementById('reg-national-id').value || 'Not provided'}<br>
         <strong>District:</strong> ${districtName}<br>
-        <strong>Village:</strong> ${document.getElementById('reg-village').value || '—'}<br>
+        <strong>Village / Town:</strong> ${document.getElementById('reg-village').value || '—'}<br>
         <strong>Crops:</strong> ${selectedCrops}<br>
         ${s.userType !== 'farmer' ? `<strong>Business:</strong> ${document.getElementById('reg-business-name').value || '—'}<br>` : ''}
     `;
@@ -2791,9 +2918,9 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // User type selection (step 1)
-    document.querySelectorAll('.reg-type-btn').forEach(btn => {
+    document.querySelectorAll('.reg-option').forEach(btn => {
         btn.addEventListener('click', () => {
-            document.querySelectorAll('.reg-type-btn').forEach(b => b.classList.remove('selected'));
+            document.querySelectorAll('.reg-option').forEach(b => b.classList.remove('selected'));
             btn.classList.add('selected');
             if (window.app) {
                 window.app._regState.userType = btn.dataset.type;
@@ -2818,8 +2945,13 @@ document.addEventListener('DOMContentLoaded', function () {
         step2Next.addEventListener('click', () => {
             const name = document.getElementById('reg-full-name').value.trim();
             const phone = document.getElementById('reg-phone').value.trim();
+            const district = document.getElementById('reg-district').value;
+            const village = document.getElementById('reg-village').value.trim();
+
             if (!name || name.length < 2) { alert('Please enter your full name.'); return; }
             if (!phone || !/\+?[\d\s\-]{8,20}/.test(phone)) { alert('Please enter a valid phone number.'); return; }
+            if (!village || village.length < 2) { alert('Please enter your village or town.'); return; }
+            if (!district) { alert('Please select your district.'); return; }
             if (window.app) window.app._regGotoStep(3);
         });
     }
@@ -2828,6 +2960,12 @@ document.addEventListener('DOMContentLoaded', function () {
     const step3Next = document.getElementById('reg-step3-next');
     if (step3Next) {
         step3Next.addEventListener('click', () => {
+            const selectedCrops = [...document.querySelectorAll('#reg-crops-grid input:checked')].map(el => el.dataset.name);
+            const business = document.getElementById('reg-business-name').value.trim();
+            const userType = window.app?._regState?.userType;
+
+            if (!selectedCrops.length) { alert('Please select at least one crop.'); return; }
+            if (userType && userType !== 'farmer' && !business) { alert('Please enter your business or organisation name.'); return; }
             if (window.app) window.app._regGotoStep(4);
         });
     }

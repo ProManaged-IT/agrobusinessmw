@@ -222,9 +222,25 @@
                         <span class="brand-location">Malawi</span>
                     </div>
                 </div>
-                <button class="lang-toggle" id="lang-switcher" aria-label="Change language">
-                    <span id="current-lang">EN</span>
-                </button>
+                <div class="lang-switcher-smart">
+                    <button class="lang-toggle" id="current-lang-btn" aria-label="Change language" aria-expanded="false">
+                        <span id="current-flag">🇬🇧</span>
+                        <span id="current-lang" class="lang-code">EN</span>
+                        <span class="lang-dropdown-arrow">▼</span>
+                    </button>
+                    <div class="lang-dropdown" id="lang-dropdown" role="menu">
+                        <button class="lang-option-smart" data-lang="en" role="menuitem" aria-label="Switch to English">
+                            <span class="option-flag">🇬🇧</span>
+                            <span class="option-name">English</span>
+                            <span class="option-code">EN</span>
+                        </button>
+                        <button class="lang-option-smart" data-lang="ci" role="menuitem" aria-label="Switch to Chichewa">
+                            <span class="option-flag">🇲🇼</span>
+                            <span class="option-name">Chichewa</span>
+                            <span class="option-code">CI</span>
+                        </button>
+                    </div>
+                </div>
             </div>
         </header>
 
@@ -406,6 +422,27 @@
                             </div>
                             <h3 data-text="farming_tips">Farming Tips</h3>
                             <p data-text="farming_tips_desc">Expert practices</p>
+                        </div>
+
+                        <div class="service-card" data-service="farming-guide" role="button" tabindex="0"
+                            aria-label="Farming guide">
+                            <div class="service-icon">
+                                <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"
+                                    aria-hidden="true">
+                                    <circle cx="24" cy="24" r="22" fill="currentColor" opacity=".08" />
+                                    <path d="M14 34h20" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" />
+                                    <path d="M24 34v-12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" />
+                                    <path d="M18 28c0-2 2-4 6-6 4 2 6 4 6 6" stroke="currentColor" stroke-width="2.5"
+                                        stroke-linecap="round" fill="none" />
+                                    <path d="M10 18h28" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" />
+                                    <path d="M14 14v-4h20v4" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" />
+                                    <circle cx="14" cy="26" r="1.5" fill="currentColor" />
+                                    <circle cx="22" cy="20" r="1.5" fill="currentColor" />
+                                    <circle cx="34" cy="22" r="1.5" fill="currentColor" />
+                                </svg>
+                            </div>
+                            <h3 data-text="farming_guide">Farming Guide</h3>
+                            <p data-text="farming_guide_desc">Step-by-step planting and care</p>
                         </div>
 
                         <div class="service-card" data-service="basic-info" role="button" tabindex="0"
@@ -620,13 +657,21 @@
                         <input type="email" id="reg-email" placeholder="john@example.com" autocomplete="email">
                     </div>
                     <div class="form-group">
-                        <label>District</label>
+                        <label>National ID</label>
+                        <input type="text" id="reg-national-id" placeholder="12345678" autocomplete="off">
+                    </div>
+                    <div class="form-group">
+                        <label>Village / Town *</label>
+                        <input type="text" id="reg-village" placeholder="Lilongwe" autocomplete="address-level2">
+                    </div>
+                    <div class="form-group">
+                        <label>District *</label>
                         <select id="reg-district">
                             <option value="">— Select District —</option>
                         </select>
                     </div>
                     <div class="reg-nav">
-                        <button class="btn-secondary" data-goto="1">← Back</button>
+                        <button class="btn-secondary reg-back-btn" data-goto="1">← Back</button>
                         <button class="btn-primary" id="reg-step2-next">Next →</button>
                     </div>
                 </div>
@@ -642,7 +687,7 @@
                         <input type="text" id="reg-business-name" placeholder="Your business">
                     </div>
                     <div class="reg-nav">
-                        <button class="btn-secondary" data-goto="2">← Back</button>
+                        <button class="btn-secondary reg-back-btn" data-goto="2">← Back</button>
                         <button class="btn-primary" id="reg-step3-next">Review →</button>
                     </div>
                 </div>

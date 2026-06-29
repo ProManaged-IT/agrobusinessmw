@@ -41,6 +41,7 @@ CREATE TABLE IF NOT EXISTS `crowdsourced_prices` (
   `crop_id`      int          NOT NULL,
   `district_id`  int          DEFAULT NULL,
   `price_per_kg` decimal(10,2) NOT NULL,
+  `price_per_bag` decimal(12,2) DEFAULT NULL,
   `unit`         varchar(20)  NOT NULL DEFAULT 'kg',
   `market_name`  varchar(200) DEFAULT NULL,
   `submitted_by` varchar(50)  NOT NULL DEFAULT 'anonymous',
@@ -83,15 +84,33 @@ CREATE TABLE IF NOT EXISTS `onboarding_applications` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 ";
 
+// ── Migration 003: crowdsourced_prices_bag_column ─────────────────────────────
+$migrations['003_crowdsourced_prices_bag_column'] = "
+ALTER TABLE crowdsourced_prices ADD COLUMN price_per_bag decimal(12,2) DEFAULT NULL;
+";
+
 // ── Run ─────────────────────────────────────────────────────────────────────
 $errors = 0;
 foreach ($migrations as $name => $sql) {
-    if ($mysqli->query(trim($sql))) {
-        echo "  ✅ $name — OK\n";
-    } else {
-        echo "  ❌ $name — " . $mysqli->error . "\n";
-        $errors++;
+    $sql = trim($sql);
+    if ($sql === '') {
+        echo "  ⏭ $name — skipped (empty migration)\n";
+        continue;
     }
+
+    if ($mysqli->query($sql)) {
+        echo "  ✅ $name — OK\n";
+        continue;
+    }
+
+    $error = $mysqli->error;
+    if (strpos($error, 'Duplicate column name') !== false || strpos($error, 'already exists') !== false) {
+        echo "  ⚠️ $name — already applied\n";
+        continue;
+    }
+
+    echo "  ❌ $name — " . $error . "\n";
+    $errors++;
 }
 
 echo $errors === 0 ? "\nAll migrations applied.\n" : "\n$errors migration(s) failed.\n";

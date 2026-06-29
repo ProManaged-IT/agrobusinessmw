@@ -452,6 +452,29 @@ try {
             if (!preg_match('/^\+?[0-9\s\-]{8,20}$/', $phone)) {
                 throw new Exception('Valid phone number is required');
             }
+            if ($email && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                throw new Exception('Valid email is required');
+            }
+            if (!$districtId) {
+                throw new Exception('District is required');
+            }
+            if (!$village || strlen($village) < 2) {
+                throw new Exception('Village / town is required');
+            }
+            if (in_array($userType, ['seller','buyer']) && $business === '') {
+                throw new Exception('Business name is required for sellers and buyers');
+            }
+
+            $districtStmt = $mysqli->prepare("SELECT id FROM districts WHERE id = ?");
+            $districtStmt->bind_param('i', $districtId);
+            $districtStmt->execute();
+            if (!stmt_fetch_one($districtStmt)) {
+                throw new Exception('Selected district is invalid');
+            }
+
+            if ($userType === 'farmer') {
+                $business = null;
+            }
 
             // Generate unique reference
             $ref = 'AGR-' . date('Ymd') . '-' . strtoupper(substr(bin2hex(random_bytes(3)), 0, 5));
@@ -635,8 +658,11 @@ try {
                                 d.name as district_name, cp.district_id,
                                 cp.market_name,
                                 ROUND(AVG(cp.price_per_kg),0) as avg_price,
+                                ROUND(AVG(cp.price_per_bag),0) as avg_price_bag,
                                 MIN(cp.price_per_kg) as min_price,
+                                MIN(cp.price_per_bag) as min_price_bag,
                                 MAX(cp.price_per_kg) as max_price,
+                                MAX(cp.price_per_bag) as max_price_bag,
                                 COUNT(*) as report_count,
                                 MAX(cp.created_at) as last_reported,
                                 cp.unit
@@ -655,8 +681,11 @@ try {
                                 d.name as district_name, cp.district_id,
                                 cp.market_name,
                                 ROUND(AVG(cp.price_per_kg),0) as avg_price,
+                                ROUND(AVG(cp.price_per_bag),0) as avg_price_bag,
                                 MIN(cp.price_per_kg) as min_price,
+                                MIN(cp.price_per_bag) as min_price_bag,
                                 MAX(cp.price_per_kg) as max_price,
+                                MAX(cp.price_per_bag) as max_price_bag,
                                 COUNT(*) as report_count,
                                 MAX(cp.created_at) as last_reported,
                                 cp.unit
@@ -705,12 +734,13 @@ try {
                 throw new Exception('Price seems too high. Please enter price per kg in MWK.');
             }
 
+            $price_per_bag = round($price * 50, 2);
             $stmt = $mysqli->prepare(
                 "INSERT INTO crowdsourced_prices
-                 (crop_id, district_id, price_per_kg, unit, market_name, submitted_by, channel)
-                 VALUES (?,?,?,?,?,?,?)"
+                 (crop_id, district_id, price_per_kg, price_per_bag, unit, market_name, submitted_by, channel)
+                 VALUES (?,?,?,?,?,?,?,?)"
             );
-            $stmt->bind_param('iidssss', $crop_id, $district_id, $price, $unit, $market, $phone, $channel);
+            $stmt->bind_param('iiddssss', $crop_id, $district_id, $price, $price_per_bag, $unit, $market, $phone, $channel);
             $stmt->execute();
 
             echo json_encode([
