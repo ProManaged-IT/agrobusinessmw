@@ -759,7 +759,7 @@ try {
 
 // ─── FEWS NET PRICE FETCH + FILE CACHE ──────────────────────────────────────
 
-function fews_get_prices(mysqli $db): array {
+function fews_get_prices($db) {
     $cacheFile = __DIR__ . '/config/fews_prices_cache.json';
     $ttl = 6 * 3600;
 
@@ -776,7 +776,7 @@ function fews_get_prices(mysqli $db): array {
     return $fresh;
 }
 
-function fews_fetch_prices(mysqli $db): array {
+function fews_fetch_prices($db) {
     $sourceUrl = 'https://fdw.fews.net/api/marketpricefacts/?format=json&country_code=MW&ordering=-period_date&page_size=250';
     $ctx = stream_context_create(['http' => [
         'timeout' => 20,
@@ -859,7 +859,7 @@ function fews_fetch_prices(mysqli $db): array {
     ];
 }
 
-function fews_district_map(mysqli $db): array {
+function fews_district_map($db) {
     $map = [];
     $r = $db->query("SELECT id, name FROM districts");
     while ($row = $r->fetch_assoc()) {
@@ -868,7 +868,7 @@ function fews_district_map(mysqli $db): array {
     return $map;
 }
 
-function fews_match_district(string $marketName, array $districtMap): array {
+function fews_match_district($marketName, $districtMap) {
     $market = strtolower($marketName);
     foreach ($districtMap as $district) {
         if (strpos($market, $district['match']) !== false) {

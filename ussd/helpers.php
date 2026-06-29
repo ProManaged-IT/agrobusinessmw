@@ -2,7 +2,7 @@
 // === Helper Functions ===
 // Reusable functions for database queries and error handling
 
-function get_fews_ussd_prices($mysqli, string $language): string {
+function get_fews_ussd_prices($mysqli, $language) {
     $cacheFile = dirname(__DIR__) . '/config/fews_prices_cache.json';
     $ttl = 6 * 3600;
     $cached = null;
