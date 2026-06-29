@@ -27,19 +27,19 @@ function parse_navigation(string $text, array $district_map): array {
         return [[], ['district' => 1, 'weather' => 1], false];
     }
 
-    $raw   = array_values(array_filter(array_map('trim', explode('*', $text)), 'strlen'));
-    $stack = [];
-    $pages = ['district' => 1, 'weather' => 1];
+    $raw              = array_values(array_filter(array_map('trim', explode('*', $text)), 'strlen'));
+    $stack            = [];
+    $pages            = ['district' => 1, 'weather' => 1];
+    $going_to_language = false; // '0' from main menu → language selection, not exit
 
     foreach ($raw as $input) {
         $level = count($stack);
         $main  = $stack[1] ?? '';
+        $going_to_language = false; // reset each step — only last '0' from main matters
 
         if ($input === '0') {
             if (!empty($stack)) {
                 // Reset page counters only when leaving the paginated menu itself.
-                // When backing out of a result, keep the page so users return to the
-                // same district/weather page they selected from.
                 if ($level === 2) {
                     if (in_array($main, ['2', '3', '5', '7', '8'])) $pages['district'] = 1;
                     elseif ($main === '9')                            $pages['weather']  = 1;
@@ -49,8 +49,14 @@ function parse_navigation(string $text, array $district_map): array {
                 if ($level === 3 && $main === '1' && ($stack[2] ?? '') === '1') $pages['district'] = 1;
                 // Crop Prices path B: backing from district list → crop selection
                 if ($level === 4 && $main === '1' && ($stack[2] ?? '') === '2') $pages['district'] = 1;
+
+                if (count($stack) === 1) {
+                    // At main menu (stack=[lang]): '0' → language selection, not session exit
+                    $going_to_language = true;
+                }
                 array_pop($stack);
             }
+            // If stack was already empty (user pressed '0' at language selection) → true exit
         } elseif ($input === '9') {
             // At level 1 (main menu) '9' is Weather. Deeper levels use '9' for
             // Next Page while pages remain, then Main Menu from page 3/results.
@@ -85,8 +91,9 @@ function parse_navigation(string $text, array $district_map): array {
         }
     }
 
-    // If the user pressed keys but the stack is now empty they backed out of everything → exit
-    $is_exit = !empty($raw) && empty($stack);
+    // Stack empty + no keys entered = fresh session (not exit).
+    // Stack empty + keys entered + NOT backing to language = true exit.
+    $is_exit = !empty($raw) && empty($stack) && !$going_to_language;
     return [$stack, $pages, $is_exit];
 }
 

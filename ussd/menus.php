@@ -11,8 +11,8 @@ $menu_texts = [
     
     // Main menu
     'main_menu' => [
-        'en' => "🌾[AGRO MENU]🌾\nSelect option:\n1. Crop Prices 💰\n2. Market Insights 📊\n3. Pest Control Tips 🐛\n4. Farming Practices 🌾\n5. Community Q&A ❓\n6. Farming Info 📚\n7. Find Sellers 🛒\n8. Find Buyers 🤝\n9. Weather 🌤️\n0. Exit 🚪",
-        'ci' => "🌾[MENU YA AGRO]🌾\nSankhani:\n1. Mitengo ya Mbeu 💰\n2. Zidziwitso za Msika 📊\n3. Malangizo a Tizirombo 🐛\n4. Njira Zolima 🌾\n5. Mafunso ndi Mayankho ❓\n6. Zofunika Zokulima 📚\n7. Pezani Ogulitsa 🛒\n8. Pezani Ogula 🤝\n9. Mvula ya Sabata 🌤️\n0. Tuluka 🚪"
+        'en' => "🌾[AGRO MENU]🌾\nSelect option:\n1. Crop Prices 💰\n2. Market Insights 📊\n3. Pest Control Tips 🐛\n4. Farming Practices 🌾\n5. Community Q&A ❓\n6. Farming Info 📚\n7. Find Sellers 🛒\n8. Find Buyers 🤝\n9. Weather 🌤️\n0. Back 🔙",
+        'ci' => "🌾[MENU YA AGRO]🌾\nSankhani:\n1. Mitengo ya Mbeu 💰\n2. Zidziwitso za Msika 📊\n3. Malangizo a Tizirombo 🐛\n4. Njira Zolima 🌾\n5. Mafunso ndi Mayankho ❓\n6. Zofunika Zokulima 📚\n7. Pezani Ogulitsa 🛒\n8. Pezani Ogula 🤝\n9. Mvula ya Sabata 🌤️\n0. Kubwerera 🔙"
     ],
 
     // Weather forecast - paginated districts
