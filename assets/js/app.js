@@ -256,7 +256,12 @@ class AgroBusinessRevolution {
             // Tab key trapping in modals
             if (e.key === 'Tab') {
                 const activeModal = document.querySelector('.modal.active');
-            });
+                if (activeModal) {
+                    // Ensure focus stays within the modal
+                    this.trapFocus(activeModal, e);
+                }
+            }
+        });
     }
 
     trapFocus(modal, event) {
