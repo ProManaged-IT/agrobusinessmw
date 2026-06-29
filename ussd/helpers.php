@@ -88,40 +88,105 @@ function get_fews_ussd_prices($mysqli, $language) {
     return $sections ? implode("\n\n", $sections) : '';
 }
 
+// mysqlnd-free fetch: works without get_result() / mysqlnd driver
+function ussd_fetch_all(mysqli_stmt $stmt): array {
+    $meta = $stmt->result_metadata();
+    if (!$meta) return [];
+    $fields = []; $row = [];
+    while ($f = $meta->fetch_field()) { $row[$f->name] = null; $fields[] = &$row[$f->name]; }
+    call_user_func_array([$stmt, 'bind_result'], $fields);
+    $rows = [];
+    while ($stmt->fetch()) $rows[] = array_map(fn($v) => $v, $row);
+    $meta->free(); $stmt->free_result(); $stmt->close();
+    return $rows;
+}
+
 function execute_query($mysqli, $query, $params = [], $types = '', $format_callback) {
     if (empty($params)) {
         $result = $mysqli->query($query);
         if ($result && $result->num_rows > 0) {
             $output = '';
-            while ($row = $result->fetch_assoc()) {
-                $output .= $format_callback($row);
-            }
+            while ($row = $result->fetch_assoc()) { $output .= $format_callback($row); }
             $result->free();
             return rtrim($output);
         }
         return false;
     }
-
     $stmt = $mysqli->prepare($query);
-    if (!$stmt) {
-        error_log('Prepare failed: ' . $mysqli->error);
-        return false;
-    }
-    if (!empty($params)) {
-        $stmt->bind_param($types, ...$params);
-    }
+    if (!$stmt) { error_log('Prepare failed: ' . $mysqli->error); return false; }
+    $stmt->bind_param($types, ...$params);
     $stmt->execute();
-    $result = $stmt->get_result();
-    if ($result->num_rows > 0) {
-        $output = '';
-        while ($row = $result->fetch_assoc()) {
-            $output .= $format_callback($row);
+    $rows = ussd_fetch_all($stmt);
+    if (!$rows) return false;
+    $output = '';
+    foreach ($rows as $row) { $output .= $format_callback($row); }
+    return rtrim($output) ?: false;
+}
+
+// Crop Prices: all crops in one district (community first, national fallback)
+function get_prices_by_district(mysqli $mysqli, int $district_id, string $lang): string {
+    $stmt = $mysqli->prepare(
+        "SELECT c.name AS crop_name, ROUND(AVG(cp.price_per_kg),0) AS avg_price, cp.unit
+         FROM crowdsourced_prices cp JOIN crops c ON cp.crop_id = c.id
+         WHERE cp.district_id = ?
+         GROUP BY cp.crop_id, cp.unit ORDER BY c.name"
+    );
+    if ($stmt) {
+        $stmt->bind_param('i', $district_id);
+        $stmt->execute();
+        $rows = ussd_fetch_all($stmt);
+        if ($rows) {
+            return implode("\n", array_map(fn($r) => "{$r['crop_name']}: MWK{$r['avg_price']}/{$r['unit']}", $rows));
         }
-        $stmt->close();
-        return rtrim($output);
     }
-    $stmt->close();
-    return false;
+    // National reference fallback
+    $r = $mysqli->query("SELECT c.name, cp.min_price, cp.market_price, cp.unit FROM crop_prices cp JOIN crops c ON cp.crop_id = c.id ORDER BY c.name");
+    if (!$r) return '';
+    $lines = [];
+    while ($row = $r->fetch_assoc()) {
+        $lines[] = "{$row['name']}: MWK{$row['min_price']}-{$row['market_price']}/{$row['unit']}";
+    }
+    return $lines ? "(National ref)\n" . implode("\n", $lines) : '';
+}
+
+// Crop Prices: one crop in one district (community first, national fallback)
+function get_prices_by_crop_district(mysqli $mysqli, int $crop_id, int $district_id, string $lang): string {
+    $stmt = $mysqli->prepare(
+        "SELECT c.name AS crop_name, d.name AS district_name,
+                ROUND(AVG(cp.price_per_kg),0) AS avg_price,
+                MIN(cp.price_per_kg) AS min_price, MAX(cp.price_per_kg) AS max_price,
+                cp.unit, COUNT(*) AS reports
+         FROM crowdsourced_prices cp
+         JOIN crops c ON cp.crop_id = c.id JOIN districts d ON cp.district_id = d.id
+         WHERE cp.crop_id = ? AND cp.district_id = ?
+         GROUP BY cp.unit"
+    );
+    if ($stmt) {
+        $stmt->bind_param('ii', $crop_id, $district_id);
+        $stmt->execute();
+        $rows = ussd_fetch_all($stmt);
+        if ($rows) {
+            $r = $rows[0];
+            return "{$r['crop_name']} - {$r['district_name']}:\n"
+                 . "Avg: MWK{$r['avg_price']}/{$r['unit']}\n"
+                 . "Range: MWK{$r['min_price']}-{$r['max_price']}\n"
+                 . "({$r['reports']} farmer reports)";
+        }
+    }
+    // National reference fallback
+    $stmt2 = $mysqli->prepare(
+        "SELECT c.name, cp.min_price, cp.market_price, cp.unit FROM crop_prices cp JOIN crops c ON cp.crop_id = c.id WHERE cp.crop_id = ?"
+    );
+    if ($stmt2) {
+        $stmt2->bind_param('i', $crop_id);
+        $stmt2->execute();
+        $rows2 = ussd_fetch_all($stmt2);
+        if ($rows2) {
+            $r = $rows2[0];
+            return "{$r['name']} (National ref):\nMin: MWK{$r['min_price']}/{$r['unit']}\nMkt: MWK{$r['market_price']}/{$r['unit']}";
+        }
+    }
+    return '';
 }
 
 function get_error($menu_texts, $type, $language) {

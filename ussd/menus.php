@@ -43,7 +43,19 @@ $menu_texts = [
         ]
     ],
 
-    // Crop selection
+    // Crop Prices sub-menu
+    'crop_prices_menu' => [
+        'en' => "💰[CROP PRICES]💰\nSelect:\n1. By District (all crops)\n2. By Crop\n0. Back 🔙",
+        'ci' => "💰[MITENGO YA MBEU]💰\nSankhani:\n1. Pa Chigawo (mbeu zonse)\n2. Pa Mbeu\n0. Kubwerera 🔙"
+    ],
+
+    // Expanded crop selection for prices (all 9 crops, pos = crop_id)
+    'crop_prices_crop' => [
+        'en' => "🌽[SELECT CROP]🌽\n1. Maize\n2. Tobacco\n3. Groundnuts\n4. Soybeans\n5. Rice\n6. Cotton\n7. Tea\n8. Coffee\n9. Beans\n0. Back 🔙",
+        'ci' => "🌽[SANKHANI MBEU]🌽\n1. Chimanga\n2. Fodya\n3. Nthola\n4. Soya\n5. Mpunga\n6. Thonje\n7. Tii\n8. Khofi\n9. Nyemba\n0. Kubwerera 🔙"
+    ],
+
+    // Crop selection (used by pest control & farming practices — 3 crops only)
     'crop_selection' => [
         'en' => "🌽[CROPS]🌽\nSelect crop:\n1. Maize 🌽\n2. Tobacco 🍂\n3. Groundnuts 🥜\n0. Back 🔙",
         'ci' => "🌽[MBEU]🌽\nSankhani mbeu:\n1. Chimanga 🌽\n2. Fodya 🍂\n3. Nthola 🥜\n0. Kubwerera 🔙"
@@ -94,6 +106,8 @@ $valid_options = [
         2 => ['1', '2', '3', '4', '5', '6', '7', '8', '9'], // Page 2
         3 => ['1', '2', '3', '4', '5', '6', '7', '8', '0', '9'] // Page 3 — 0=Back, 9=Main Menu
     ],
+    'crop_prices' => ['1', '2', '0'],
+    'price_crops' => ['1','2','3','4','5','6','7','8','9','0'],
     'crops' => ['1', '2', '3', '0'],
     'practices' => ['1', '2', '3', '0'],
     'results' => ['0']

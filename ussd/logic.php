@@ -45,6 +45,10 @@ function parse_navigation(string $text, array $district_map): array {
                     elseif ($main === '9')                            $pages['weather']  = 1;
                 }
                 if ($level === 3 && $main === '3') $pages['district'] = 1;
+                // Crop Prices path A: backing from district list → crop_prices sub-menu
+                if ($level === 3 && $main === '1' && ($stack[2] ?? '') === '1') $pages['district'] = 1;
+                // Crop Prices path B: backing from district list → crop selection
+                if ($level === 4 && $main === '1' && ($stack[2] ?? '') === '2') $pages['district'] = 1;
                 array_pop($stack);
             }
         } elseif ($input === '9') {
@@ -61,6 +65,14 @@ function parse_navigation(string $text, array $district_map): array {
                     $stack = array_slice($stack, 0, 1);
                 }
             } elseif ($level === 3 && $main === '3') {
+                if ($pages['district'] < 3) $pages['district']++;
+                else $stack = array_slice($stack, 0, 1);
+            } elseif ($level === 3 && $main === '1' && ($stack[2] ?? '') === '1') {
+                // Crop Prices path A: page through districts
+                if ($pages['district'] < 3) $pages['district']++;
+                else $stack = array_slice($stack, 0, 1);
+            } elseif ($level === 4 && $main === '1' && ($stack[2] ?? '') === '2') {
+                // Crop Prices path B: page through districts
                 if ($pages['district'] < 3) $pages['district']++;
                 else $stack = array_slice($stack, 0, 1);
             } elseif ($level >= 3) {
@@ -115,20 +127,8 @@ function process_ussd(mysqli $mysqli, array $menu_texts, array $valid_options, a
     } elseif ($level === 2) {
         $main = $stack[1];
         switch ($main) {
-            case '1': // Crop Prices — direct result, no further selection needed
-                $result = get_fews_ussd_prices($mysqli, $language);
-                if (!$result) {
-                    $result = execute_query(
-                        $mysqli,
-                        "SELECT c.name, cp.min_price, cp.market_price, cp.unit
-                         FROM crop_prices cp JOIN crops c ON cp.crop_id = c.id",
-                        [], '',
-                        fn($row) => "{$row['name']}: Min MWK{$row['min_price']}/{$row['unit']}, Mkt MWK{$row['market_price']}/{$row['unit']}\n"
-                    );
-                }
-                $response = $result
-                    ? "CON " . $result . "\n" . $menu_texts['back_option'][$language]
-                    : $menu_texts['errors']['no_data'][$language];
+            case '1': // Crop Prices — show sub-menu
+                $response = "CON " . $menu_texts['crop_prices_menu'][$language];
                 break;
 
             case '2': case '5': case '7': case '8': // District-based menus
@@ -166,6 +166,18 @@ function process_ussd(mysqli $mysqli, array $menu_texts, array $valid_options, a
         $sub  = $stack[2];
 
         switch ($main) {
+            case '1': // Crop Prices sub-path
+                if ($sub === '1') {
+                    // Path A: by district — show district pages
+                    $response = "CON " . $menu_texts['district_selection'][$language][$pages['district']];
+                } elseif ($sub === '2') {
+                    // Path B: by crop — show full crop list
+                    $response = "CON " . $menu_texts['crop_prices_crop'][$language];
+                } else {
+                    $response = "CON " . $menu_texts['crop_prices_menu'][$language];
+                }
+                break;
+
             case '9': // Weather — district selected
                 $district_id = $district_map[$pages['weather']][(int)$sub] ?? null;
                 if (!$district_id) {
@@ -265,6 +277,31 @@ function process_ussd(mysqli $mysqli, array $menu_texts, array $valid_options, a
         $sub      = $stack[3];
 
         switch ($main) {
+            case '1': // Crop Prices
+                $path = $crop_pos; // stack[2]: '1'=by-district, '2'=by-crop
+                if ($path === '1') {
+                    // Path A: district selected → show all prices in that district
+                    $district_id = $district_map[$pages['district']][(int)$sub] ?? null;
+                    if (!$district_id) {
+                        $response = "CON " . $menu_texts['district_selection'][$language][$pages['district']];
+                    } else {
+                        $result = get_prices_by_district($mysqli, $district_id, $language);
+                        $response = $result
+                            ? "CON " . $result . $menu_texts['back_option'][$language]
+                            : $menu_texts['errors']['no_data'][$language];
+                    }
+                } elseif ($path === '2') {
+                    // Path B: crop selected → show district selection
+                    if (in_array($sub, ['1','2','3','4','5','6','7','8','9'])) {
+                        $response = "CON " . $menu_texts['district_selection'][$language][$pages['district']];
+                    } else {
+                        $response = "CON " . $menu_texts['crop_prices_crop'][$language];
+                    }
+                } else {
+                    $response = "CON " . $menu_texts['main_menu'][$language];
+                }
+                break;
+
             case '3': // Pest Control Tips — district chosen
                 $district_id = $district_map[$pages['district']][(int)$sub] ?? null;
                 if (!$district_id || !in_array($crop_pos, ['1', '2', '3'])) {
@@ -299,6 +336,28 @@ function process_ussd(mysqli $mysqli, array $menu_texts, array $valid_options, a
 
             default:
                 $response = "CON " . $menu_texts['main_menu'][$language];
+        }
+
+    // ── LEVEL 5: Crop Prices path B — crop + district → show price ──────────
+    } elseif ($level === 5) {
+        $main     = $stack[1]; // '1' = crop prices
+        $path     = $stack[2]; // '2' = by-crop path
+        $crop_pos = $stack[3]; // menu pos 1-9 = crop_id 1-9
+        $dist_pos = $stack[4]; // district page button
+
+        if ($main === '1' && $path === '2') {
+            $crop_id     = (int)$crop_pos;
+            $district_id = $district_map[$pages['district']][(int)$dist_pos] ?? null;
+            if (!$district_id || !in_array($crop_pos, ['1','2','3','4','5','6','7','8','9'])) {
+                $response = "CON " . $menu_texts['district_selection'][$language][$pages['district']];
+            } else {
+                $result = get_prices_by_crop_district($mysqli, $crop_id, $district_id, $language);
+                $response = $result
+                    ? "CON " . $result . $menu_texts['back_option'][$language]
+                    : $menu_texts['errors']['no_data'][$language];
+            }
+        } else {
+            $response = "CON " . $menu_texts['main_menu'][$language];
         }
     }
 
