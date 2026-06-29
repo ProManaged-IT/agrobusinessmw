@@ -642,31 +642,14 @@ try {
         // ─── DUAL PRICE DATA ────────────────────────────────────────────────────
 
         case 'dual_crop_prices':
-            // Returns both ADMARC official prices and community-reported prices
             $crop_id = isset($_GET['crop_id']) ? (int)$_GET['crop_id'] : null;
 
-            // ADMARC prices
+            // ADMARC — live scrape with 6h file cache, no DB table needed
+            $admarc_cache = admarc_get_prices($mysqli);
+            $admarc = $admarc_cache['data'] ?? [];
             if ($crop_id) {
-                $stmt = $mysqli->prepare(
-                    "SELECT ap.*, c.name as crop_name, d.name as district_name
-                     FROM admarc_prices ap
-                     JOIN crops c ON ap.crop_id = c.id
-                     LEFT JOIN districts d ON ap.district_id = d.id
-                     WHERE ap.crop_id = ?
-                     ORDER BY ap.price_date DESC, ap.depot_name"
-                );
-                $stmt->bind_param('i', $crop_id);
-            } else {
-                $stmt = $mysqli->prepare(
-                    "SELECT ap.*, c.name as crop_name, d.name as district_name
-                     FROM admarc_prices ap
-                     JOIN crops c ON ap.crop_id = c.id
-                     LEFT JOIN districts d ON ap.district_id = d.id
-                     ORDER BY c.name, ap.price_date DESC, ap.depot_name"
-                );
+                $admarc = array_values(array_filter($admarc, fn($r) => (int)$r['crop_id'] === $crop_id));
             }
-            $stmt->execute();
-            $admarc = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 
             // Community prices — aggregated per crop + district
             if ($crop_id) {
@@ -710,11 +693,14 @@ try {
             $community = $stmt2->get_result()->fetch_all(MYSQLI_ASSOC);
 
             echo json_encode([
-                'success'   => true,
-                'admarc'    => $admarc,
-                'community' => $community,
+                'success'         => true,
+                'admarc'          => $admarc,
+                'community'       => $community,
                 'admarc_count'    => count($admarc),
                 'community_count' => count($community),
+                'admarc_source'   => $admarc_cache['source_url'] ?? null,
+                'admarc_cached_at'=> $admarc_cache['fetched_at'] ?? null,
+                'admarc_error'    => $admarc_cache['error'] ?? null,
             ]);
             break;
 
@@ -752,14 +738,22 @@ try {
             break;
 
         case 'admarc_scrape':
-            // Scrape ADMARC website for latest commodity prices (cron-triggered)
+            // Force-refresh the ADMARC cache (admin-only)
             $adminToken = $_SERVER['HTTP_X_ADMIN_TOKEN'] ?? $_GET['token'] ?? '';
             if ($adminToken !== ($_ENV['ADMIN_TOKEN'] ?? 'agro_admin_2024')) {
                 throw new Exception('Unauthorized.');
             }
-
-            $result = scrape_admarc_prices($mysqli);
-            echo json_encode(['success' => true, 'scraped' => $result]);
+            // Delete cache file so admarc_get_prices() fetches fresh
+            $cacheFile = __DIR__ . '/config/admarc_cache.json';
+            if (file_exists($cacheFile)) unlink($cacheFile);
+            $result = admarc_get_prices($mysqli);
+            echo json_encode([
+                'success'       => true,
+                'rows'          => count($result['data'] ?? []),
+                'source_url'    => $result['source_url'] ?? null,
+                'error'         => $result['error'] ?? null,
+                'fetched_at'    => $result['fetched_at'] ?? null,
+            ]);
             break;
 
         default:
@@ -778,16 +772,46 @@ try {
     ]);
 }
 
-// ─── ADMARC SCRAPER ──────────────────────────────────────────────────────────
-function scrape_admarc_prices(mysqli $db): array {
+// ─── ADMARC LIVE FETCH + FILE CACHE ─────────────────────────────────────────
+
+/**
+ * Returns cached ADMARC prices (6h TTL). Fetches live if cache is stale.
+ * Never touches the admarc_prices DB table.
+ */
+function admarc_get_prices(mysqli $db): array {
+    $cacheFile = __DIR__ . '/config/admarc_cache.json';
+    $ttl       = 6 * 3600; // 6 hours
+
+    if (file_exists($cacheFile)) {
+        $cached = json_decode(file_get_contents($cacheFile), true);
+        if ($cached && (time() - (int)($cached['fetched_at'] ?? 0)) < $ttl) {
+            return $cached;
+        }
+    }
+
+    $fresh = admarc_scrape_live($db);
+    $fresh['fetched_at'] = time();
+    @file_put_contents($cacheFile, json_encode($fresh), LOCK_EX);
+    return $fresh;
+}
+
+/**
+ * Fetches ADMARC commodity prices from their public website and returns
+ * a structured array. No DB writes — caller decides what to do with the data.
+ *
+ * Returns: ['data'=>[...rows], 'source_url'=>'...', 'error'=>null|string]
+ */
+function admarc_scrape_live(mysqli $db): array {
     $sources = [
+        'https://admarc.mw/commodity-prices',
+        'https://www.admarc.mw/commodity-prices',
+        'https://admarc.mw/prices',
         'https://admarc.co.mw/commodity-prices',
         'https://admarc.co.mw/prices',
-        'https://www.admarc.co.mw/commodity-prices',
     ];
     $ctx = stream_context_create(['http' => [
         'timeout'         => 10,
-        'user_agent'      => 'Mozilla/5.0 AgroBusiness-Malawi/1.0',
+        'user_agent'      => 'Mozilla/5.0 (compatible; AgroBusiness-Malawi/1.0)',
         'follow_location' => 1,
     ]]);
 
@@ -796,9 +820,20 @@ function scrape_admarc_prices(mysqli $db): array {
         $raw = @file_get_contents($url, false, $ctx);
         if ($raw && strlen($raw) > 500) { $html = $raw; $usedUrl = $url; break; }
     }
+
     if (!$html) {
-        return ['status' => 'unreachable', 'rows_inserted' => 0,
-                'message' => 'ADMARC website unreachable. Use manual admin entry.'];
+        return [
+            'data'       => [],
+            'source_url' => null,
+            'error'      => 'ADMARC website unreachable. Showing community prices only.',
+        ];
+    }
+
+    // Build crop name → id map
+    $cropMap = [];
+    $r = $db->query("SELECT id, name FROM crops");
+    while ($row = $r->fetch_assoc()) {
+        $cropMap[strtolower($row['name'])] = ['id' => (int)$row['id'], 'name' => $row['name']];
     }
 
     libxml_use_internal_errors(true);
@@ -807,28 +842,26 @@ function scrape_admarc_prices(mysqli $db): array {
     libxml_clear_errors();
     $xpath = new DOMXPath($dom);
 
-    $cropMap = [];
-    $r = $db->query("SELECT id, name FROM crops");
-    while ($row = $r->fetch_assoc()) {
-        $cropMap[strtolower($row['name'])] = (int)$row['id'];
-    }
+    $rows   = [];
+    $today  = date('Y-m-d');
 
-    $inserted = 0;
     foreach ($xpath->query('//table//tr') as $tr) {
         $cells = $xpath->query('td', $tr);
         if ($cells->length < 2) continue;
         $cols = [];
         foreach ($cells as $td) $cols[] = trim($td->textContent);
 
-        $cropId = null;
-        foreach ([0,1] as $ci) {
+        // Match a crop name in any of the first two columns
+        $matched = null;
+        foreach ([0, 1] as $ci) {
             $lower = strtolower($cols[$ci] ?? '');
-            foreach ($cropMap as $name => $id) {
-                if (str_contains($lower, $name)) { $cropId = $id; break 2; }
+            foreach ($cropMap as $name => $info) {
+                if (str_contains($lower, $name)) { $matched = $info; break 2; }
             }
         }
-        if (!$cropId) continue;
+        if (!$matched) continue;
 
+        // Extract all numeric values from the row
         $prices = [];
         foreach ($cols as $c) {
             $n = (float)preg_replace('/[^\d.]/', '', $c);
@@ -837,18 +870,28 @@ function scrape_admarc_prices(mysqli $db): array {
         if (empty($prices)) continue;
 
         $buying  = $prices[0];
-        $selling = $prices[1] ?? round($buying * 1.28, 2);
-        $depot   = trim($cols[0] ?? 'ADMARC Depot');
+        $selling = isset($prices[1]) ? $prices[1] : round($buying * 1.28, 2);
+        // Depot name: use first column if it doesn't look like a crop name,
+        // otherwise label generically
+        $depot = preg_match('/[a-z]{4,}/i', $cols[0]) ? trim($cols[0]) : 'ADMARC Depot';
 
-        $stmt = $db->prepare(
-            "INSERT INTO admarc_prices (crop_id,depot_name,buying_price,selling_price,unit,price_date,source_url)
-             VALUES (?,?,?,?,'kg',CURDATE(),?)
-             ON DUPLICATE KEY UPDATE buying_price=VALUES(buying_price),selling_price=VALUES(selling_price),scraped_at=NOW()"
-        );
-        $stmt->bind_param('isdds', $cropId, $depot, $buying, $selling, $usedUrl);
-        if ($stmt->execute()) $inserted++;
+        $rows[] = [
+            'crop_id'       => $matched['id'],
+            'crop_name'     => $matched['name'],
+            'depot_name'    => $depot,
+            'buying_price'  => $buying,
+            'selling_price' => $selling,
+            'unit'          => 'kg',
+            'price_date'    => $today,
+            'source_url'    => $usedUrl,
+        ];
     }
-    return ['status' => 'ok', 'url' => $usedUrl, 'rows_inserted' => $inserted];
+
+    return [
+        'data'       => $rows,
+        'source_url' => $usedUrl,
+        'error'      => empty($rows) ? 'Page fetched but no price table found on ADMARC site.' : null,
+    ];
 }
 
 // Close database connection

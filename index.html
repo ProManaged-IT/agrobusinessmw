@@ -12,6 +12,7 @@
     
     <!-- PWA & Mobile -->
     <meta name="theme-color" content="#f5f2eb">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="AgroBusiness">
@@ -868,26 +869,21 @@ function switchEnvironment(env) {
     <!-- Performance Monitoring -->
     <script>
         window.addEventListener('load', function() {
-            // Performance monitoring
-            if ('performance' in window) {
-                const loadTime = performance.timing.loadEventEnd - performance.timing.navigationStart;
-                console.log('Page load time:', loadTime + 'ms');
-                
-                // Send to analytics (optional)
-                if (navigator.sendBeacon && loadTime > 0) {
-                    navigator.sendBeacon('/api/analytics', JSON.stringify({ 
-                        loadTime: loadTime,
-                        userAgent: navigator.userAgent,
-                        timestamp: new Date().toISOString()
-                    }));
-                }
+            // Performance monitoring — use PerformanceObserver to avoid negative values
+            if ('performance' in window && performance.getEntriesByType) {
+                setTimeout(() => {
+                    const nav = performance.getEntriesByType('navigation')[0];
+                    if (nav && nav.loadEventEnd > 0) {
+                        console.log('Page load time:', Math.round(nav.loadEventEnd) + 'ms');
+                    }
+                }, 0);
             }
-            
+
             // Service Worker Registration for PWA
             if ('serviceWorker' in navigator) {
-                navigator.serviceWorker.register('/sw.js')
-                    .then(registration => console.log('SW registered: ', registration))
-                    .catch(registrationError => console.log('SW registration failed: ', registrationError));
+                navigator.serviceWorker.register('/agrobusinessmalawi/sw.js', { scope: '/agrobusinessmalawi/' })
+                    .then(r => console.log('SW registered:', r.scope))
+                    .catch(e => console.log('SW unavailable:', e.message));
             }
         });
     </script>

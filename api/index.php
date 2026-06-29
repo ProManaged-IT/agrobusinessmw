@@ -172,27 +172,27 @@ function svc_crop_prices($db, $nav, $pos) {
     if (!$crop) ussd_end("Invalid crop.");
 
     if ($mode === 1) {
-        // ── ADMARC OFFICIAL PRICES ───────────────────────────────────────────
-        $stmt = $db->prepare(
-            "SELECT depot_name, buying_price, selling_price, unit, price_date
-             FROM admarc_prices
-             WHERE crop_id = ?
-             ORDER BY price_date DESC
-             LIMIT 3"
-        );
-        $stmt->bind_param('i', $crop['id']);
-        $stmt->execute();
-        $rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+        // ── ADMARC OFFICIAL PRICES — read from shared file cache ─────────────
+        $cacheFile = dirname(__DIR__) . '/config/admarc_cache.json';
+        $cached    = file_exists($cacheFile) ? json_decode(file_get_contents($cacheFile), true) : null;
+        $allRows   = $cached['data'] ?? [];
 
-        if (empty($rows)) ussd_end("No ADMARC data for {$crop['name']} yet.");
+        // Filter to this crop and take up to 3 depots
+        $rows = array_values(array_filter($allRows, fn($r) => (int)$r['crop_id'] === (int)$crop['id']));
+        $rows = array_slice($rows, 0, 3);
+
+        if (empty($rows)) {
+            $age = $cached ? round((time() - $cached['fetched_at']) / 3600) . 'h ago' : 'never fetched';
+            ussd_end("No ADMARC data for {$crop['name']}.\nCache: {$age}.\nTry option 2 for community prices.");
+        }
 
         $out = "ADMARC: {$crop['name']}\n";
         foreach ($rows as $r) {
-            $buy  = $r['buying_price']  ? 'MK' . number_format($r['buying_price'])  : 'N/A';
-            $sell = $r['selling_price'] ? 'MK' . number_format($r['selling_price']) : 'N/A';
+            $buy  = $r['buying_price']  ? 'MK' . number_format((float)$r['buying_price'])  : 'N/A';
+            $sell = $r['selling_price'] ? 'MK' . number_format((float)$r['selling_price']) : 'N/A';
             $out .= "{$r['depot_name']}\nBuy:{$buy} Sell:{$sell}\n";
         }
-        $out .= "Date: " . date('d/m/Y', strtotime($rows[0]['price_date']));
+        $out .= "Date: " . ($rows[0]['price_date'] ?? date('d/m/Y'));
         ussd_end(trim($out));
 
     } else {

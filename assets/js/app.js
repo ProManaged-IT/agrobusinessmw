@@ -1792,6 +1792,14 @@ closeModal(modal) {
                 return d === 0 ? 'Today' : d === 1 ? 'Yesterday' : `${d}d ago`;
             };
 
+            // Build crop options list for report form (deduplicated by id)
+            const _seen = new Set();
+            const allCrops = [...admarc, ...community]
+                .map(r => ({ id: r.crop_id, name: r.crop_name }))
+                .filter(c => { if (_seen.has(c.id)) return false; _seen.add(c.id); return true; })
+                .sort((a, b) => a.name.localeCompare(b.name));
+            const cropOptions = allCrops.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+
             const admarRows = admarc.map((r, i) => `
                 <tr style="animation:serviceReveal .3s ease ${i*.04}s both">
                     <td><span style="font-size:1.3rem">${this.getCropIcon(r.crop_name)}</span> <strong>${r.crop_name}</strong></td>
@@ -1857,10 +1865,7 @@ closeModal(modal) {
                             <label>Crop *</label>
                             <select id="pr-crop" required>
                                 <option value="">Select crop...</option>
-                                ${[...new Set([...admarc.map(r=>({id:r.crop_id,name:r.crop_name})),...community.map(r=>({id:r.crop_id,name:r.crop_name}))])
-                                    .reduce((acc,c)=>{if(!acc.find(x=>x.id===c.id))acc.push(c);return acc;},[])
-                                    .sort((a,b)=>a.name.localeCompare(b.name))
-                                    .map(c=>`<option value="${c.id}">${c.name}</option>`).join('')}
+                                ${cropOptions}
                             </select>
                         </div>
                         <div class="reg-field">
