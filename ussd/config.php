@@ -6,8 +6,6 @@ error_reporting(E_ALL);
 ini_set('log_errors', 1);
 ini_set('error_log', __DIR__ . '/ussd_errors.log');
 
-error_log('POST Data: ' . json_encode($_POST));
-
 // Load credentials from .env — same source as the web app
 $envFile = dirname(__DIR__) . '/.env';
 if (file_exists($envFile)) {
@@ -19,8 +17,8 @@ if (file_exists($envFile)) {
 }
 
 function get_db_connection($max_retries = 2) {
-    // On cPanel the DB is always on localhost regardless of .env DB_HOST
-    $host = 'localhost';
+    $isLocal = in_array($_SERVER['SERVER_NAME'] ?? 'localhost', ['localhost', '127.0.0.1']);
+    $host = $isLocal ? ($_ENV['DB_HOST'] ?? 'promanaged-it.com') : 'localhost';
     $user = $_ENV['DB_USER'] ?? '';
     $pass = $_ENV['DB_PASS'] ?? '';
     $db   = $_ENV['DB_NAME'] ?? '';
@@ -29,14 +27,13 @@ function get_db_connection($max_retries = 2) {
         $mysqli = new mysqli($host, $user, $pass, $db);
         if (!$mysqli->connect_error) {
             $mysqli->set_charset('utf8mb4');
-            error_log("Database connection successful on attempt $attempt");
             return $mysqli;
         }
-        error_log("Database connection failed on attempt $attempt: " . $mysqli->connect_error);
+        error_log("USSD DB connection failed (attempt $attempt): " . $mysqli->connect_error);
         if ($attempt < $max_retries) sleep(1);
     }
 
-    error_log("All database connection attempts failed");
+    error_log("USSD: all DB connection attempts failed");
     echo "END System error. Please try again later.";
     ob_end_flush();
     exit;

@@ -27,7 +27,7 @@ function parse_navigation(string $text, array $district_map): array {
         return [[], ['district' => 1, 'weather' => 1], false];
     }
 
-    $raw   = array_values(array_filter(array_map('trim', explode('*', $text))));
+    $raw   = array_values(array_filter(array_map('trim', explode('*', $text)), 'strlen'));
     $stack = [];
     $pages = ['district' => 1, 'weather' => 1];
 
@@ -47,13 +47,17 @@ function parse_navigation(string $text, array $district_map): array {
                 array_pop($stack);
             }
         } elseif ($input === '9') {
-            // Next-page control: advance the right counter, never push to stack
+            // '9' = next page ONLY when inside a paginated district/weather menu.
+            // At level 1 (main menu) '9' is the Weather option — push it normally.
             if ($level === 2) {
-                if (in_array($main, ['2', '5', '7', '8']))  $pages['district'] = min($pages['district'] + 1, 3);
-                elseif ($main === '9')                        $pages['weather']  = min($pages['weather']  + 1, 3);
+                if (in_array($main, ['2', '5', '7', '8'])) $pages['district'] = min($pages['district'] + 1, 3);
+                elseif ($main === '9')                      $pages['weather']  = min($pages['weather']  + 1, 3);
+                else                                        $stack[] = $input; // push at level 2 if not a paginated menu
             } elseif ($level === 3 && $main === '3') {
-                // Pest control: district selection is at level 3
                 $pages['district'] = min($pages['district'] + 1, 3);
+            } else {
+                // Level 0, 1, or any other level: '9' is a regular menu selection
+                $stack[] = $input;
             }
         } else {
             $stack[] = $input;
@@ -75,17 +79,10 @@ function process_ussd(mysqli $mysqli, array $menu_texts, array $valid_options, a
     $session_file = "$session_dir/$sessionId.json";
     if (!is_dir($session_dir)) mkdir($session_dir, 0755, true);
 
-    file_put_contents(__DIR__ . '/ussd_sessions.log',
-        date('c') . " - INPUT: $text  SessionID: $sessionId\n", FILE_APPEND);
-
     [$stack, $pages, $is_exit] = parse_navigation($text, $district_map);
 
     $level    = count($stack);
     $language = ($stack[0] ?? '1') === '2' ? 'ci' : 'en';
-
-    file_put_contents(__DIR__ . '/ussd_sessions.log',
-        date('c') . ' - NAV: stack=' . json_encode($stack) .
-        " level=$level lang=$language district_page={$pages['district']} weather_page={$pages['weather']}\n", FILE_APPEND);
 
     $response = '';
 
@@ -295,17 +292,15 @@ function process_ussd(mysqli $mysqli, array $menu_texts, array $valid_options, a
 
     // ── Fallback (should never be empty) ────────────────────────────────────
     if (empty($response)) {
+        error_log("USSD fallback triggered at level $level stack=" . json_encode($stack));
         $response = $level <= 1
             ? "CON " . $menu_texts['language_selection'][$language]
             : "CON " . $menu_texts['main_menu'][$language];
-        file_put_contents(__DIR__ . '/ussd_sessions.log',
-            date('c') . " - FALLBACK used at level $level\n", FILE_APPEND);
     }
 
     // ── Session housekeeping ─────────────────────────────────────────────────
     if (strpos($response, 'END') === 0) {
         if (file_exists($session_file)) unlink($session_file);
-        file_put_contents(__DIR__ . '/ussd_sessions.log', date('c') . " - SESSION CLEARED\n", FILE_APPEND);
     } else {
         file_put_contents($session_file, json_encode([
             'stack'          => $stack,
@@ -314,9 +309,6 @@ function process_ussd(mysqli $mysqli, array $menu_texts, array $valid_options, a
             'weather_page'   => $pages['weather'],
         ]));
     }
-
-    file_put_contents(__DIR__ . '/ussd_sessions.log',
-        date('c') . " - RESPONSE: $response\n", FILE_APPEND);
 
     return $response;
 }

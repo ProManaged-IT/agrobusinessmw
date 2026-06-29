@@ -630,6 +630,7 @@ try {
             }
 
             // Community prices — aggregated per crop + district
+            $community = [];
             if ($crop_id) {
                 $stmt2 = $mysqli->prepare(
                     "SELECT cp.crop_id, c.name as crop_name,
@@ -648,6 +649,7 @@ try {
                      GROUP BY cp.crop_id, cp.district_id, cp.market_name
                      ORDER BY report_count DESC, last_reported DESC"
                 );
+                if (!$stmt2) throw new Exception('Community prices query failed: ' . $mysqli->error);
                 $stmt2->bind_param('i', $crop_id);
             } else {
                 $stmt2 = $mysqli->prepare(
@@ -666,8 +668,8 @@ try {
                      GROUP BY cp.crop_id, cp.district_id, cp.market_name
                      ORDER BY c.name, report_count DESC"
                 );
+                if (!$stmt2) throw new Exception('Community prices query failed: ' . $mysqli->error);
             }
-            if (!$stmt2) throw new Exception('Community prices query failed: ' . $mysqli->error);
             $stmt2->execute();
             $r2 = $stmt2->get_result();
             $community = $r2 ? $r2->fetch_all(MYSQLI_ASSOC) : [];

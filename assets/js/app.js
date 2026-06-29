@@ -739,6 +739,19 @@ updateTexts() {
                 this.shareContent();
             });
         }
+
+        // Browser back/forward button: when the pushed content state is popped,
+        // the user pressed back from the content screen — go to dashboard.
+        window.addEventListener('popstate', (e) => {
+            if (!e.state || e.state.screen === 'dashboard') {
+                this.showScreen('dashboard');
+            }
+        });
+
+        // Seed the initial history state so pressing back from dashboard exits the SPA cleanly.
+        if (!history.state) {
+            history.replaceState({ screen: 'dashboard' }, '', location.pathname);
+        }
     }
 
     navigateBack() {
@@ -747,7 +760,13 @@ updateTexts() {
             backBtn.style.transform = 'scale(0.9)';
             setTimeout(() => {
                 backBtn.style.transform = '';
-                this.showScreen('dashboard');
+                // Use history.back() when there's a pushed state so the browser
+                // URL stays consistent; otherwise go directly to dashboard.
+                if (history.state && history.state.screen === 'content') {
+                    history.back();
+                } else {
+                    this.showScreen('dashboard');
+                }
             }, 150);
         }
     }
@@ -875,6 +894,14 @@ updateTexts() {
     }
     
     showScreen(screenId) {
+        // Keep browser history in sync so the native back button works within the SPA.
+        // Push a state when entering 'content'; replace (reset) when returning to 'dashboard'.
+        if (screenId === 'content' && this.currentScreen !== 'content') {
+            history.pushState({ screen: 'content' }, '', location.pathname + location.search);
+        } else if (screenId === 'dashboard') {
+            history.replaceState({ screen: 'dashboard' }, '', location.pathname);
+        }
+
         // Cancel any pending transition so a quick second call never wins over the latest one
         if (this._screenTimer) {
             clearTimeout(this._screenTimer);
