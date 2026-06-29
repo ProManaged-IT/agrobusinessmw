@@ -624,11 +624,11 @@ function switchEnvironment(env) {
                 }, 0);
             }
 
-            // Service Worker Registration for PWA
+            // Unregister any previously installed service worker and clear its caches
             if ('serviceWorker' in navigator) {
-                navigator.serviceWorker.register('/agrobusinessmalawi/sw.js', { scope: '/agrobusinessmalawi/' })
-                    .then(r => console.log('SW registered:', r.scope))
-                    .catch(e => console.log('SW unavailable:', e.message));
+                navigator.serviceWorker.getRegistrations().then(regs => {
+                    regs.forEach(r => r.unregister());
+                });
             }
         });
     </script>
