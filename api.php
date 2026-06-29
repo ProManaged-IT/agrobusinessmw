@@ -28,6 +28,30 @@ error_reporting(E_ALL);
 // Start output buffering
 ob_start();
 
+// ── Compatibility helpers: get_result() requires mysqlnd which may not be available ──
+function stmt_fetch_all(mysqli_stmt $stmt): array {
+    $meta = $stmt->result_metadata();
+    if (!$meta) return [];
+    $fields = [];
+    $row = [];
+    while ($field = $meta->fetch_field()) {
+        $row[$field->name] = null;
+        $fields[] = &$row[$field->name];
+    }
+    call_user_func_array([$stmt, 'bind_result'], $fields);
+    $rows = [];
+    while ($stmt->fetch()) {
+        $rows[] = array_map(fn($v) => $v, $row);
+    }
+    $meta->free();
+    $stmt->free_result();
+    return $rows;
+}
+function stmt_fetch_one(mysqli_stmt $stmt): ?array {
+    $rows = stmt_fetch_all($stmt);
+    return $rows[0] ?? null;
+}
+
 // Set JSON header & CORS
 header('Content-Type: application/json; charset=utf-8');
 header('Access-Control-Allow-Origin: *');
@@ -207,12 +231,7 @@ try {
             $stmt = $mysqli->prepare($query);
             $stmt->bind_param('i', $district_id);
             $stmt->execute();
-            $result = $stmt->get_result();
-            
-            $insights = [];
-            while ($row = $result->fetch_assoc()) {
-                $insights[] = $row;
-            }
+            $insights = stmt_fetch_all($stmt);
             
             echo json_encode([
                 'success' => true,
@@ -258,12 +277,7 @@ try {
                 $stmt->bind_param('i', $district_id);
             }
             $stmt->execute();
-            $result = $stmt->get_result();
-
-            $sellers = [];
-            while ($row = $result->fetch_assoc()) {
-                $sellers[] = $row;
-            }
+            $sellers = stmt_fetch_all($stmt);
 
             echo json_encode(['success' => true, 'data' => $sellers, 'count' => count($sellers), 'timestamp' => date('c')]);
             break;
@@ -302,12 +316,7 @@ try {
                 $stmt->bind_param('i', $district_id);
             }
             $stmt->execute();
-            $result = $stmt->get_result();
-
-            $buyers = [];
-            while ($row = $result->fetch_assoc()) {
-                $buyers[] = $row;
-            }
+            $buyers = stmt_fetch_all($stmt);
 
             echo json_encode(['success' => true, 'data' => $buyers, 'count' => count($buyers), 'timestamp' => date('c')]);
             break;
@@ -340,12 +349,7 @@ try {
             $stmt = $mysqli->prepare($query);
             $stmt->bind_param('ii', $crop_id, $district_id);
             $stmt->execute();
-            $result = $stmt->get_result();
-            
-            $tips = [];
-            while ($row = $result->fetch_assoc()) {
-                $tips[] = $row;
-            }
+            $tips = stmt_fetch_all($stmt);
             
             echo json_encode([
                 'success' => true,
@@ -380,12 +384,7 @@ try {
             $stmt = $mysqli->prepare($query);
             $stmt->bind_param('i', $crop_id);
             $stmt->execute();
-            $result = $stmt->get_result();
-            
-            $practices = [];
-            while ($row = $result->fetch_assoc()) {
-                $practices[] = $row;
-            }
+            $practices = stmt_fetch_all($stmt);
             
             echo json_encode([
                 'success' => true,
@@ -504,7 +503,7 @@ try {
             );
             $stmt->bind_param('s', $ref);
             $stmt->execute();
-            $row = $stmt->get_result()->fetch_assoc();
+            $row = stmt_fetch_one($stmt);
 
             if (!$row) throw new Exception('Application not found');
 
@@ -533,7 +532,7 @@ try {
                 $stmt3 = $mysqli->prepare($sql . " WHERE a.status = ? ORDER BY a.created_at DESC LIMIT 100");
                 $stmt3->bind_param('s', $status);
                 $stmt3->execute();
-                $apps = $stmt3->get_result()->fetch_all(MYSQLI_ASSOC);
+                $apps = stmt_fetch_all($stmt3);
             } else {
                 $result = $mysqli->query($sql . " ORDER BY a.created_at DESC LIMIT 100");
                 $apps = $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
@@ -581,7 +580,7 @@ try {
             );
             $stmt2->bind_param('i', $appId);
             $stmt2->execute();
-            $app = $stmt2->get_result()->fetch_assoc();
+            $app = stmt_fetch_one($stmt2);
 
             if ($app && $app['email']) {
                 if ($action === 'approve') {
@@ -670,12 +669,7 @@ try {
                     if (!$stmt2) throw new Exception($mysqli->error);
                 }
                 $stmt2->execute();
-                $r2 = $stmt2->get_result();
-                if ($r2) {
-                    while ($row = $r2->fetch_assoc()) {
-                        $community[] = $row;
-                    }
-                }
+                $community = stmt_fetch_all($stmt2);
             } catch (Throwable $ce) {
                 $community_error = $ce->getMessage();
             }

@@ -639,16 +639,16 @@ updateTexts() {
 }
 
     bindModalEvents() {
-        document.querySelectorAll('.modal-close-revolution').forEach(btn => {
+        document.querySelectorAll('.modal-close').forEach(btn => {
             btn.addEventListener('click', (e) => {
-                const modal = e.target.closest('.modal-revolution');
+                const modal = e.target.closest('.modal');
                 if (modal) this.closeModal(modal);
             });
         });
 
-        document.querySelectorAll('.modal-revolution').forEach(modal => {
+        document.querySelectorAll('.modal').forEach(modal => {
             modal.addEventListener('click', (e) => {
-                if (e.target === modal || e.target.classList.contains('modal-backdrop-revolution')) {
+                if (e.target === modal || e.target.classList.contains('modal-backdrop')) {
                     this.closeModal(modal);
                 }
             });
@@ -674,6 +674,7 @@ updateTexts() {
 
     filterDistricts(searchTerm) {
         const items = document.querySelectorAll('.district-item');
+        const intro = document.querySelector('.district-picker-intro');
         const term = searchTerm.toLowerCase().trim();
         let visibleCount = 0;
 
@@ -684,9 +685,12 @@ updateTexts() {
             if (matches) visibleCount++;
         });
 
+        // Hide intro block while searching so it doesn't clutter the filtered results
+        if (intro) intro.hidden = term.length > 0;
+
         const searchStats = document.getElementById('search-stats');
         if (searchStats) {
-            searchStats.textContent = term ? `${visibleCount} districts found` : `${items.length} districts available`;
+            searchStats.textContent = term ? `${visibleCount} district${visibleCount !== 1 ? 's' : ''} found` : `${items.length} districts available`;
         }
     }
 
@@ -1409,56 +1413,56 @@ updateTexts() {
     
 // Update openModal method
 openModal(modal) {
-    if (modal) {
-        modal.classList.add('active');
-        document.body.style.overflow = 'hidden';
-        
-        // Enhanced modal animation
-        const content = modal.querySelector('.modal-content');
-        if (content) {
-            content.style.transform = 'scale(0.7) translateY(200px)';
-            content.style.opacity = '0';
-            
-            requestAnimationFrame(() => {
-                content.style.transition = 'all 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55)';
-                content.style.transform = 'scale(1) translateY(0)';
-                content.style.opacity = '1';
-            });
-        }
-        
-        // Focus management
-        const firstFocusable = modal.querySelector('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
-        if (firstFocusable) {
-            firstFocusable.focus();
-        }
-        
-        // Announce to screen readers
-        const modalTitle = modal.querySelector('h2')?.textContent || 'Modal';
-        this.announceToScreenReader(`${modalTitle} opened`);
+    if (!modal) return;
+    modal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+
+    const content = modal.querySelector('.modal-content');
+    if (content) {
+        content.style.transform = 'translateY(40px)';
+        content.style.opacity = '0';
+        requestAnimationFrame(() => {
+            content.style.transition = 'transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease';
+            content.style.transform = 'translateY(0)';
+            content.style.opacity = '1';
+        });
     }
+
+    // Focus the search input first, otherwise the first interactive element
+    const searchInput = modal.querySelector('input[type="text"], input[type="search"]');
+    const firstFocusable = searchInput || modal.querySelector('button:not(.modal-close), [href], select, textarea, [tabindex]:not([tabindex="-1"])');
+    if (firstFocusable) setTimeout(() => firstFocusable.focus(), 50);
+
+    const modalTitle = modal.querySelector('h2')?.textContent || 'Modal';
+    this.announceToScreenReader(`${modalTitle} opened`);
 }
 
 // Update closeModal method
 closeModal(modal) {
-    if (modal) {
-        const content = modal.querySelector('.modal-content');
-        if (content) {
-            content.style.transform = 'scale(0.8) translateY(-100px)';
-            content.style.opacity = '0';
-        }
-        
-        setTimeout(() => {
-            modal.classList.remove('active');
-            document.body.style.overflow = '';
-            modal.dispatchEvent(new Event('modalclosed'));
-
-            const lastFocused = document.querySelector('[data-last-focused]');
-            if (lastFocused) {
-                lastFocused.focus();
-                lastFocused.removeAttribute('data-last-focused');
-            }
-        }, 400);
+    if (!modal) return;
+    const content = modal.querySelector('.modal-content');
+    if (content) {
+        content.style.transition = 'transform 0.22s ease-in, opacity 0.18s ease';
+        content.style.transform = 'translateY(30px)';
+        content.style.opacity = '0';
     }
+
+    setTimeout(() => {
+        modal.classList.remove('active');
+        document.body.style.overflow = '';
+        if (content) {
+            content.style.transform = '';
+            content.style.opacity = '';
+            content.style.transition = '';
+        }
+        modal.dispatchEvent(new Event('modalclosed'));
+
+        const lastFocused = document.querySelector('[data-last-focused]');
+        if (lastFocused) {
+            lastFocused.focus();
+            lastFocused.removeAttribute('data-last-focused');
+        }
+    }, 240);
 }
 
     async testConnection() {
@@ -2823,12 +2827,12 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Close modals on backdrop click
+    // Close modals on backdrop click (registration & status use same .modal-backdrop class)
     ['register-modal', 'status-modal'].forEach(id => {
         const modal = document.getElementById(id);
         if (modal) {
             modal.addEventListener('click', e => {
-                if (e.target === modal || e.target.classList.contains('modal-backdrop-revolution')) {
+                if (e.target === modal || e.target.classList.contains('modal-backdrop')) {
                     modal.classList.remove('active');
                     document.body.style.overflow = '';
                 }
