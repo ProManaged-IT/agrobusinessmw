@@ -715,28 +715,23 @@ updateTexts() {
     bindNavigation() {
         const backBtn = document.getElementById('back-btn');
         if (backBtn) {
-            backBtn.addEventListener('click', () => {
-                this.navigateBack();
-            });
+            backBtn.addEventListener('click', () => this.navigateBack());
         }
 
-        // Share button
         const shareBtn = document.getElementById('share-btn');
         if (shareBtn) {
-            shareBtn.addEventListener('click', () => {
-                this.shareContent();
-            });
+            shareBtn.addEventListener('click', () => this.shareContent());
         }
 
-        // Browser back/forward button: when the pushed content state is popped,
-        // the user pressed back from the content screen — go to dashboard.
+        // Replay the correct view when the browser back/forward button is used.
         window.addEventListener('popstate', (e) => {
             if (!e.state || e.state.screen === 'dashboard') {
                 this.showScreen('dashboard');
+            } else if (e.state.view) {
+                this._replayState(e.state);
             }
         });
 
-        // Seed the initial history state so pressing back from dashboard exits the SPA cleanly.
         if (!history.state) {
             history.replaceState({ screen: 'dashboard' }, '', location.pathname);
         }
@@ -746,17 +741,40 @@ updateTexts() {
         const backBtn = document.getElementById('back-btn');
         if (backBtn) {
             backBtn.style.transform = 'scale(0.9)';
-            setTimeout(() => {
-                backBtn.style.transform = '';
-                // Use history.back() when there's a pushed state so the browser
-                // URL stays consistent; otherwise go directly to dashboard.
-                if (history.state && history.state.screen === 'content') {
-                    history.back();
-                } else {
-                    this.showScreen('dashboard');
-                }
-            }, 150);
+            setTimeout(() => { backBtn.style.transform = ''; }, 150);
         }
+        // Always use browser history — each view has its own state entry now.
+        if (history.length > 1) {
+            history.back();
+        } else {
+            this.showScreen('dashboard');
+        }
+    }
+
+    // Record the current view in browser history so back/forward works between pages.
+    pushNavState(view, params = {}) {
+        if (this._historyReplaying) return; // skip while replaying to avoid double-push
+        history.pushState({ view, ...params, screen: 'content' }, '', location.pathname);
+    }
+
+    // Replay a history state — called by the popstate listener.
+    _replayState(state) {
+        this._historyReplaying = true;
+        this.showScreen('content');
+        switch (state.view) {
+            case 'crop_prices':      this.loadCropPrices(state.specificCrop || null); break;
+            case 'weather':          this.loadWeather(state.districtId); break;
+            case 'market_insights':  this.loadMarketInsights(state.districtId); break;
+            case 'sellers':          this.loadSellers(state.districtId, state.specificCrop || null); break;
+            case 'buyers':           this.loadBuyers(state.districtId); break;
+            case 'pest_control':     this.loadPestControl(state.cropId, state.districtId); break;
+            case 'farming_tips':     this.loadFarmingTips(state.cropId); break;
+            case 'basic_info':       this.loadBasicInfo(); break;
+            case 'district_actions': this.showDistrictActions(state.districtId); break;
+            case 'crop_actions':     this.showCropActions(state.cropId); break;
+            default: this.showScreen('dashboard'); break;
+        }
+        this._historyReplaying = false;
     }
 
     async shareContent() {
@@ -882,11 +900,8 @@ updateTexts() {
     }
     
     showScreen(screenId) {
-        // Keep browser history in sync so the native back button works within the SPA.
-        // Push a state when entering 'content'; replace (reset) when returning to 'dashboard'.
-        if (screenId === 'content' && this.currentScreen !== 'content') {
-            history.pushState({ screen: 'content' }, '', location.pathname + location.search);
-        } else if (screenId === 'dashboard') {
+        // Reset history to dashboard when going home; each content view pushes its own state via pushNavState().
+        if (screenId === 'dashboard') {
             history.replaceState({ screen: 'dashboard' }, '', location.pathname);
         }
 
@@ -1153,7 +1168,8 @@ updateTexts() {
     showDistrictActions(districtId) {
         const district = this.districtCoords[districtId];
         if (!district) return;
-        
+
+        this.pushNavState('district_actions', { districtId });
         this.showScreen('content');
         const title = document.getElementById('content-title');
         if (title) title.textContent = `${district.name} Services`;
@@ -1207,7 +1223,8 @@ updateTexts() {
         this.loadCrops().then(crops => {
             const crop = crops.find(c => c.id == cropId);
             if (!crop) return;
-            
+
+            this.pushNavState('crop_actions', { cropId });
             this.showScreen('content');
             const title = document.getElementById('content-title');
             if (title) title.textContent = `${crop.name} Services`;
@@ -1730,6 +1747,7 @@ closeModal(modal) {
     
     async loadCropPrices(specificCrop = null) {
         try {
+            this.pushNavState('crop_prices', { specificCrop });
             const response = await this.apiCall('api.php?action=dual_crop_prices');
 
             if (!response.success) {
@@ -1994,7 +2012,7 @@ closeModal(modal) {
     
     async loadWeather(districtId) {
         try {
-            
+            this.pushNavState('weather', { districtId });
             const weatherData = await this.getWeatherData(districtId);
             
             if (weatherData) {
@@ -2108,6 +2126,7 @@ closeModal(modal) {
     
     async loadMarketInsights(districtId) {
         try {
+            this.pushNavState('market_insights', { districtId });
             const response = await this.apiCall('api.php?action=market_insights&district_id=' + districtId);
             
             if (!response.success) {
@@ -2234,6 +2253,7 @@ closeModal(modal) {
 
     async loadSellers(districtId, specificCrop = null) {
         try {
+            this.pushNavState('sellers', { districtId, specificCrop });
             let endpoint = `api.php?action=sellers&district_id=${districtId}`;
             if (specificCrop) endpoint += `&crop=${encodeURIComponent(specificCrop)}`;
             const response = await this.apiCall(endpoint);
@@ -2291,6 +2311,7 @@ closeModal(modal) {
 
     async loadBuyers(districtId) {
         try {
+            this.pushNavState('buyers', { districtId });
             const response = await this.apiCall(`api.php?action=buyers&district_id=${districtId}`);
             if (!response.success) { this.showError(response.error || 'Failed to load buyers'); return; }
             const buyers = response.data || [];
@@ -2344,6 +2365,7 @@ closeModal(modal) {
 
     async loadPestControl(cropId, districtId) {
         try {
+            this.pushNavState('pest_control', { cropId, districtId });
             const response = await this.apiCall(`api.php?action=pest_control&crop_id=${cropId}&district_id=${districtId}`);
             
             if (!response.success) {
@@ -2387,6 +2409,7 @@ closeModal(modal) {
     
     async loadFarmingTips(cropId) {
         try {
+            this.pushNavState('farming_tips', { cropId });
             const response = await this.apiCall(`api.php?action=farming_tips&crop_id=${cropId}`);
             
             if (!response.success) {
@@ -2430,6 +2453,7 @@ closeModal(modal) {
     
     async loadBasicInfo() {
         try {
+            this.pushNavState('basic_info', {});
             const response = await this.apiCall('api.php?action=basic_info');
             
             if (!response.success) {
