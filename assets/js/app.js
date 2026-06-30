@@ -37,7 +37,21 @@ class AgroBusinessRevolution {
                 search_crops: 'Search crops...',
                 district_picker_intro: 'Choose where you want to trade. Search by district or region, then tap one result.',
                 search_sellers: 'Search sellers, crops, phone...',
-                search_buyers: 'Search buyers, crops, phone...'
+                search_buyers: 'Search buyers, crops, phone...',
+                prevention_label: 'Prevention',
+                essential_label: 'Essential',
+                also_view: 'Also view:',
+                crop_actions_heading: 'What would you like to know about',
+                current_prices: 'Current Prices',
+                market_prices_for: 'Market prices for',
+                best_practices_for: 'Best practices for',
+                protect_crops: 'Protect your',
+                cereal: 'Cereal',
+                cash: 'Cash Crop',
+                legume: 'Legume',
+                vegetable: 'Vegetable',
+                root: 'Root Crop',
+                specialty: 'Specialty'
             },
             ci: {
                 welcome: 'Takulandirani ku AgroBusiness',
@@ -69,7 +83,21 @@ class AgroBusinessRevolution {
                 search_crops: 'Fufuzani mbeu...',
                 district_picker_intro: 'Sankhani kumene mukufuna kugula kapena kugulitsa. Fufuzani chigawo kapena dera, ndiye dinani chisankho chimodzi.',
                 search_sellers: 'Sakani ogulitsa, mbewu, nambala...',
-                search_buyers: 'Sakani ogula, mbewu, nambala...'
+                search_buyers: 'Sakani ogula, mbewu, nambala...',
+                prevention_label: 'Chitetezo',
+                essential_label: 'Zofunikira',
+                also_view: 'Onanso:',
+                crop_actions_heading: 'Mukufuna kudziwa chiyani pa',
+                current_prices: 'Mitengo Yapano',
+                market_prices_for: 'Mitengo ya msika ya',
+                best_practices_for: 'Njira zabwino za',
+                protect_crops: 'Tetezani mbeu ya',
+                cereal: 'Chinangwa',
+                cash: 'Mbeu ya Ndalama',
+                legume: 'Nyemba',
+                vegetable: 'Ndiwo',
+                root: 'Mbeu ya Mizizi',
+                specialty: 'Mbeu Inanena'
             }
         };
 
@@ -112,6 +140,18 @@ class AgroBusinessRevolution {
             'legume': ['Groundnuts', 'Soybeans', 'Beans', 'Pigeon Peas'],
             'vegetable': ['Tomatoes', 'Onions', 'Cabbage', 'Irish Potato'],
             'root': ['Cassava', 'Sweet Potato', 'Irish Potato']
+        };
+
+        // Chichewa translations for DB practice_type values (farming tips badges)
+        this.practiceTypeMap = {
+            'Planting': 'Kulima',
+            'Irrigation': 'Madzi',
+            'Pest Control': 'Kuteteza Tizirombo',
+            'Harvesting': 'Kukolola',
+            'Fertilizer': 'Feteleza',
+            'Storage': 'Kusungirira',
+            'Soil Preparation': 'Kukonza Nthaka',
+            'Weeding': 'Chotsa Udzu'
         };
 
         this.init();
@@ -652,6 +692,15 @@ class AgroBusinessRevolution {
         if (cropSearch) {
             cropSearch.placeholder = this.texts[this.currentLang].search_crops || 'Search crops...';
         }
+
+        // Re-render the farming guide in-place when language switches while on that view
+        const contentArea = document.getElementById('content-area');
+        if (contentArea && contentArea.dataset.view === 'farming_guide') {
+            // Suppress pushNavState so switching language doesn't add a history entry
+            this._historyReplaying = true;
+            this.loadFarmingGuide();
+            this._historyReplaying = false;
+        }
     }
 
     bindModalEvents() {
@@ -783,10 +832,18 @@ class AgroBusinessRevolution {
             case 'market_insights': this.loadMarketInsights(state.districtId); break;
             case 'sellers': this.loadSellers(state.districtId, state.specificCrop || null); break;
             case 'buyers': this.loadBuyers(state.districtId); break;
-            case 'pest_control': this.loadPestControl(state.cropId, state.districtId); break;
-            case 'farming_tips': this.loadFarmingTips(state.cropId); break;
-            case 'basic_info': this.loadBasicInfo(); break;
-            case 'farming_guide': this.loadFarmingGuide(); break;
+            case 'pest_control':
+                { const _t = document.getElementById('content-title'); if (_t) _t.textContent = this.texts[this.currentLang].pest_control; }
+                this.showLoading(); this.loadPestControl(state.cropId, state.districtId); break;
+            case 'farming_tips':
+                { const _t = document.getElementById('content-title'); if (_t) _t.textContent = this.texts[this.currentLang].farming_tips; }
+                this.showLoading(); this.loadFarmingTips(state.cropId); break;
+            case 'basic_info':
+                { const _t = document.getElementById('content-title'); if (_t) _t.textContent = this.texts[this.currentLang].basic_info; }
+                this.showLoading(); this.loadBasicInfo(); break;
+            case 'farming_guide':
+                { const _t = document.getElementById('content-title'); if (_t) _t.textContent = this.texts[this.currentLang].farming_guide; }
+                this.showLoading(); this.loadFarmingGuide(); break;
             case 'district_actions': this.showDistrictActions(state.districtId); break;
             case 'crop_actions': this.showCropActions(state.cropId); break;
             default: this.showScreen('dashboard'); break;
@@ -1129,15 +1186,17 @@ class AgroBusinessRevolution {
             ]
         };
 
+        area.dataset.view = 'farming_guide';
         area.innerHTML = `
             <section class="guide-hero">
                 <div>
                     <p class="eyebrow">${guide.label}</p>
-                    <h2>${guide.intro}</h2>
+                    <h2>${this.texts[this.currentLang].farming_guide}</h2>
+                    <p class="guide-intro-text">${guide.intro}</p>
                     <p class="guide-subtitle">${guide.story}</p>
                 </div>
                 <div class="guide-hero-illustration" aria-hidden="true">
-                    <svg viewBox="0 0 360 220" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <svg width="100%" preserveAspectRatio="xMidYMid meet" viewBox="0 0 360 220" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <rect x="0" y="84" width="360" height="136" fill="#f5f2eb"/>
                         <path d="M0 140h360" stroke="#8B7355" stroke-width="4"/>
                         <path d="M48 140c16-22 42-26 72-24 28 2 46 14 68 24 18 8 40 10 58 2 14-6 28-18 42-20 16-2 34 6 50 16" stroke="#C8A45A" stroke-width="5" fill="none"/>
@@ -1350,42 +1409,59 @@ class AgroBusinessRevolution {
             this.pushNavState('crop_actions', { cropId });
             this.showScreen('content');
             const title = document.getElementById('content-title');
-            if (title) title.textContent = `${crop.name} Services`;
+            if (title) title.textContent = crop.name;
 
+            const t = this.texts[this.currentLang];
             const area = document.getElementById('content-area');
             if (area) {
                 area.innerHTML = `
                     <div style="text-align: center; padding: 3rem;">
                         <h2 style="margin-bottom: 2rem; color: var(--primary);">${this.getCropIcon(crop.name)} ${crop.name}</h2>
-                        <p style="margin-bottom: 3rem; color: var(--text-secondary);">What would you like to know about ${crop.name}?</p>
+                        <p style="margin-bottom: 3rem; color: var(--text-secondary);">${t.crop_actions_heading} ${crop.name}?</p>
 
                         <div class="services-grid" style="max-width: 800px; margin: 0 auto;">
-                            <div class="service-card" onclick="app.showCropPrices('${crop.name}')" style="cursor: pointer;">
+                            <button class="service-card crop-action-btn" data-action="prices"
+                                data-crop-id="${cropId}" data-crop-name="${crop.name.replace(/"/g, '&quot;')}" type="button">
                                 <div class="service-icon-3d">💰</div>
                                 <div class="service-content-modern">
-                                    <h3>Current Prices</h3>
-                                    <p>Market prices for ${crop.name}</p>
+                                    <h3>${t.current_prices}</h3>
+                                    <p>${t.market_prices_for} ${crop.name}</p>
                                 </div>
-                            </div>
+                            </button>
 
-                            <div class="service-card" onclick="app.loadFarmingTips(${cropId})" style="cursor: pointer;">
+                            <button class="service-card crop-action-btn" data-action="tips"
+                                data-crop-id="${cropId}" data-crop-name="${crop.name.replace(/"/g, '&quot;')}" type="button">
                                 <div class="service-icon-3d">🌾</div>
                                 <div class="service-content-modern">
-                                    <h3>Farming Tips</h3>
-                                    <p>Best practices for ${crop.name}</p>
+                                    <h3>${t.farming_tips}</h3>
+                                    <p>${t.best_practices_for} ${crop.name}</p>
                                 </div>
-                            </div>
+                            </button>
 
-                            <div class="service-card" onclick="app.showCropPestControl(${cropId})" style="cursor: pointer;">
+                            <button class="service-card crop-action-btn" data-action="pest"
+                                data-crop-id="${cropId}" data-crop-name="${crop.name.replace(/"/g, '&quot;')}" type="button">
                                 <div class="service-icon-3d">🐛</div>
                                 <div class="service-content-modern">
-                                    <h3>Pest Control</h3>
-                                    <p>Protect your ${crop.name} crops</p>
+                                    <h3>${t.pest_control}</h3>
+                                    <p>${t.protect_crops} ${crop.name}</p>
                                 </div>
-                            </div>
+                            </button>
                         </div>
                     </div>
                 `;
+
+                // Delegated listeners — no interpolated crop data in onclick attributes
+                area.querySelectorAll('.crop-action-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const id = btn.dataset.cropId;
+                        const name = btn.dataset.cropName;
+                        switch (btn.dataset.action) {
+                            case 'prices': this.showLoading(); this.showCropPrices(name); break;
+                            case 'tips':   this.showLoading(); this.loadFarmingTips(id);  break;
+                            case 'pest':   this.showLoading(); this.showCropPestControl(id); break;
+                        }
+                    });
+                });
             }
         });
     }
@@ -1509,7 +1585,7 @@ class AgroBusinessRevolution {
                 const category = this.getCropCategory(crop.name);
                 return `
                     <button class="crop-item" data-id="${crop.id}" data-name="${crop.name}" data-category="${category}" type="button">
-                        ${this.getCropIcon(crop.name)} <strong>${crop.name}</strong> — ${category}
+                        ${this.getCropIcon(crop.name)} <strong>${crop.name}</strong> — ${this.texts[this.currentLang][category] ?? category}
                     </button>
                 `;
             }).join('');
@@ -2595,22 +2671,28 @@ class AgroBusinessRevolution {
                 return;
             }
 
+            const t = this.texts[this.currentLang];
             const html = `
                 <h2 style="margin-bottom: 2rem; color: var(--primary);">🐛 ${this.texts[this.currentLang].pest_control}</h2>
-                <div class="tips-grid" style="display: grid; gap: 1.5rem;">
+                <div class="tips-grid">
                     ${tips.map((tip, index) => `
-                        <div class="tip-card" style="background: var(--white); border: 1px solid var(--gray-200); border-radius: var(--radius-xl); padding: 2rem; position: relative; overflow: hidden; animation: serviceReveal 0.4s ease ${index * 0.1}s both;">
-                            <div style="position: absolute; top: 0; left: 0; width: 100%; height: 3px; background: var(--gradient-warm);"></div>
-                            <div class="card-header" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem;">
+                        <div class="tip-card" style="animation: serviceReveal 0.4s ease ${index * 0.1}s both;">
+                            <div class="card-accent-bar" style="background: var(--gradient-warm);"></div>
+                            <div class="card-header">
                                 <h3 style="display: flex; align-items: center; gap: 0.75rem; color: var(--text-primary);">
                                     <span style="font-size: 2rem;">🐛</span>
                                     ${tip.crop_name} - ${tip.district_name}
                                 </h3>
-                                <span class="tip-badge" style="background: rgba(245, 158, 11, 0.1); color: #d97706; padding: 0.25rem 0.75rem; border-radius: var(--radius-md); font-size: 0.75rem; font-weight: 600; text-transform: uppercase;">Prevention</span>
+                                <span class="tip-badge" style="background: rgba(245, 158, 11, 0.1); color: #d97706;">${t.prevention_label}</span>
                             </div>
-                            <p style="color: var(--text-secondary); line-height: 1.7; font-size: 1rem;">${tip[`tip_${this.currentLang}`] || tip.tip_en}</p>
+                            <p class="card-text">${tip[`tip_${this.currentLang}`] || tip.tip_en}</p>
                         </div>
                     `).join('')}
+                </div>
+                <div class="also-view">
+                    <span class="also-view-label">${t.also_view}</span>
+                    <button class="also-view-btn" onclick="app.showLoading();app.loadFarmingTips(${cropId})">🌾 ${t.farming_tips}</button>
+                    <button class="also-view-btn" onclick="app.openService('basic-info')">📚 ${t.basic_info}</button>
                 </div>
             `;
 
@@ -2639,22 +2721,32 @@ class AgroBusinessRevolution {
                 return;
             }
 
+            const t = this.texts[this.currentLang];
             const html = `
                 <h2 style="margin-bottom: 2rem; color: var(--primary);">🌾 ${this.texts[this.currentLang].farming_tips}</h2>
-                <div class="tips-grid" style="display: grid; gap: 1.5rem;">
-                    ${tips.map((tip, index) => `
-                        <div class="tip-card" style="background: var(--white); border: 1px solid var(--gray-200); border-radius: var(--radius-xl); padding: 2rem; position: relative; overflow: hidden; animation: serviceReveal 0.4s ease ${index * 0.1}s both;">
-                            <div style="position: absolute; top: 0; left: 0; width: 100%; height: 3px; background: var(--gradient-primary);"></div>
-                            <div class="card-header" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem;">
+                <div class="tips-grid">
+                    ${tips.map((tip, index) => {
+                        const badgeLabel = this.currentLang === 'ci'
+                            ? (this.practiceTypeMap[tip.practice_type] || tip.practice_type)
+                            : tip.practice_type;
+                        return `
+                        <div class="tip-card" style="animation: serviceReveal 0.4s ease ${index * 0.1}s both;">
+                            <div class="card-accent-bar" style="background: var(--gradient-primary);"></div>
+                            <div class="card-header">
                                 <h3 style="display: flex; align-items: center; gap: 0.75rem; color: var(--text-primary);">
                                     <span style="font-size: 2rem;">🌾</span>
                                     ${tip.crop_name}
                                 </h3>
-                                <span class="practice-badge" style="background: var(--primary-glow); color: var(--primary); padding: 0.25rem 0.75rem; border-radius: var(--radius-md); font-size: 0.75rem; font-weight: 600; text-transform: uppercase;">${tip.practice_type}</span>
+                                <span class="practice-badge" style="background: var(--primary-glow); color: var(--primary);">${badgeLabel}</span>
                             </div>
-                            <p style="color: var(--text-secondary); line-height: 1.7; font-size: 1rem;">${tip[`practice_${this.currentLang}`] || tip.practice_en}</p>
-                        </div>
-                    `).join('')}
+                            <p class="card-text">${tip[`practice_${this.currentLang}`] || tip.practice_en}</p>
+                        </div>`;
+                    }).join('')}
+                </div>
+                <div class="also-view">
+                    <span class="also-view-label">${t.also_view}</span>
+                    <button class="also-view-btn" onclick="app.showLoading();app.showCropPestControl(${cropId})">🐛 ${t.pest_control}</button>
+                    <button class="also-view-btn" onclick="app.openService('basic-info')">📚 ${t.basic_info}</button>
                 </div>
             `;
 
@@ -2683,22 +2775,28 @@ class AgroBusinessRevolution {
                 return;
             }
 
+            const t = this.texts[this.currentLang];
             const html = `
                 <h2 style="margin-bottom: 2rem; color: var(--primary);">📚 ${this.texts[this.currentLang].basic_info}</h2>
-                <div class="info-grid" style="display: grid; gap: 1.5rem;">
+                <div class="info-grid">
                     ${info.map((item, index) => `
-                        <div class="info-card" style="background: var(--white); border: 1px solid var(--gray-200); border-radius: var(--radius-xl); padding: 2rem; position: relative; overflow: hidden; animation: serviceReveal 0.4s ease ${index * 0.1}s both;">
-                            <div style="position: absolute; top: 0; left: 0; width: 100%; height: 3px; background: var(--gradient-secondary);"></div>
-                            <div class="card-header" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem;">
+                        <div class="info-card" style="animation: serviceReveal 0.4s ease ${index * 0.1}s both;">
+                            <div class="card-accent-bar" style="background: var(--gradient-secondary);"></div>
+                            <div class="card-header">
                                 <h3 style="display: flex; align-items: center; gap: 0.75rem; color: var(--text-primary);">
                                     <span style="font-size: 2rem;">📚</span>
                                     ${item.topic}
                                 </h3>
-                                <span class="info-badge" style="background: rgba(59, 130, 246, 0.1); color: var(--accent); padding: 0.25rem 0.75rem; border-radius: var(--radius-md); font-size: 0.75rem; font-weight: 600; text-transform: uppercase;">Essential</span>
+                                <span class="info-badge" style="background: rgba(139, 115, 85, 0.1); color: var(--accent);">${t.essential_label}</span>
                             </div>
-                            <p style="color: var(--text-secondary); line-height: 1.7; font-size: 1rem;">${item[`info_${this.currentLang}`] || item.info_en}</p>
+                            <p class="card-text">${item[`info_${this.currentLang}`] || item.info_en}</p>
                         </div>
                     `).join('')}
+                </div>
+                <div class="also-view">
+                    <span class="also-view-label">${t.also_view}</span>
+                    <button class="also-view-btn" onclick="app.openService('farming-tips')">🌾 ${t.farming_tips}</button>
+                    <button class="also-view-btn" onclick="app.openService('pest-control')">🐛 ${t.pest_control}</button>
                 </div>
             `;
 
