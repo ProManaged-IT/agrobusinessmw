@@ -1,0 +1,155 @@
+- generic [ref=f4e1]:
+  - link "Skip to main content" [ref=f4e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - generic [ref=f4e158]:
+    - banner [ref=f4e159]:
+      - generic [ref=f4e160]:
+        - button "Go back" [ref=f4e161] [cursor=pointer]:
+          - generic [ref=f4e162]: arrow_back
+        - heading "Market Insights" [level=1] [ref=f4e163]
+        - button "Share content" [ref=f4e164] [cursor=pointer]:
+          - generic [ref=f4e165]: share
+    - main [ref=f4e166]:
+      - generic [ref=f4e313]:
+        - generic [ref=f4e315]: 🌾
+        - paragraph [ref=f4e316]: Loading...
+  - dialog "Select Your District" [ref=f4e173]:
+    - generic [ref=f4e175]:
+      - generic [ref=f4e176]:
+        - heading "Select Your District" [level=2] [ref=f4e177]
+        - button "Close" [ref=f4e178] [cursor=pointer]:
+          - generic [ref=f4e179]: close
+      - generic [ref=f4e180]:
+        - generic [ref=f4e181]:
+          - generic [ref=f4e182]: search
+          - textbox "Search districts" [active] [ref=f4e183]:
+            - /placeholder: Search districts...
+        - paragraph [ref=f4e184]: 29 districts available
+        - generic [ref=f4e185]:
+          - generic [ref=f4e317]:
+            - generic [ref=f4e318]:
+              - generic [ref=f4e319]: "Central: 11"
+              - generic [ref=f4e320]: "Northern: 6"
+              - generic [ref=f4e321]: "Southern: 11"
+            - generic "Common district choices" [ref=f4e322]:
+              - button "Blantyre" [ref=f4e323] [cursor=pointer]
+              - button "Lilongwe" [ref=f4e324] [cursor=pointer]
+              - button "Mzuzu" [ref=f4e325] [cursor=pointer]
+              - button "Zomba" [ref=f4e326] [cursor=pointer]
+          - button "Balaka Southern Region" [ref=f4e327] [cursor=pointer]:
+            - generic [ref=f4e328]:
+              - strong [ref=f4e329]: Balaka
+              - generic [ref=f4e330]: Southern Region
+          - button "Blantyre Southern Region" [ref=f4e331] [cursor=pointer]:
+            - generic [ref=f4e332]:
+              - strong [ref=f4e333]: Blantyre
+              - generic [ref=f4e334]: Southern Region
+          - button "Chikwawa Northern Region" [ref=f4e335] [cursor=pointer]:
+            - generic [ref=f4e336]:
+              - strong [ref=f4e337]: Chikwawa
+              - generic [ref=f4e338]: Northern Region
+          - button "Chiradzulu Central Region" [ref=f4e339] [cursor=pointer]:
+            - generic [ref=f4e340]:
+              - strong [ref=f4e341]: Chiradzulu
+              - generic [ref=f4e342]: Central Region
+          - button "Chitipa Northern Region" [ref=f4e343] [cursor=pointer]:
+            - generic [ref=f4e344]:
+              - strong [ref=f4e345]: Chitipa
+              - generic [ref=f4e346]: Northern Region
+          - button "Dedza Central Region" [ref=f4e347] [cursor=pointer]:
+            - generic [ref=f4e348]:
+              - strong [ref=f4e349]: Dedza
+              - generic [ref=f4e350]: Central Region
+          - button "Dowa Southern Region" [ref=f4e351] [cursor=pointer]:
+            - generic [ref=f4e352]:
+              - strong [ref=f4e353]: Dowa
+              - generic [ref=f4e354]: Southern Region
+          - button "Karonga Southern Region" [ref=f4e355] [cursor=pointer]:
+            - generic [ref=f4e356]:
+              - strong [ref=f4e357]: Karonga
+              - generic [ref=f4e358]: Southern Region
+          - button "Kasungu Central Region" [ref=f4e359] [cursor=pointer]:
+            - generic [ref=f4e360]:
+              - strong [ref=f4e361]: Kasungu
+              - generic [ref=f4e362]: Central Region
+          - button "Likoma Central Region" [ref=f4e363] [cursor=pointer]:
+            - generic [ref=f4e364]:
+              - strong [ref=f4e365]: Likoma
+              - generic [ref=f4e366]: Central Region
+          - button "Lilongwe Central Region" [ref=f4e367] [cursor=pointer]:
+            - generic [ref=f4e368]:
+              - strong [ref=f4e369]: Lilongwe
+              - generic [ref=f4e370]: Central Region
+          - button "Machinga Southern Region" [ref=f4e371] [cursor=pointer]:
+            - generic [ref=f4e372]:
+              - strong [ref=f4e373]: Machinga
+              - generic [ref=f4e374]: Southern Region
+          - button "Mangochi Northern Region" [ref=f4e375] [cursor=pointer]:
+            - generic [ref=f4e376]:
+              - strong [ref=f4e377]: Mangochi
+              - generic [ref=f4e378]: Northern Region
+          - button "Mchinji Central Region" [ref=f4e379] [cursor=pointer]:
+            - generic [ref=f4e380]:
+              - strong [ref=f4e381]: Mchinji
+              - generic [ref=f4e382]: Central Region
+          - button "Mulanje Southern Region" [ref=f4e383] [cursor=pointer]:
+            - generic [ref=f4e384]:
+              - strong [ref=f4e385]: Mulanje
+              - generic [ref=f4e386]: Southern Region
+          - button "Mwanza Central Region" [ref=f4e387] [cursor=pointer]:
+            - generic [ref=f4e388]:
+              - strong [ref=f4e389]: Mwanza
+              - generic [ref=f4e390]: Central Region
+          - button "Mzimba Central Region" [ref=f4e391] [cursor=pointer]:
+            - generic [ref=f4e392]:
+              - strong [ref=f4e393]: Mzimba
+              - generic [ref=f4e394]: Central Region
+          - button "Mzuzu Northern Region" [ref=f4e395] [cursor=pointer]:
+            - generic [ref=f4e396]:
+              - strong [ref=f4e397]: Mzuzu
+              - generic [ref=f4e398]: Northern Region
+          - button "Neno Central Region" [ref=f4e399] [cursor=pointer]:
+            - generic [ref=f4e400]:
+              - strong [ref=f4e401]: Neno
+              - generic [ref=f4e402]: Central Region
+          - button "Nkhata Bay Northern Region" [ref=f4e403] [cursor=pointer]:
+            - generic [ref=f4e404]:
+              - strong [ref=f4e405]: Nkhata Bay
+              - generic [ref=f4e406]: Northern Region
+          - button "Nkhotakota Southern Region" [ref=f4e407] [cursor=pointer]:
+            - generic [ref=f4e408]:
+              - strong [ref=f4e409]: Nkhotakota
+              - generic [ref=f4e410]: Southern Region
+          - button "Nsanje Malawi Region" [ref=f4e411] [cursor=pointer]:
+            - generic [ref=f4e412]:
+              - strong [ref=f4e413]: Nsanje
+              - generic [ref=f4e414]: Malawi Region
+          - button "Ntcheu Southern Region" [ref=f4e415] [cursor=pointer]:
+            - generic [ref=f4e416]:
+              - strong [ref=f4e417]: Ntcheu
+              - generic [ref=f4e418]: Southern Region
+          - button "Ntchisi Central Region" [ref=f4e419] [cursor=pointer]:
+            - generic [ref=f4e420]:
+              - strong [ref=f4e421]: Ntchisi
+              - generic [ref=f4e422]: Central Region
+          - button "Phalombe Southern Region" [ref=f4e423] [cursor=pointer]:
+            - generic [ref=f4e424]:
+              - strong [ref=f4e425]: Phalombe
+              - generic [ref=f4e426]: Southern Region
+          - button "Rumphi Southern Region" [ref=f4e427] [cursor=pointer]:
+            - generic [ref=f4e428]:
+              - strong [ref=f4e429]: Rumphi
+              - generic [ref=f4e430]: Southern Region
+          - button "Salima Northern Region" [ref=f4e431] [cursor=pointer]:
+            - generic [ref=f4e432]:
+              - strong [ref=f4e433]: Salima
+              - generic [ref=f4e434]: Northern Region
+          - button "Thyolo Southern Region" [ref=f4e435] [cursor=pointer]:
+            - generic [ref=f4e436]:
+              - strong [ref=f4e437]: Thyolo
+              - generic [ref=f4e438]: Southern Region
+          - button "Zomba Central Region" [ref=f4e439] [cursor=pointer]:
+            - generic [ref=f4e440]:
+              - strong [ref=f4e441]: Zomba
+              - generic [ref=f4e442]: Central Region
+  - generic [ref=f4e312]: Select Your District opened

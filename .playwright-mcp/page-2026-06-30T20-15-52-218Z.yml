@@ -1,0 +1,38 @@
+- generic [active] [ref=f2e1]:
+  - link "Skip to main content" [ref=f2e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - status "Loading application" [ref=f2e3]:
+    - generic [ref=f2e4]:
+      - generic [ref=f2e5]: 🌾
+      - heading "AgroBusiness" [level=1] [ref=f2e6]
+      - paragraph [ref=f2e7]: Malawi
+      - paragraph [ref=f2e10]: Initializing...
+    - generic [ref=f2e11]:
+      - generic [ref=f2e12]:
+        - generic [ref=f2e13]: "28"
+        - text: Districts
+      - generic [ref=f2e14]:
+        - generic [ref=f2e15]: "9"
+        - text: Crops
+      - generic [ref=f2e16]: Live Weather
+      - generic [ref=f2e17]: 24/7 Prices
+  - main "Language selection" [ref=f2e18]:
+    - generic [ref=f2e19]:
+      - generic [ref=f2e20]:
+        - generic [ref=f2e21]: 🌾
+        - heading "Welcome to AgroBusiness" [level=1] [ref=f2e22]
+        - paragraph [ref=f2e23]: Your agricultural platform
+      - generic [ref=f2e24]:
+        - button "Select English" [ref=f2e25] [cursor=pointer]:
+          - generic [ref=f2e26]:
+            - heading "English" [level=2] [ref=f2e27]
+            - paragraph [ref=f2e28]: International Language
+            - generic [ref=f2e29]: →
+        - button "Select Chichewa" [ref=f2e30] [cursor=pointer]:
+          - generic [ref=f2e31]:
+            - heading "Chichewa" [level=2] [ref=f2e32]
+            - paragraph [ref=f2e33]: Chinenero cha Malawi
+            - generic [ref=f2e34]: →
+      - group "Primary actions" [ref=f2e35]:
+        - button "View prices" [ref=f2e36] [cursor=pointer]: Get Prices
+        - button "Register" [ref=f2e37] [cursor=pointer]

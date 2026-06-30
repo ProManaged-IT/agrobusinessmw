@@ -54,6 +54,118 @@ function stmt_fetch_one(mysqli_stmt $stmt): ?array
     return $rows[0] ?? null;
 }
 
+/**
+ * Send an email via SMTPS (port 465 / implicit TLS) using credentials from .env.
+ * Falls back to PHP mail() if the socket connection fails.
+ *
+ * @return bool  true on success, false on failure
+ */
+function send_smtp_email(string $to, string $subject, string $plainBody): bool
+{
+    $smtpHost = trim($_ENV['Outgoing Server'] ?? 'blue.webhostingireland.ie');
+    $smtpPort = (int)trim($_ENV['SMTP Port']       ?? '465');
+    $smtpUser = trim($_ENV['Username']             ?? '');
+    $smtpPass = trim($_ENV['Password']             ?? '');
+    $fromAddr = $smtpUser ?: 'noreply@agrobusinessmw.com';
+    $fromName = 'AgroBusiness Malawi';
+
+    // Build raw email message
+    $boundary = uniqid('', true);
+    $msgId    = '<' . uniqid('agro-') . '@agrobusinessmw.com>';
+    $rawMsg   = "From: {$fromName} <{$fromAddr}>\r\n"
+              . "To: {$to}\r\n"
+              . "Subject: {$subject}\r\n"
+              . "Message-ID: {$msgId}\r\n"
+              . "Date: " . date('r') . "\r\n"
+              . "MIME-Version: 1.0\r\n"
+              . "Content-Type: text/plain; charset=utf-8\r\n"
+              . "Content-Transfer-Encoding: 8bit\r\n"
+              . "\r\n"
+              . $plainBody;
+
+    // Dot-stuffing: lines starting with "." must be doubled
+    $rawMsg = preg_replace('/^\.$/m', '..', $rawMsg);
+
+    $ctx = stream_context_create([
+        'ssl' => [
+            // Peer verification is disabled to support shared-hosting certs that may
+            // not be trusted in the local CA bundle. The connection is still encrypted.
+            'verify_peer'      => false,
+            'verify_peer_name' => false,
+            'allow_self_signed'=> true,
+        ],
+    ]);
+
+    $socket = @stream_socket_client(
+        "ssl://{$smtpHost}:{$smtpPort}",
+        $errno,
+        $errstr,
+        15,
+        STREAM_CLIENT_CONNECT,
+        $ctx
+    );
+
+    if (!$socket) {
+        // Fallback to system mail()
+        $headers = "From: {$fromName} <{$fromAddr}>\r\nContent-Type: text/plain; charset=utf-8";
+        return @mail($to, $subject, $plainBody, $headers);
+    }
+
+    stream_set_timeout($socket, 10);
+
+    // Read a full (possibly multi-line) SMTP response; returns the last line.
+    $readResp = function () use ($socket): string {
+        $last = '';
+        while (true) {
+            $line = fgets($socket, 1024);
+            if ($line === false || $line === '') break;
+            $last = $line;
+            // A line like "250-..." means more follows; "250 ..." means done.
+            if (strlen($line) >= 4 && $line[3] !== '-') break;
+        }
+        return $last;
+    };
+    $write = function (string $cmd) use ($socket): void { fwrite($socket, $cmd . "\r\n"); };
+
+    // Consume greeting
+    $readResp();
+
+    // EHLO
+    $helo = $_SERVER['HTTP_HOST'] ?? 'localhost';
+    $write("EHLO {$helo}");
+    $readResp(); // consume full EHLO response (may be many lines)
+
+    // AUTH LOGIN
+    $write('AUTH LOGIN');
+    $readResp();                            // 334 VXNlcm5hbWU6
+    $write(base64_encode($smtpUser));
+    $readResp();                            // 334 UGFzc3dvcmQ6
+    $write(base64_encode($smtpPass));
+    $authResp = $readResp();               // 235 or 535
+
+    if (substr($authResp, 0, 3) !== '235') {
+        $write('QUIT');
+        fclose($socket);
+        return false;
+    }
+
+    $write("MAIL FROM:<{$fromAddr}>");
+    $readResp();
+    $write("RCPT TO:<{$to}>");
+    $readResp();
+    $write('DATA');
+    $readResp(); // 354
+
+    fwrite($socket, $rawMsg . "\r\n.\r\n");
+    $dataResp = $readResp(); // 250 or error
+
+    $write('QUIT');
+    $readResp();
+    fclose($socket);
+
+    return substr($dataResp, 0, 3) === '250';
+}
+
 // Set JSON header & CORS
 header('Content-Type: application/json; charset=utf-8');
 header('Access-Control-Allow-Origin: *');
@@ -508,12 +620,7 @@ try {
                     . "Reference: {$ref}\nType: " . ucfirst($userType) . "\n\n"
                     . "We will review and notify you within 2-3 business days.\n\n"
                     . "AgroBusiness Malawi Team";
-                @mail(
-                    $email,
-                    $subject,
-                    $message,
-                    "From: noreply@agrobusinessmw.com\r\nContent-Type: text/plain; charset=utf-8"
-                );
+                send_smtp_email($email, $subject, $message);
             }
 
             echo json_encode([
@@ -632,12 +739,7 @@ try {
                         . ($notes ? "Reason: {$notes}\n\n" : '')
                         . "Please contact us if you have questions.\nAgroBusiness Malawi Team";
                 }
-                @mail(
-                    $app['email'],
-                    $subject,
-                    $msg,
-                    "From: noreply@agrobusinessmw.com\r\nContent-Type: text/plain; charset=utf-8"
-                );
+                send_smtp_email($app['email'], $subject, $msg);
             }
 
             echo json_encode([
@@ -784,8 +886,34 @@ try {
             ]);
             break;
 
+        // ── TEST: Send a test email via SMTP ────────────────────────
+        case 'test_email':
+            $adminToken    = $_SERVER['HTTP_X_ADMIN_TOKEN'] ?? ($_GET['token'] ?? '');
+            $envAdminToken = $_ENV['ADMIN_TOKEN'] ?? 'agro_admin_2024';
+            if ($adminToken !== $envAdminToken) {
+                throw new Exception('Unauthorised — provide valid admin token');
+            }
+            $toAddr = trim($_GET['to'] ?? '');
+            if (!$toAddr || !filter_var($toAddr, FILTER_VALIDATE_EMAIL)) {
+                throw new Exception('Provide a valid "to" email address: ?to=you@example.com');
+            }
+            $testSubject = 'AgroBusiness Malawi — SMTP Test';
+            $testBody    = "Hello,\n\nThis is a test email from AgroBusiness Malawi to confirm that SMTP is configured correctly.\n\n"
+                         . "Sent: " . date('Y-m-d H:i:s T') . "\n\nAgroBusiness Malawi Team";
+            $sent = send_smtp_email($toAddr, $testSubject, $testBody);
+            echo json_encode([
+                'success'   => $sent,
+                'message'   => $sent ? "Test email sent to {$toAddr}" : 'SMTP send failed — check server logs',
+                'to'        => $toAddr,
+                'smtp_host' => $_ENV['Outgoing Server'] ?? '(not set)',
+                'smtp_port' => $_ENV['SMTP Port'] ?? '(not set)',
+                'smtp_user' => $_ENV['Username'] ?? '(not set)',
+                'timestamp' => date('c'),
+            ]);
+            break;
+
         default:
-            throw new Exception('Invalid action specified. Available actions: test, districts, crops, crop_prices, dual_crop_prices, submit_price, fews_prices_refresh, market_insights, sellers, buyers, pest_control, farming_tips, basic_info, submit_application, check_application, admin_applications, admin_review');
+            throw new Exception('Invalid action specified. Available actions: test, districts, crops, crop_prices, dual_crop_prices, submit_price, fews_prices_refresh, market_insights, sellers, buyers, pest_control, farming_tips, basic_info, submit_application, check_application, admin_applications, admin_review, test_email');
     }
 } catch (Throwable $e) {
     ob_clean();
