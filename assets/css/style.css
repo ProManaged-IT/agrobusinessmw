@@ -89,9 +89,12 @@ body {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    min-height: 100vh;
+    position: fixed;
+    inset: 0;
+    z-index: 9000;
     background: var(--bg);
     padding: 2rem 1rem;
+    transition: opacity 0.8s ease, transform 0.8s ease, filter 0.8s ease;
 }
 
 .loading-content {
@@ -494,20 +497,18 @@ body {
 /* Hero CTAs on the language/welcome screen */
 .hero-ctas {
     display: flex;
+    flex-direction: column;
     gap: 0.75rem;
-    justify-content: center;
-    margin-top: 1.25rem;
+    margin-top: 1.75rem;
     width: 100%;
+    max-width: 400px;
 }
 
-.hero-ctas .btn-primary {
-    max-width: 220px;
-    padding-left: 1.25rem;
-    padding-right: 1.25rem;
-}
-
+.hero-ctas .btn-primary,
 .hero-ctas .btn-secondary {
-    max-width: 220px;
+    width: 100%;
+    max-width: none;
+    text-align: center;
 }
 
 /* Slightly larger welcome header for modern feel */
@@ -774,7 +775,7 @@ body {
 @media (min-width: 768px) {
     .modal-content {
         border-radius: 16px;
-        max-width: 640px;
+        max-width: 700px;
         max-height: 85vh;
     }
 }
@@ -864,6 +865,12 @@ body {
     gap: 0.5rem;
 }
 
+.district-picker {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+}
+
 .item-list button,
 .district-item,
 .crop-item {
@@ -885,7 +892,6 @@ body {
 .crop-item:hover {
     background: var(--bg);
     border-color: var(--accent);
-    transform: translateY(-1px);
 }
 
 .item-list button:active {
@@ -900,17 +906,16 @@ body {
 }
 
 .district-picker-intro {
-    background: linear-gradient(135deg, rgba(22, 163, 74, 0.08), rgba(200, 164, 90, 0.14));
+    grid-column: 1 / -1;
+    background: var(--surface);
     border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 1rem 1rem 0.9rem;
-    margin-bottom: 1rem;
+    border-radius: 4px;
+    padding: 0.75rem;
+    margin-bottom: 0;
 }
 
 .district-picker-intro p {
-    margin: 0 0 0.75rem;
-    color: var(--text);
-    line-height: 1.5;
+    display: none;
 }
 
 .district-region-summary,
@@ -924,10 +929,10 @@ body {
 .district-chip {
     border: 1px solid var(--border);
     border-radius: 999px;
-    padding: 0.4rem 0.7rem;
+    padding: 0.25rem 0.55rem;
     background: var(--surface);
     color: var(--text);
-    font-size: 0.82rem;
+    font-size: 0.72rem;
 }
 
 .district-chip {
@@ -936,10 +941,13 @@ body {
 }
 
 .district-item {
-    align-items: center;
-    display: grid;
-    grid-template-columns: auto 1fr auto;
-    gap: 0.85rem;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 0.7rem 0.85rem;
+    min-height: unset;
+    border-radius: 2px;
+    gap: 0.1rem;
 }
 
 .district-pin {
@@ -952,13 +960,20 @@ body {
 
 .district-copy {
     display: grid;
-    gap: 0.15rem;
+    gap: 0.1rem;
+}
+
+.district-copy strong {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text);
+    line-height: 1.2;
 }
 
 .district-copy small,
 .district-action {
     color: var(--muted);
-    font-size: 0.8rem;
+    font-size: 0.72rem;
 }
 
 /* ── Seller / Buyer Trade UI ───────────────────────────────── */
@@ -1318,26 +1333,28 @@ body {
 
 /* Price Display */
 .price-tab {
-    background: var(--bg);
+    padding: 0.5rem 1.1rem;
     border: 1px solid var(--border);
-    padding: 0.5rem 1rem;
     border-radius: 2px;
-    cursor: pointer;
-    font-size: 0.85rem;
-    font-weight: 500;
+    background: var(--surface);
     color: var(--text);
-    transition: all 0.2s ease;
-    white-space: nowrap;
-}
-
-.price-tab:hover {
-    border-color: var(--accent);
+    font-family: inherit;
+    font-size: 0.82rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    letter-spacing: 0.03em;
 }
 
 .price-tab.active {
     background: var(--accent);
     color: var(--surface);
     border-color: var(--accent);
+}
+
+.price-tab:not(.active):hover {
+    border-color: var(--accent);
+    color: var(--accent);
 }
 
 .price-pane {
@@ -1357,6 +1374,54 @@ body {
 .price-badge.price-high {
     background: rgba(200, 164, 90, 0.15);
     color: var(--gold);
+}
+
+.price-filters {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.price-filters input[type="search"],
+.price-filters select {
+    width: 100%;
+    padding: 0.65rem 0.875rem;
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    background: var(--surface);
+    color: var(--text);
+    font-family: inherit;
+    font-size: 0.875rem;
+    appearance: none;
+    -webkit-appearance: none;
+    transition: border-color 0.15s ease;
+    outline: none;
+}
+
+.price-filters input[type="search"]:focus,
+.price-filters select:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(139, 115, 85, 0.12);
+}
+
+.price-filters input[type="search"]::placeholder {
+    color: var(--muted);
+    font-size: 0.82rem;
+}
+
+.price-filters select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238B7355' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    padding-right: 2rem;
+}
+
+.price-meta {
+    font-size: 0.82rem;
+    color: var(--muted);
+    margin-bottom: 0.75rem;
+    line-height: 1.5;
 }
 
 /* Registration */
@@ -1656,22 +1721,30 @@ a:focus-visible,
 
 .data-table th {
     background: var(--bg);
-    padding: 1rem;
+    padding: 0.75rem 1rem;
     text-align: left;
-    font-weight: 600;
-    font-size: 0.85rem;
-    border-bottom: 2px solid var(--border);
-    color: var(--text);
+    font-weight: 700;
+    font-size: 0.75rem;
+    border-bottom: 1px solid var(--border);
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
 }
 
 .data-table td {
-    padding: 1rem;
+    padding: 0.85rem 1rem;
     border-bottom: 1px solid var(--border);
-    font-size: 0.9rem;
+    font-size: 0.875rem;
+    vertical-align: middle;
 }
 
 .data-table tr:hover {
-    background: var(--bg);
+    background: rgba(139, 115, 85, 0.04);
+}
+
+.table-wrap {
+    border-radius: 2px;
+    overflow: hidden;
 }
 
 /* Badge */
@@ -1708,6 +1781,19 @@ a:focus-visible,
 
     .modal-content {
         border-radius: 8px 8px 0 0;
+    }
+
+    .stats-bar {
+        overflow-x: auto;
+        white-space: nowrap;
+        -webkit-overflow-scrolling: touch;
+        font-size: 0.8rem;
+        padding: 1rem;
+        letter-spacing: 0.03em;
+    }
+
+    .services {
+        padding-bottom: 2rem;
     }
 
     .services-grid {

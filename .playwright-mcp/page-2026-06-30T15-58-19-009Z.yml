@@ -1,0 +1,774 @@
+- generic [active] [ref=f16e1]:
+  - link "Skip to main content" [ref=f16e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - generic [ref=f16e38]:
+    - banner [ref=f16e39]:
+      - generic [ref=f16e40]:
+        - button "Go back" [ref=f16e41] [cursor=pointer]:
+          - generic [ref=f16e42]: arrow_back
+        - heading "Crop Prices" [level=1] [ref=f16e43]
+        - button "Share content" [ref=f16e44] [cursor=pointer]:
+          - generic [ref=f16e45]: share
+    - main [ref=f16e46]:
+      - generic [ref=f16e48]:
+        - heading "Crop Prices" [level=2] [ref=f16e49]
+        - paragraph [ref=f16e50]: FEWS NET reference prices and community market reports are shown side by side in one searchable table.
+        - generic [ref=f16e51]:
+          - button "All Prices 41" [ref=f16e52] [cursor=pointer]
+          - button "+ Report a Price" [ref=f16e53] [cursor=pointer]
+        - generic [ref=f16e54]:
+          - generic [ref=f16e55]:
+            - searchbox "Search crop, district, market, source, price..." [ref=f16e56]
+            - combobox [ref=f16e57]:
+              - option "All sources" [selected]
+              - option "FEWS NET only"
+              - option "Community only"
+            - combobox [ref=f16e58]:
+              - option "All crops" [selected]
+              - option "Beans"
+              - option "Groundnuts"
+              - option "Maize"
+              - option "Rice"
+              - option "Soybeans"
+            - combobox [ref=f16e59]:
+              - option "All districts" [selected]
+              - option "Balaka"
+              - option "Blantyre"
+              - option "Chikwawa"
+              - option "Chiradzulu"
+              - option "Chitipa"
+              - option "Dedza"
+              - option "Dowa"
+              - option "Karonga"
+              - option "Kasungu"
+              - option "Likoma"
+              - option "Lilongwe"
+              - option "Machinga"
+              - option "Mangochi"
+              - option "Mchinji"
+              - option "Mulanje"
+              - option "Mwanza"
+              - option "Mzimba"
+              - option "Mzuzu"
+              - option "Neno"
+              - option "Nkhata Bay"
+              - option "Nkhotakota"
+              - option "Nsanje"
+              - option "Ntcheu"
+              - option "Ntchisi"
+              - option "Phalombe"
+              - option "Rumphi"
+              - option "Salima"
+              - option "Thyolo"
+              - option "Zomba"
+          - paragraph [ref=f16e60]: "Showing 41 price records: 69 FEWS NET, 8 community."
+          - table [ref=f16e62]:
+            - rowgroup [ref=f16e63]:
+              - row "Crop Location FEWS Price Community Range Unit Date Source" [ref=f16e64]:
+                - button "Crop" [ref=f16e65] [cursor=pointer]
+                - button "Location" [ref=f16e66] [cursor=pointer]
+                - button "FEWS Price" [ref=f16e67] [cursor=pointer]
+                - button "Community Range" [ref=f16e68] [cursor=pointer]
+                - button "Unit" [ref=f16e69] [cursor=pointer]
+                - button "Date" [ref=f16e70] [cursor=pointer]
+                - button "Source" [ref=f16e71] [cursor=pointer]
+            - rowgroup [ref=f16e72]:
+              - 'row "🫘 Beans Retail Nsanje Nsanje, Nsanje Boma MK 5,000 Bag: MK 250,000 — kg 30/06/2026 FEWS NET" [ref=f16e73]':
+                - cell "🫘 Beans Retail" [ref=f16e74]:
+                  - text: 🫘
+                  - strong [ref=f16e75]: Beans
+                  - text: Retail
+                - cell "Nsanje Nsanje, Nsanje Boma" [ref=f16e76]:
+                  - text: Nsanje
+                  - text: Nsanje, Nsanje Boma
+                - 'cell "MK 5,000 Bag: MK 250,000" [ref=f16e77]':
+                  - generic [ref=f16e78]: MK 5,000
+                  - generic [ref=f16e79]: "Bag: MK 250,000"
+                - cell "—" [ref=f16e80]:
+                  - generic [ref=f16e81]: —
+                - cell "kg" [ref=f16e82]
+                - cell "30/06/2026" [ref=f16e83]
+                - cell "FEWS NET" [ref=f16e84]:
+                  - generic [ref=f16e85]: FEWS NET
+              - 'row "🫘 Beans Retail Karonga Karonga MK 2,368.42 Bag: MK 118,421 — kg 30/06/2026 FEWS NET" [ref=f16e86]':
+                - cell "🫘 Beans Retail" [ref=f16e87]:
+                  - text: 🫘
+                  - strong [ref=f16e88]: Beans
+                  - text: Retail
+                - cell "Karonga Karonga" [ref=f16e89]:
+                  - text: Karonga
+                  - text: Karonga
+                - 'cell "MK 2,368.42 Bag: MK 118,421" [ref=f16e90]':
+                  - generic [ref=f16e91]: MK 2,368.42
+                  - generic [ref=f16e92]: "Bag: MK 118,421"
+                - cell "—" [ref=f16e93]:
+                  - generic [ref=f16e94]: —
+                - cell "kg" [ref=f16e95]
+                - cell "30/06/2026" [ref=f16e96]
+                - cell "FEWS NET" [ref=f16e97]:
+                  - generic [ref=f16e98]: FEWS NET
+              - 'row "🫘 Beans Retail Mzuzu Mzuzu MK 4,500 Bag: MK 225,000 — kg 30/06/2026 FEWS NET" [ref=f16e99]':
+                - cell "🫘 Beans Retail" [ref=f16e100]:
+                  - text: 🫘
+                  - strong [ref=f16e101]: Beans
+                  - text: Retail
+                - cell "Mzuzu Mzuzu" [ref=f16e102]:
+                  - text: Mzuzu
+                  - text: Mzuzu
+                - 'cell "MK 4,500 Bag: MK 225,000" [ref=f16e103]':
+                  - generic [ref=f16e104]: MK 4,500
+                  - generic [ref=f16e105]: "Bag: MK 225,000"
+                - cell "—" [ref=f16e106]:
+                  - generic [ref=f16e107]: —
+                - cell "kg" [ref=f16e108]
+                - cell "30/06/2026" [ref=f16e109]
+                - cell "FEWS NET" [ref=f16e110]:
+                  - generic [ref=f16e111]: FEWS NET
+              - 'row "🫘 Beans Retail Southern Lunzu MK 4,000 Bag: MK 200,000 — kg 30/06/2026 FEWS NET" [ref=f16e112]':
+                - cell "🫘 Beans Retail" [ref=f16e113]:
+                  - text: 🫘
+                  - strong [ref=f16e114]: Beans
+                  - text: Retail
+                - cell "Southern Lunzu" [ref=f16e115]:
+                  - text: Southern
+                  - text: Lunzu
+                - 'cell "MK 4,000 Bag: MK 200,000" [ref=f16e116]':
+                  - generic [ref=f16e117]: MK 4,000
+                  - generic [ref=f16e118]: "Bag: MK 200,000"
+                - cell "—" [ref=f16e119]:
+                  - generic [ref=f16e120]: —
+                - cell "kg" [ref=f16e121]
+                - cell "30/06/2026" [ref=f16e122]
+                - cell "FEWS NET" [ref=f16e123]:
+                  - generic [ref=f16e124]: FEWS NET
+              - 'row "🫘 Beans Retail Northern Jenda MK 3,300.75 Bag: MK 165,038 — kg 30/06/2026 FEWS NET" [ref=f16e125]':
+                - cell "🫘 Beans Retail" [ref=f16e126]:
+                  - text: 🫘
+                  - strong [ref=f16e127]: Beans
+                  - text: Retail
+                - cell "Northern Jenda" [ref=f16e128]:
+                  - text: Northern
+                  - text: Jenda
+                - 'cell "MK 3,300.75 Bag: MK 165,038" [ref=f16e129]':
+                  - generic [ref=f16e130]: MK 3,300.75
+                  - generic [ref=f16e131]: "Bag: MK 165,038"
+                - cell "—" [ref=f16e132]:
+                  - generic [ref=f16e133]: —
+                - cell "kg" [ref=f16e134]
+                - cell "30/06/2026" [ref=f16e135]
+                - cell "FEWS NET" [ref=f16e136]:
+                  - generic [ref=f16e137]: FEWS NET
+              - 'row "🫘 Beans Retail Central Mitundu MK 5,250 Bag: MK 262,500 — kg 30/06/2026 FEWS NET" [ref=f16e138]':
+                - cell "🫘 Beans Retail" [ref=f16e139]:
+                  - text: 🫘
+                  - strong [ref=f16e140]: Beans
+                  - text: Retail
+                - cell "Central Mitundu" [ref=f16e141]:
+                  - text: Central
+                  - text: Mitundu
+                - 'cell "MK 5,250 Bag: MK 262,500" [ref=f16e142]':
+                  - generic [ref=f16e143]: MK 5,250
+                  - generic [ref=f16e144]: "Bag: MK 262,500"
+                - cell "—" [ref=f16e145]:
+                  - generic [ref=f16e146]: —
+                - cell "kg" [ref=f16e147]
+                - cell "30/06/2026" [ref=f16e148]
+                - cell "FEWS NET" [ref=f16e149]:
+                  - generic [ref=f16e150]: FEWS NET
+              - 'row "🫘 Beans Retail Balaka Balaka MK 2,900 Bag: MK 145,000 — kg 30/06/2026 FEWS NET" [ref=f16e151]':
+                - cell "🫘 Beans Retail" [ref=f16e152]:
+                  - text: 🫘
+                  - strong [ref=f16e153]: Beans
+                  - text: Retail
+                - cell "Balaka Balaka" [ref=f16e154]:
+                  - text: Balaka
+                  - text: Balaka
+                - 'cell "MK 2,900 Bag: MK 145,000" [ref=f16e155]':
+                  - generic [ref=f16e156]: MK 2,900
+                  - generic [ref=f16e157]: "Bag: MK 145,000"
+                - cell "—" [ref=f16e158]:
+                  - generic [ref=f16e159]: —
+                - cell "kg" [ref=f16e160]
+                - cell "30/06/2026" [ref=f16e161]
+                - cell "FEWS NET" [ref=f16e162]:
+                  - generic [ref=f16e163]: FEWS NET
+              - 'row "🫘 Beans Retail Phalombe Phalombe MK 4,750 Bag: MK 237,500 — kg 30/06/2026 FEWS NET" [ref=f16e164]':
+                - cell "🫘 Beans Retail" [ref=f16e165]:
+                  - text: 🫘
+                  - strong [ref=f16e166]: Beans
+                  - text: Retail
+                - cell "Phalombe Phalombe" [ref=f16e167]:
+                  - text: Phalombe
+                  - text: Phalombe
+                - 'cell "MK 4,750 Bag: MK 237,500" [ref=f16e168]':
+                  - generic [ref=f16e169]: MK 4,750
+                  - generic [ref=f16e170]: "Bag: MK 237,500"
+                - cell "—" [ref=f16e171]:
+                  - generic [ref=f16e172]: —
+                - cell "kg" [ref=f16e173]
+                - cell "30/06/2026" [ref=f16e174]
+                - cell "FEWS NET" [ref=f16e175]:
+                  - generic [ref=f16e176]: FEWS NET
+              - 'row "🫘 Beans Farmer/trader report Mchinji Limbe Market — MK 420 / MK 420 / MK 420 Bag: MK 21,000 / MK 21,000 / MK 21,000 kg 1 report · 2d ago Community" [ref=f16e177]':
+                - cell "🫘 Beans Farmer/trader report" [ref=f16e178]:
+                  - text: 🫘
+                  - strong [ref=f16e179]: Beans
+                  - text: Farmer/trader report
+                - cell "Mchinji Limbe Market" [ref=f16e180]:
+                  - text: Mchinji
+                  - text: Limbe Market
+                - cell "—" [ref=f16e181]:
+                  - generic [ref=f16e182]: —
+                - 'cell "MK 420 / MK 420 / MK 420 Bag: MK 21,000 / MK 21,000 / MK 21,000" [ref=f16e183]':
+                  - generic [ref=f16e184]: MK 420 / MK 420 / MK 420
+                  - generic [ref=f16e185]: "Bag: MK 21,000 / MK 21,000 / MK 21,000"
+                - cell "kg" [ref=f16e186]
+                - cell "1 report · 2d ago" [ref=f16e187]
+                - cell "Community" [ref=f16e188]:
+                  - generic [ref=f16e189]: Community
+              - 'row "🥜 Groundnuts Farmer/trader report Thyolo Kanengo Market — MK 620 / MK 620 / MK 620 Bag: MK 31,000 / MK 31,000 / MK 31,000 kg 1 report · 2d ago Community" [ref=f16e190]':
+                - cell "🥜 Groundnuts Farmer/trader report" [ref=f16e191]:
+                  - text: 🥜
+                  - strong [ref=f16e192]: Groundnuts
+                  - text: Farmer/trader report
+                - cell "Thyolo Kanengo Market" [ref=f16e193]:
+                  - text: Thyolo
+                  - text: Kanengo Market
+                - cell "—" [ref=f16e194]:
+                  - generic [ref=f16e195]: —
+                - 'cell "MK 620 / MK 620 / MK 620 Bag: MK 31,000 / MK 31,000 / MK 31,000" [ref=f16e196]':
+                  - generic [ref=f16e197]: MK 620 / MK 620 / MK 620
+                  - generic [ref=f16e198]: "Bag: MK 31,000 / MK 31,000 / MK 31,000"
+                - cell "kg" [ref=f16e199]
+                - cell "1 report · 2d ago" [ref=f16e200]
+                - cell "Community" [ref=f16e201]:
+                  - generic [ref=f16e202]: Community
+              - 'row "🌽 Maize Retail Phalombe Phalombe MK 800 Bag: MK 40,000 — kg 30/06/2026 FEWS NET" [ref=f16e203]':
+                - cell "🌽 Maize Retail" [ref=f16e204]:
+                  - text: 🌽
+                  - strong [ref=f16e205]: Maize
+                  - text: Retail
+                - cell "Phalombe Phalombe" [ref=f16e206]:
+                  - text: Phalombe
+                  - text: Phalombe
+                - 'cell "MK 800 Bag: MK 40,000" [ref=f16e207]':
+                  - generic [ref=f16e208]: MK 800
+                  - generic [ref=f16e209]: "Bag: MK 40,000"
+                - cell "—" [ref=f16e210]:
+                  - generic [ref=f16e211]: —
+                - cell "kg" [ref=f16e212]
+                - cell "30/06/2026" [ref=f16e213]
+                - cell "FEWS NET" [ref=f16e214]:
+                  - generic [ref=f16e215]: FEWS NET
+              - 'row "🌽 Maize Retail Southern Lunzu MK 700 Bag: MK 35,000 — kg 30/06/2026 FEWS NET" [ref=f16e216]':
+                - cell "🌽 Maize Retail" [ref=f16e217]:
+                  - text: 🌽
+                  - strong [ref=f16e218]: Maize
+                  - text: Retail
+                - cell "Southern Lunzu" [ref=f16e219]:
+                  - text: Southern
+                  - text: Lunzu
+                - 'cell "MK 700 Bag: MK 35,000" [ref=f16e220]':
+                  - generic [ref=f16e221]: MK 700
+                  - generic [ref=f16e222]: "Bag: MK 35,000"
+                - cell "—" [ref=f16e223]:
+                  - generic [ref=f16e224]: —
+                - cell "kg" [ref=f16e225]
+                - cell "30/06/2026" [ref=f16e226]
+                - cell "FEWS NET" [ref=f16e227]:
+                  - generic [ref=f16e228]: FEWS NET
+              - 'row "🌽 Maize Retail Northern Jenda MK 578.52 Bag: MK 28,926 — kg 30/06/2026 FEWS NET" [ref=f16e229]':
+                - cell "🌽 Maize Retail" [ref=f16e230]:
+                  - text: 🌽
+                  - strong [ref=f16e231]: Maize
+                  - text: Retail
+                - cell "Northern Jenda" [ref=f16e232]:
+                  - text: Northern
+                  - text: Jenda
+                - 'cell "MK 578.52 Bag: MK 28,926" [ref=f16e233]':
+                  - generic [ref=f16e234]: MK 578.52
+                  - generic [ref=f16e235]: "Bag: MK 28,926"
+                - cell "—" [ref=f16e236]:
+                  - generic [ref=f16e237]: —
+                - cell "kg" [ref=f16e238]
+                - cell "30/06/2026" [ref=f16e239]
+                - cell "FEWS NET" [ref=f16e240]:
+                  - generic [ref=f16e241]: FEWS NET
+              - 'row "🌽 Maize Retail Karonga Karonga MK 857.145 Bag: MK 42,857 — kg 30/06/2026 FEWS NET" [ref=f16e242]':
+                - cell "🌽 Maize Retail" [ref=f16e243]:
+                  - text: 🌽
+                  - strong [ref=f16e244]: Maize
+                  - text: Retail
+                - cell "Karonga Karonga" [ref=f16e245]:
+                  - text: Karonga
+                  - text: Karonga
+                - 'cell "MK 857.145 Bag: MK 42,857" [ref=f16e246]':
+                  - generic [ref=f16e247]: MK 857.145
+                  - generic [ref=f16e248]: "Bag: MK 42,857"
+                - cell "—" [ref=f16e249]:
+                  - generic [ref=f16e250]: —
+                - cell "kg" [ref=f16e251]
+                - cell "30/06/2026" [ref=f16e252]
+                - cell "FEWS NET" [ref=f16e253]:
+                  - generic [ref=f16e254]: FEWS NET
+              - 'row "🌽 Maize Retail Balaka Balaka MK 650 Bag: MK 32,500 — kg 30/06/2026 FEWS NET" [ref=f16e255]':
+                - cell "🌽 Maize Retail" [ref=f16e256]:
+                  - text: 🌽
+                  - strong [ref=f16e257]: Maize
+                  - text: Retail
+                - cell "Balaka Balaka" [ref=f16e258]:
+                  - text: Balaka
+                  - text: Balaka
+                - 'cell "MK 650 Bag: MK 32,500" [ref=f16e259]':
+                  - generic [ref=f16e260]: MK 650
+                  - generic [ref=f16e261]: "Bag: MK 32,500"
+                - cell "—" [ref=f16e262]:
+                  - generic [ref=f16e263]: —
+                - cell "kg" [ref=f16e264]
+                - cell "30/06/2026" [ref=f16e265]
+                - cell "FEWS NET" [ref=f16e266]:
+                  - generic [ref=f16e267]: FEWS NET
+              - 'row "🌽 Maize Retail Central Mitundu MK 600 Bag: MK 30,000 — kg 30/06/2026 FEWS NET" [ref=f16e268]':
+                - cell "🌽 Maize Retail" [ref=f16e269]:
+                  - text: 🌽
+                  - strong [ref=f16e270]: Maize
+                  - text: Retail
+                - cell "Central Mitundu" [ref=f16e271]:
+                  - text: Central
+                  - text: Mitundu
+                - 'cell "MK 600 Bag: MK 30,000" [ref=f16e272]':
+                  - generic [ref=f16e273]: MK 600
+                  - generic [ref=f16e274]: "Bag: MK 30,000"
+                - cell "—" [ref=f16e275]:
+                  - generic [ref=f16e276]: —
+                - cell "kg" [ref=f16e277]
+                - cell "30/06/2026" [ref=f16e278]
+                - cell "FEWS NET" [ref=f16e279]:
+                  - generic [ref=f16e280]: FEWS NET
+              - 'row "🌽 Maize Retail Mzuzu Mzuzu MK 980 Bag: MK 49,000 — kg 30/06/2026 FEWS NET" [ref=f16e281]':
+                - cell "🌽 Maize Retail" [ref=f16e282]:
+                  - text: 🌽
+                  - strong [ref=f16e283]: Maize
+                  - text: Retail
+                - cell "Mzuzu Mzuzu" [ref=f16e284]:
+                  - text: Mzuzu
+                  - text: Mzuzu
+                - 'cell "MK 980 Bag: MK 49,000" [ref=f16e285]':
+                  - generic [ref=f16e286]: MK 980
+                  - generic [ref=f16e287]: "Bag: MK 49,000"
+                - cell "—" [ref=f16e288]:
+                  - generic [ref=f16e289]: —
+                - cell "kg" [ref=f16e290]
+                - cell "30/06/2026" [ref=f16e291]
+                - cell "FEWS NET" [ref=f16e292]:
+                  - generic [ref=f16e293]: FEWS NET
+              - 'row "🌽 Maize Retail Nsanje Nsanje, Nsanje Boma MK 800 Bag: MK 40,000 — kg 30/06/2026 FEWS NET" [ref=f16e294]':
+                - cell "🌽 Maize Retail" [ref=f16e295]:
+                  - text: 🌽
+                  - strong [ref=f16e296]: Maize
+                  - text: Retail
+                - cell "Nsanje Nsanje, Nsanje Boma" [ref=f16e297]:
+                  - text: Nsanje
+                  - text: Nsanje, Nsanje Boma
+                - 'cell "MK 800 Bag: MK 40,000" [ref=f16e298]':
+                  - generic [ref=f16e299]: MK 800
+                  - generic [ref=f16e300]: "Bag: MK 40,000"
+                - cell "—" [ref=f16e301]:
+                  - generic [ref=f16e302]: —
+                - cell "kg" [ref=f16e303]
+                - cell "30/06/2026" [ref=f16e304]
+                - cell "FEWS NET" [ref=f16e305]:
+                  - generic [ref=f16e306]: FEWS NET
+              - 'row "🌽 Maize Farmer/trader report — Limbe Market — MK 260 / MK 260 / MK 260 Bag: MK 13,000 / MK 13,000 / MK 13,000 kg 1 report · Yesterday Community" [ref=f16e307]':
+                - cell "🌽 Maize Farmer/trader report" [ref=f16e308]:
+                  - text: 🌽
+                  - strong [ref=f16e309]: Maize
+                  - text: Farmer/trader report
+                - cell "— Limbe Market" [ref=f16e310]:
+                  - text: —
+                  - text: Limbe Market
+                - cell "—" [ref=f16e311]:
+                  - generic [ref=f16e312]: —
+                - 'cell "MK 260 / MK 260 / MK 260 Bag: MK 13,000 / MK 13,000 / MK 13,000" [ref=f16e313]':
+                  - generic [ref=f16e314]: MK 260 / MK 260 / MK 260
+                  - generic [ref=f16e315]: "Bag: MK 13,000 / MK 13,000 / MK 13,000"
+                - cell "kg" [ref=f16e316]
+                - cell "1 report · Yesterday" [ref=f16e317]
+                - cell "Community" [ref=f16e318]:
+                  - generic [ref=f16e319]: Community
+              - 'row "🌽 Maize Farmer/trader report Mchinji Limbe Market — MK 248 / MK 248 / MK 248 Bag: MK 12,400 / MK 12,400 / MK 12,400 kg 1 report · 2d ago Community" [ref=f16e320]':
+                - cell "🌽 Maize Farmer/trader report" [ref=f16e321]:
+                  - text: 🌽
+                  - strong [ref=f16e322]: Maize
+                  - text: Farmer/trader report
+                - cell "Mchinji Limbe Market" [ref=f16e323]:
+                  - text: Mchinji
+                  - text: Limbe Market
+                - cell "—" [ref=f16e324]:
+                  - generic [ref=f16e325]: —
+                - 'cell "MK 248 / MK 248 / MK 248 Bag: MK 12,400 / MK 12,400 / MK 12,400" [ref=f16e326]':
+                  - generic [ref=f16e327]: MK 248 / MK 248 / MK 248
+                  - generic [ref=f16e328]: "Bag: MK 12,400 / MK 12,400 / MK 12,400"
+                - cell "kg" [ref=f16e329]
+                - cell "1 report · 2d ago" [ref=f16e330]
+                - cell "Community" [ref=f16e331]:
+                  - generic [ref=f16e332]: Community
+              - 'row "🌽 Maize Farmer/trader report Thyolo Area 25 Market — MK 255 / MK 255 / MK 255 Bag: MK 12,750 / MK 12,750 / MK 12,750 kg 1 report · 2d ago Community" [ref=f16e333]':
+                - cell "🌽 Maize Farmer/trader report" [ref=f16e334]:
+                  - text: 🌽
+                  - strong [ref=f16e335]: Maize
+                  - text: Farmer/trader report
+                - cell "Thyolo Area 25 Market" [ref=f16e336]:
+                  - text: Thyolo
+                  - text: Area 25 Market
+                - cell "—" [ref=f16e337]:
+                  - generic [ref=f16e338]: —
+                - 'cell "MK 255 / MK 255 / MK 255 Bag: MK 12,750 / MK 12,750 / MK 12,750" [ref=f16e339]':
+                  - generic [ref=f16e340]: MK 255 / MK 255 / MK 255
+                  - generic [ref=f16e341]: "Bag: MK 12,750 / MK 12,750 / MK 12,750"
+                - cell "kg" [ref=f16e342]
+                - cell "1 report · 2d ago" [ref=f16e343]
+                - cell "Community" [ref=f16e344]:
+                  - generic [ref=f16e345]: Community
+              - 'row "🌽 Maize Farmer/trader report Nkhotakota Mzuzu City Market — MK 240 / MK 240 / MK 240 Bag: MK 12,000 / MK 12,000 / MK 12,000 kg 1 report · 2d ago Community" [ref=f16e346]':
+                - cell "🌽 Maize Farmer/trader report" [ref=f16e347]:
+                  - text: 🌽
+                  - strong [ref=f16e348]: Maize
+                  - text: Farmer/trader report
+                - cell "Nkhotakota Mzuzu City Market" [ref=f16e349]:
+                  - text: Nkhotakota
+                  - text: Mzuzu City Market
+                - cell "—" [ref=f16e350]:
+                  - generic [ref=f16e351]: —
+                - 'cell "MK 240 / MK 240 / MK 240 Bag: MK 12,000 / MK 12,000 / MK 12,000" [ref=f16e352]':
+                  - generic [ref=f16e353]: MK 240 / MK 240 / MK 240
+                  - generic [ref=f16e354]: "Bag: MK 12,000 / MK 12,000 / MK 12,000"
+                - cell "kg" [ref=f16e355]
+                - cell "1 report · 2d ago" [ref=f16e356]
+                - cell "Community" [ref=f16e357]:
+                  - generic [ref=f16e358]: Community
+              - 'row "🌽 Maize Retail Chitipa Chitipa MK 751.3 Bag: MK 37,565 — kg 31/05/2026 FEWS NET" [ref=f16e359]':
+                - cell "🌽 Maize Retail" [ref=f16e360]:
+                  - text: 🌽
+                  - strong [ref=f16e361]: Maize
+                  - text: Retail
+                - cell "Chitipa Chitipa" [ref=f16e362]:
+                  - text: Chitipa
+                  - text: Chitipa
+                - 'cell "MK 751.3 Bag: MK 37,565" [ref=f16e363]':
+                  - generic [ref=f16e364]: MK 751.3
+                  - generic [ref=f16e365]: "Bag: MK 37,565"
+                - cell "—" [ref=f16e366]:
+                  - generic [ref=f16e367]: —
+                - cell "kg" [ref=f16e368]
+                - cell "31/05/2026" [ref=f16e369]
+                - cell "FEWS NET" [ref=f16e370]:
+                  - generic [ref=f16e371]: FEWS NET
+              - 'row "🌽 Maize Retail Chikwawa Chikwawa MK 743.5 Bag: MK 37,175 — kg 31/05/2026 FEWS NET" [ref=f16e372]':
+                - cell "🌽 Maize Retail" [ref=f16e373]:
+                  - text: 🌽
+                  - strong [ref=f16e374]: Maize
+                  - text: Retail
+                - cell "Chikwawa Chikwawa" [ref=f16e375]:
+                  - text: Chikwawa
+                  - text: Chikwawa
+                - 'cell "MK 743.5 Bag: MK 37,175" [ref=f16e376]':
+                  - generic [ref=f16e377]: MK 743.5
+                  - generic [ref=f16e378]: "Bag: MK 37,175"
+                - cell "—" [ref=f16e379]:
+                  - generic [ref=f16e380]: —
+                - cell "kg" [ref=f16e381]
+                - cell "31/05/2026" [ref=f16e382]
+                - cell "FEWS NET" [ref=f16e383]:
+                  - generic [ref=f16e384]: FEWS NET
+              - 'row "🌽 Maize Retail Mulanje Mulanje MK 695.4 Bag: MK 34,770 — kg 31/05/2026 FEWS NET" [ref=f16e385]':
+                - cell "🌽 Maize Retail" [ref=f16e386]:
+                  - text: 🌽
+                  - strong [ref=f16e387]: Maize
+                  - text: Retail
+                - cell "Mulanje Mulanje" [ref=f16e388]:
+                  - text: Mulanje
+                  - text: Mulanje
+                - 'cell "MK 695.4 Bag: MK 34,770" [ref=f16e389]':
+                  - generic [ref=f16e390]: MK 695.4
+                  - generic [ref=f16e391]: "Bag: MK 34,770"
+                - cell "—" [ref=f16e392]:
+                  - generic [ref=f16e393]: —
+                - cell "kg" [ref=f16e394]
+                - cell "31/05/2026" [ref=f16e395]
+                - cell "FEWS NET" [ref=f16e396]:
+                  - generic [ref=f16e397]: FEWS NET
+              - 'row "🌽 Maize Retail Mwanza Mwanza MK 791.6 Bag: MK 39,580 — kg 31/05/2026 FEWS NET" [ref=f16e398]':
+                - cell "🌽 Maize Retail" [ref=f16e399]:
+                  - text: 🌽
+                  - strong [ref=f16e400]: Maize
+                  - text: Retail
+                - cell "Mwanza Mwanza" [ref=f16e401]:
+                  - text: Mwanza
+                  - text: Mwanza
+                - 'cell "MK 791.6 Bag: MK 39,580" [ref=f16e402]':
+                  - generic [ref=f16e403]: MK 791.6
+                  - generic [ref=f16e404]: "Bag: MK 39,580"
+                - cell "—" [ref=f16e405]:
+                  - generic [ref=f16e406]: —
+                - cell "kg" [ref=f16e407]
+                - cell "31/05/2026" [ref=f16e408]
+                - cell "FEWS NET" [ref=f16e409]:
+                  - generic [ref=f16e410]: FEWS NET
+              - 'row "🌽 Maize Retail Mangochi Mangochi MK 784.6 Bag: MK 39,230 — kg 31/05/2026 FEWS NET" [ref=f16e411]':
+                - cell "🌽 Maize Retail" [ref=f16e412]:
+                  - text: 🌽
+                  - strong [ref=f16e413]: Maize
+                  - text: Retail
+                - cell "Mangochi Mangochi" [ref=f16e414]:
+                  - text: Mangochi
+                  - text: Mangochi
+                - 'cell "MK 784.6 Bag: MK 39,230" [ref=f16e415]':
+                  - generic [ref=f16e416]: MK 784.6
+                  - generic [ref=f16e417]: "Bag: MK 39,230"
+                - cell "—" [ref=f16e418]:
+                  - generic [ref=f16e419]: —
+                - cell "kg" [ref=f16e420]
+                - cell "31/05/2026" [ref=f16e421]
+                - cell "FEWS NET" [ref=f16e422]:
+                  - generic [ref=f16e423]: FEWS NET
+              - 'row "🌽 Maize Retail Salima Salima MK 898.5 Bag: MK 44,925 — kg 31/05/2026 FEWS NET" [ref=f16e424]':
+                - cell "🌽 Maize Retail" [ref=f16e425]:
+                  - text: 🌽
+                  - strong [ref=f16e426]: Maize
+                  - text: Retail
+                - cell "Salima Salima" [ref=f16e427]:
+                  - text: Salima
+                  - text: Salima
+                - 'cell "MK 898.5 Bag: MK 44,925" [ref=f16e428]':
+                  - generic [ref=f16e429]: MK 898.5
+                  - generic [ref=f16e430]: "Bag: MK 44,925"
+                - cell "—" [ref=f16e431]:
+                  - generic [ref=f16e432]: —
+                - cell "kg" [ref=f16e433]
+                - cell "31/05/2026" [ref=f16e434]
+                - cell "FEWS NET" [ref=f16e435]:
+                  - generic [ref=f16e436]: FEWS NET
+              - 'row "🌽 Maize Retail Mzimba Mzimba MK 738.5 Bag: MK 36,925 — kg 31/05/2026 FEWS NET" [ref=f16e437]':
+                - cell "🌽 Maize Retail" [ref=f16e438]:
+                  - text: 🌽
+                  - strong [ref=f16e439]: Maize
+                  - text: Retail
+                - cell "Mzimba Mzimba" [ref=f16e440]:
+                  - text: Mzimba
+                  - text: Mzimba
+                - 'cell "MK 738.5 Bag: MK 36,925" [ref=f16e441]':
+                  - generic [ref=f16e442]: MK 738.5
+                  - generic [ref=f16e443]: "Bag: MK 36,925"
+                - cell "—" [ref=f16e444]:
+                  - generic [ref=f16e445]: —
+                - cell "kg" [ref=f16e446]
+                - cell "31/05/2026" [ref=f16e447]
+                - cell "FEWS NET" [ref=f16e448]:
+                  - generic [ref=f16e449]: FEWS NET
+              - 'row "🌽 Maize Retail Rumphi Rumphi MK 745.5 Bag: MK 37,275 — kg 31/05/2026 FEWS NET" [ref=f16e450]':
+                - cell "🌽 Maize Retail" [ref=f16e451]:
+                  - text: 🌽
+                  - strong [ref=f16e452]: Maize
+                  - text: Retail
+                - cell "Rumphi Rumphi" [ref=f16e453]:
+                  - text: Rumphi
+                  - text: Rumphi
+                - 'cell "MK 745.5 Bag: MK 37,275" [ref=f16e454]':
+                  - generic [ref=f16e455]: MK 745.5
+                  - generic [ref=f16e456]: "Bag: MK 37,275"
+                - cell "—" [ref=f16e457]:
+                  - generic [ref=f16e458]: —
+                - cell "kg" [ref=f16e459]
+                - cell "31/05/2026" [ref=f16e460]
+                - cell "FEWS NET" [ref=f16e461]:
+                  - generic [ref=f16e462]: FEWS NET
+              - 'row "🌽 Maize Retail Kasungu Kasungu MK 894.1 Bag: MK 44,705 — kg 31/05/2026 FEWS NET" [ref=f16e463]':
+                - cell "🌽 Maize Retail" [ref=f16e464]:
+                  - text: 🌽
+                  - strong [ref=f16e465]: Maize
+                  - text: Retail
+                - cell "Kasungu Kasungu" [ref=f16e466]:
+                  - text: Kasungu
+                  - text: Kasungu
+                - 'cell "MK 894.1 Bag: MK 44,705" [ref=f16e467]':
+                  - generic [ref=f16e468]: MK 894.1
+                  - generic [ref=f16e469]: "Bag: MK 44,705"
+                - cell "—" [ref=f16e470]:
+                  - generic [ref=f16e471]: —
+                - cell "kg" [ref=f16e472]
+                - cell "31/05/2026" [ref=f16e473]
+                - cell "FEWS NET" [ref=f16e474]:
+                  - generic [ref=f16e475]: FEWS NET
+              - 'row "🌾 Rice Retail Karonga Karonga MK 2,184.21 Bag: MK 109,211 — kg 30/06/2026 FEWS NET" [ref=f16e476]':
+                - cell "🌾 Rice Retail" [ref=f16e477]:
+                  - text: 🌾
+                  - strong [ref=f16e478]: Rice
+                  - text: Retail
+                - cell "Karonga Karonga" [ref=f16e479]:
+                  - text: Karonga
+                  - text: Karonga
+                - 'cell "MK 2,184.21 Bag: MK 109,211" [ref=f16e480]':
+                  - generic [ref=f16e481]: MK 2,184.21
+                  - generic [ref=f16e482]: "Bag: MK 109,211"
+                - cell "—" [ref=f16e483]:
+                  - generic [ref=f16e484]: —
+                - cell "kg" [ref=f16e485]
+                - cell "30/06/2026" [ref=f16e486]
+                - cell "FEWS NET" [ref=f16e487]:
+                  - generic [ref=f16e488]: FEWS NET
+              - 'row "🌾 Rice Retail Central Mitundu MK 3,700 Bag: MK 185,000 — kg 30/06/2026 FEWS NET" [ref=f16e489]':
+                - cell "🌾 Rice Retail" [ref=f16e490]:
+                  - text: 🌾
+                  - strong [ref=f16e491]: Rice
+                  - text: Retail
+                - cell "Central Mitundu" [ref=f16e492]:
+                  - text: Central
+                  - text: Mitundu
+                - 'cell "MK 3,700 Bag: MK 185,000" [ref=f16e493]':
+                  - generic [ref=f16e494]: MK 3,700
+                  - generic [ref=f16e495]: "Bag: MK 185,000"
+                - cell "—" [ref=f16e496]:
+                  - generic [ref=f16e497]: —
+                - cell "kg" [ref=f16e498]
+                - cell "30/06/2026" [ref=f16e499]
+                - cell "FEWS NET" [ref=f16e500]:
+                  - generic [ref=f16e501]: FEWS NET
+              - 'row "🌾 Rice Retail Phalombe Phalombe MK 2,775 Bag: MK 138,750 — kg 30/06/2026 FEWS NET" [ref=f16e502]':
+                - cell "🌾 Rice Retail" [ref=f16e503]:
+                  - text: 🌾
+                  - strong [ref=f16e504]: Rice
+                  - text: Retail
+                - cell "Phalombe Phalombe" [ref=f16e505]:
+                  - text: Phalombe
+                  - text: Phalombe
+                - 'cell "MK 2,775 Bag: MK 138,750" [ref=f16e506]':
+                  - generic [ref=f16e507]: MK 2,775
+                  - generic [ref=f16e508]: "Bag: MK 138,750"
+                - cell "—" [ref=f16e509]:
+                  - generic [ref=f16e510]: —
+                - cell "kg" [ref=f16e511]
+                - cell "30/06/2026" [ref=f16e512]
+                - cell "FEWS NET" [ref=f16e513]:
+                  - generic [ref=f16e514]: FEWS NET
+              - 'row "🌾 Rice Retail Southern Lunzu MK 4,000 Bag: MK 200,000 — kg 30/06/2026 FEWS NET" [ref=f16e515]':
+                - cell "🌾 Rice Retail" [ref=f16e516]:
+                  - text: 🌾
+                  - strong [ref=f16e517]: Rice
+                  - text: Retail
+                - cell "Southern Lunzu" [ref=f16e518]:
+                  - text: Southern
+                  - text: Lunzu
+                - 'cell "MK 4,000 Bag: MK 200,000" [ref=f16e519]':
+                  - generic [ref=f16e520]: MK 4,000
+                  - generic [ref=f16e521]: "Bag: MK 200,000"
+                - cell "—" [ref=f16e522]:
+                  - generic [ref=f16e523]: —
+                - cell "kg" [ref=f16e524]
+                - cell "30/06/2026" [ref=f16e525]
+                - cell "FEWS NET" [ref=f16e526]:
+                  - generic [ref=f16e527]: FEWS NET
+              - 'row "🌾 Rice Retail Balaka Balaka MK 3,350 Bag: MK 167,500 — kg 30/06/2026 FEWS NET" [ref=f16e528]':
+                - cell "🌾 Rice Retail" [ref=f16e529]:
+                  - text: 🌾
+                  - strong [ref=f16e530]: Rice
+                  - text: Retail
+                - cell "Balaka Balaka" [ref=f16e531]:
+                  - text: Balaka
+                  - text: Balaka
+                - 'cell "MK 3,350 Bag: MK 167,500" [ref=f16e532]':
+                  - generic [ref=f16e533]: MK 3,350
+                  - generic [ref=f16e534]: "Bag: MK 167,500"
+                - cell "—" [ref=f16e535]:
+                  - generic [ref=f16e536]: —
+                - cell "kg" [ref=f16e537]
+                - cell "30/06/2026" [ref=f16e538]
+                - cell "FEWS NET" [ref=f16e539]:
+                  - generic [ref=f16e540]: FEWS NET
+              - 'row "🌾 Rice Retail Nsanje Nsanje, Nsanje Boma MK 3,000 Bag: MK 150,000 — kg 30/06/2026 FEWS NET" [ref=f16e541]':
+                - cell "🌾 Rice Retail" [ref=f16e542]:
+                  - text: 🌾
+                  - strong [ref=f16e543]: Rice
+                  - text: Retail
+                - cell "Nsanje Nsanje, Nsanje Boma" [ref=f16e544]:
+                  - text: Nsanje
+                  - text: Nsanje, Nsanje Boma
+                - 'cell "MK 3,000 Bag: MK 150,000" [ref=f16e545]':
+                  - generic [ref=f16e546]: MK 3,000
+                  - generic [ref=f16e547]: "Bag: MK 150,000"
+                - cell "—" [ref=f16e548]:
+                  - generic [ref=f16e549]: —
+                - cell "kg" [ref=f16e550]
+                - cell "30/06/2026" [ref=f16e551]
+                - cell "FEWS NET" [ref=f16e552]:
+                  - generic [ref=f16e553]: FEWS NET
+              - 'row "🌾 Rice Retail Northern Jenda MK 3,813.79 Bag: MK 190,690 — kg 30/06/2026 FEWS NET" [ref=f16e554]':
+                - cell "🌾 Rice Retail" [ref=f16e555]:
+                  - text: 🌾
+                  - strong [ref=f16e556]: Rice
+                  - text: Retail
+                - cell "Northern Jenda" [ref=f16e557]:
+                  - text: Northern
+                  - text: Jenda
+                - 'cell "MK 3,813.79 Bag: MK 190,690" [ref=f16e558]':
+                  - generic [ref=f16e559]: MK 3,813.79
+                  - generic [ref=f16e560]: "Bag: MK 190,690"
+                - cell "—" [ref=f16e561]:
+                  - generic [ref=f16e562]: —
+                - cell "kg" [ref=f16e563]
+                - cell "30/06/2026" [ref=f16e564]
+                - cell "FEWS NET" [ref=f16e565]:
+                  - generic [ref=f16e566]: FEWS NET
+              - 'row "🌾 Rice Retail Mzuzu Mzuzu MK 3,900 Bag: MK 195,000 — kg 30/06/2026 FEWS NET" [ref=f16e567]':
+                - cell "🌾 Rice Retail" [ref=f16e568]:
+                  - text: 🌾
+                  - strong [ref=f16e569]: Rice
+                  - text: Retail
+                - cell "Mzuzu Mzuzu" [ref=f16e570]:
+                  - text: Mzuzu
+                  - text: Mzuzu
+                - 'cell "MK 3,900 Bag: MK 195,000" [ref=f16e571]':
+                  - generic [ref=f16e572]: MK 3,900
+                  - generic [ref=f16e573]: "Bag: MK 195,000"
+                - cell "—" [ref=f16e574]:
+                  - generic [ref=f16e575]: —
+                - cell "kg" [ref=f16e576]
+                - cell "30/06/2026" [ref=f16e577]
+                - cell "FEWS NET" [ref=f16e578]:
+                  - generic [ref=f16e579]: FEWS NET
+              - 'row "🌾 Rice Farmer/trader report Thyolo Area 25 Market — MK 500 / MK 500 / MK 500 Bag: MK 25,000 / MK 25,000 / MK 25,000 kg 1 report · 2d ago Community" [ref=f16e580]':
+                - cell "🌾 Rice Farmer/trader report" [ref=f16e581]:
+                  - text: 🌾
+                  - strong [ref=f16e582]: Rice
+                  - text: Farmer/trader report
+                - cell "Thyolo Area 25 Market" [ref=f16e583]:
+                  - text: Thyolo
+                  - text: Area 25 Market
+                - cell "—" [ref=f16e584]:
+                  - generic [ref=f16e585]: —
+                - 'cell "MK 500 / MK 500 / MK 500 Bag: MK 25,000 / MK 25,000 / MK 25,000" [ref=f16e586]':
+                  - generic [ref=f16e587]: MK 500 / MK 500 / MK 500
+                  - generic [ref=f16e588]: "Bag: MK 25,000 / MK 25,000 / MK 25,000"
+                - cell "kg" [ref=f16e589]
+                - cell "1 report · 2d ago" [ref=f16e590]
+                - cell "Community" [ref=f16e591]:
+                  - generic [ref=f16e592]: Community
+              - 'row "🫘 Soybeans Farmer/trader report Thyolo Kanengo Market — MK 590 / MK 590 / MK 590 Bag: MK 29,500 / MK 29,500 / MK 29,500 kg 1 report · 2d ago Community" [ref=f16e593]':
+                - cell "🫘 Soybeans Farmer/trader report" [ref=f16e594]:
+                  - text: 🫘
+                  - strong [ref=f16e595]: Soybeans
+                  - text: Farmer/trader report
+                - cell "Thyolo Kanengo Market" [ref=f16e596]:
+                  - text: Thyolo
+                  - text: Kanengo Market
+                - cell "—" [ref=f16e597]:
+                  - generic [ref=f16e598]: —
+                - 'cell "MK 590 / MK 590 / MK 590 Bag: MK 29,500 / MK 29,500 / MK 29,500" [ref=f16e599]':
+                  - generic [ref=f16e600]: MK 590 / MK 590 / MK 590
+                  - generic [ref=f16e601]: "Bag: MK 29,500 / MK 29,500 / MK 29,500"
+                - cell "kg" [ref=f16e602]
+                - cell "1 report · 2d ago" [ref=f16e603]
+                - cell "Community" [ref=f16e604]:
+                  - generic [ref=f16e605]: Community
+          - paragraph [ref=f16e606]: FEWS NET prices are external reference prices. Community prices are farmer/trader reports from the local database.
+  - generic [ref=f16e607]: Opening Crop Prices

@@ -1,0 +1,9 @@
+[     117ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:8080/favicon.ico:0
+[  337189ms] [LOG] Page load time: 97ms @ http://localhost:8080/:761
+[  343728ms] TypeError: Cannot read properties of undefined (reading 'crop_prices')
+    at AgroBusinessRevolution.openService (http://localhost:8080/assets/js/app.js:975:61)
+    at http://localhost:8080/assets/js/app.js:476:18
+[  351495ms] TypeError: Cannot read properties of undefined (reading 'market_insights')
+    at AgroBusinessRevolution.openService (http://localhost:8080/assets/js/app.js:975:61)
+    at http://localhost:8080/assets/js/app.js:476:18
+[  866509ms] [LOG] Page load time: 1633ms @ http://localhost:8080/:761

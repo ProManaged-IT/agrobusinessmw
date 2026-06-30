@@ -63,19 +63,22 @@
         }
 
         .skip-link {
-            position: absolute;
-            top: -40px;
-            left: 6px;
+            position: fixed;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%) translateY(-100%);
             background: #000;
             color: white;
-            padding: 8px;
+            padding: 8px 16px;
             z-index: 10000;
             text-decoration: none;
-            border-radius: 2px;
+            border-radius: 0 0 4px 4px;
+            transition: transform 0.2s ease;
+            white-space: nowrap;
         }
 
         .skip-link:focus {
-            top: 6px;
+            transform: translateX(-50%) translateY(0);
         }
 
         .skeleton-loading {
@@ -201,10 +204,10 @@
             <!-- Modern hero CTAs -->
             <div class="hero-ctas" role="group" aria-label="Primary actions">
                 <button class="btn-primary" id="cta-prices"
-                    onclick="document.getElementById('language-selection').classList.remove('active');document.getElementById('dashboard').classList.add('active');"
+                    onclick="if(window.app){app.selectLanguageWithAnimation(this,'en');}"
                     aria-label="View prices">Get Prices</button>
                 <button class="btn-secondary" id="cta-register"
-                    onclick="document.getElementById('register-modal').classList.add('active');document.body.style.overflow='hidden';"
+                    onclick="if(window.app){app.openRegistrationModal();}"
                     aria-label="Register">Register</button>
             </div>
         </div>
@@ -744,28 +747,6 @@
             </div>
         </div>
     </div>
-
-    <!-- Environment Switcher (for development only) -->
-    <div id="env-switcher"
-        style="position: fixed; bottom: 10px; right: 10px; background: white; padding: 10px; border-radius: 5px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); z-index: 9999; display: none;">
-        <strong>Environment:</strong>
-        <select id="env-select" onchange="switchEnvironment(this.value)">
-            <option value="local">Local Development</option>
-            <option value="production">Production</option>
-        </select>
-    </div>
-
-    <script>
-        // Show switcher only in local/dev
-        if (window.location.hostname === 'localhost' || window.location.hostname.includes('.local')) {
-            document.getElementById('env-switcher').style.display = 'block';
-        }
-
-        function switchEnvironment(env) {
-            localStorage.setItem('agrobusiness_environment', env);
-            alert(`Environment switched to ${env}. Refresh page to apply changes.`);
-        }
-    </script>
 
     <script src="assets/js/app.js" defer></script>
     <script src="assets/js/config.js"></script>

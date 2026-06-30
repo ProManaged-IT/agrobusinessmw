@@ -2,6 +2,7 @@
 class AgroBusinessRevolution {
     constructor() {
         this.apiBase = 'api.php';
+        this.currentLang = 'en';
 
 
         // Enhanced translation dictionary
@@ -33,7 +34,10 @@ class AgroBusinessRevolution {
                 no_data: 'No data available',
                 error: 'An error occurred',
                 search_districts: 'Search districts...',
-                search_crops: 'Search crops...'
+                search_crops: 'Search crops...',
+                district_picker_intro: 'Choose where you want to trade. Search by district or region, then tap one result.',
+                search_sellers: 'Search sellers, crops, phone...',
+                search_buyers: 'Search buyers, crops, phone...'
             },
             ci: {
                 welcome: 'Takulandirani ku AgroBusiness',
@@ -62,7 +66,10 @@ class AgroBusinessRevolution {
                 no_data: 'Palibe zidziwitso',
                 error: 'Pali vuto',
                 search_districts: 'Fufuzani maboma...',
-                search_crops: 'Fufuzani mbeu...'
+                search_crops: 'Fufuzani mbeu...',
+                district_picker_intro: 'Sankhani kumene mukufuna kugula kapena kugulitsa. Fufuzani chigawo kapena dera, ndiye dinani chisankho chimodzi.',
+                search_sellers: 'Sakani ogulitsa, mbewu, nambala...',
+                search_buyers: 'Sakani ogula, mbewu, nambala...'
             }
         };
 
@@ -128,8 +135,9 @@ class AgroBusinessRevolution {
         // Bind all events
         this.bindAllEvents();
 
-        // Hide loading screen after data is loaded
-        setTimeout(() => this.hideLoadingScreen(), 3000);
+        // Hide loading screen now that data is ready — give the progress animation
+        // a brief moment to finish rendering before fading out (200ms is enough).
+        setTimeout(() => this.hideLoadingScreen(), 200);
 
         // Test database connection
         this.testConnection();
@@ -778,6 +786,7 @@ class AgroBusinessRevolution {
             case 'pest_control': this.loadPestControl(state.cropId, state.districtId); break;
             case 'farming_tips': this.loadFarmingTips(state.cropId); break;
             case 'basic_info': this.loadBasicInfo(); break;
+            case 'farming_guide': this.loadFarmingGuide(); break;
             case 'district_actions': this.showDistrictActions(state.districtId); break;
             case 'crop_actions': this.showCropActions(state.cropId); break;
             default: this.showScreen('dashboard'); break;
@@ -797,8 +806,9 @@ class AgroBusinessRevolution {
             }
         } else {
             // Fallback to clipboard
-            navigator.clipboard.writeText(window.location.href);
-            this.showNotification('Link copied to clipboard!');
+            navigator.clipboard.writeText(window.location.href)
+                .then(() => this.showNotification('Link copied to clipboard!'))
+                .catch(() => this.showNotification('Could not copy link. Please copy the URL manually.', 'error'));
         }
     }
 
@@ -1050,6 +1060,7 @@ class AgroBusinessRevolution {
     }
 
     loadFarmingGuide() {
+        this.pushNavState('farming_guide');
         const area = document.getElementById('content-area');
         if (!area) return;
 
@@ -1294,7 +1305,7 @@ class AgroBusinessRevolution {
                     <p style="margin-bottom: 3rem; color: var(--text-secondary);">What would you like to know about ${district.name}?</p>
 
                     <div class="services-grid" style="max-width: 800px; margin: 0 auto;">
-                        <div class="service-card" onclick="app.loadWeather(${districtId})" style="cursor: pointer;">
+                        <div class="service-card" onclick="app.showLoading();app.loadWeather(${districtId})" style="cursor: pointer;">
                             <div class="service-icon-3d">🌤️</div>
                             <div class="service-content-modern">
                                 <h3>Weather Forecast</h3>
@@ -1302,7 +1313,7 @@ class AgroBusinessRevolution {
                             </div>
                         </div>
 
-                        <div class="service-card" onclick="app.loadMarketInsights(${districtId})" style="cursor: pointer;">
+                        <div class="service-card" onclick="app.showLoading();app.loadMarketInsights(${districtId})" style="cursor: pointer;">
                             <div class="service-icon-3d">📊</div>
                             <div class="service-content-modern">
                                 <h3>Market Insights</h3>
@@ -1310,7 +1321,7 @@ class AgroBusinessRevolution {
                             </div>
                         </div>
 
-                        <div class="service-card" onclick="app.loadSellers(${districtId})" style="cursor: pointer;">
+                        <div class="service-card" onclick="app.showLoading();app.loadSellers(${districtId})" style="cursor: pointer;">
                             <div class="service-icon-3d">👨‍🌾</div>
                             <div class="service-content-modern">
                                 <h3>Find Sellers</h3>
@@ -1318,7 +1329,7 @@ class AgroBusinessRevolution {
                             </div>
                         </div>
 
-                        <div class="service-card" onclick="app.loadBuyers(${districtId})" style="cursor: pointer;">
+                        <div class="service-card" onclick="app.showLoading();app.loadBuyers(${districtId})" style="cursor: pointer;">
                             <div class="service-icon-3d">🏢</div>
                             <div class="service-content-modern">
                                 <h3>Find Buyers</h3>
@@ -1423,7 +1434,7 @@ class AgroBusinessRevolution {
 
             list.innerHTML = `
                 <div class="district-picker-intro">
-                    <p>Choose where you want to trade. Search by district or region, then tap one result.</p>
+                    <p>${this.texts[this.currentLang].district_picker_intro}</p>
                     <div class="district-region-summary">${regionSummary}</div>
                     ${quickPicks}
                 </div>
@@ -1432,12 +1443,10 @@ class AgroBusinessRevolution {
                 const region = coords ? coords.region : 'Malawi';
                 return `
                         <button class="district-item" data-id="${district.id}" data-name="${district.name}" data-region="${region}" type="button">
-                            <span class="district-pin" aria-hidden="true"></span>
                             <span class="district-copy">
                                 <strong>${district.name}</strong>
                                 <small>${region} Region</small>
                             </span>
-                            <span class="district-action">Select</span>
                         </button>
                     `;
             }).join('')}
@@ -1997,7 +2006,7 @@ class AgroBusinessRevolution {
             const area = document.getElementById('content-area');
             area.innerHTML = `
                 <h2 style="font-family:'DM Serif Display',serif;margin-bottom:1rem;color:var(--text-primary)">Crop Prices</h2>
-                <p style="color:var(--text-muted);font-size:.9rem;margin-bottom:1.25rem">FEWS NET reference prices and community market reports are shown side by side in one searchable table.</p>
+                <p class="price-meta" style="margin-bottom:1.25rem">FEWS NET reference prices and community market reports are shown side by side in one searchable table.</p>
 
                 <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:1.5rem;flex-wrap:wrap">
                     <button class="price-tab active" id="tab-prices" onclick="app._priceTab('prices')">All Prices <span style="background:var(--accent);color:#fff;border-radius:20px;padding:.1rem .5rem;font-size:.75rem;margin-left:.3rem">${rows.length}</span></button>
@@ -2005,7 +2014,7 @@ class AgroBusinessRevolution {
                 </div>
 
                 <div id="pane-prices" class="price-pane">
-                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:.75rem;margin-bottom:1rem">
+                    <div class="price-filters">
                         <input id="price-search" type="search" placeholder="Search crop, district, market, source, price..." style="padding:.75rem;border:1px solid var(--border);border-radius:8px">
                         <select id="price-source-filter" style="padding:.75rem;border:1px solid var(--border);border-radius:8px">
                             <option value="all">All sources</option>
@@ -2020,11 +2029,11 @@ class AgroBusinessRevolution {
                             ${districtOptions}
                         </select>
                     </div>
-                    <p id="price-filter-stats" style="color:var(--text-muted);font-size:.85rem;margin-bottom:.75rem">Showing ${rows.length} price records: ${fews.length} FEWS NET, ${community.length} community.</p>
-                    <div style="overflow-x:auto">
+                    <p id="price-filter-stats" class="price-meta">Showing ${rows.length} price records: ${fews.length} FEWS NET, ${community.length} community.</p>
+                    <div class="table-wrap" style="overflow-x:auto">
                     <table class="data-table" id="price-combined-table">
                         <thead><tr>
-                            <th>Crop</th><th>District / Market</th><th>FEWS NET Price</th><th>Community Min / Avg / Max</th><th>Unit</th><th>Date / Reports</th><th>Source</th>
+                            <th>Crop</th><th>Location</th><th>FEWS Price</th><th>Community Range</th><th>Unit</th><th>Date</th><th>Source</th>
                         </tr></thead>
                         <tbody>
                             ${priceRows || `<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:2rem">No price data yet.</td></tr>`}
@@ -2032,7 +2041,7 @@ class AgroBusinessRevolution {
                         </tbody>
                     </table>
                     </div>
-                    <p style="margin-top:1rem;font-size:.8rem;color:var(--text-muted)">FEWS NET prices are external reference prices. Community prices are farmer/trader reports from the local database.</p>
+                    <p class="price-meta" style="margin-top:1rem">FEWS NET prices are external reference prices. Community prices are farmer/trader reports from the local database.</p>
                 </div>
 
                 <div id="pane-report" class="price-pane" style="display:none">
@@ -2389,9 +2398,7 @@ class AgroBusinessRevolution {
         const t = this.texts[this.currentLang];
         const isSeller = type === 'seller';
         const title = isSeller ? t.find_sellers : t.find_buyers;
-        const ph = this.currentLang === 'ci'
-            ? (isSeller ? 'Sakani ogulitsa, mbewu, nambala...' : 'Sakani ogula, mbewu, nambala...')
-            : (isSeller ? 'Search sellers, crops, phone...' : 'Search buyers, crops, phone...');
+        const ph = isSeller ? t.search_sellers : t.search_buyers;
 
         const toggle = districtId !== null ? `
             <div class="trade-type-toggle">
@@ -2844,7 +2851,7 @@ AgroBusinessRevolution.prototype._regGotoStep = function (step) {
     if (target) target.style.display = '';
 
     // Update step indicators
-    document.querySelectorAll('#reg-steps .reg-step').forEach(el => {
+    document.querySelectorAll('.reg-steps .reg-step').forEach(el => {
         const s = parseInt(el.dataset.step);
         el.classList.toggle('reg-step-active', s === step);
         el.classList.toggle('reg-step-done', s < step);
@@ -2856,7 +2863,9 @@ AgroBusinessRevolution.prototype._regGotoStep = function (step) {
 
 AgroBusinessRevolution.prototype._regLoadDistricts = function () {
     const sel = document.getElementById('reg-district');
-    if (!sel || sel.options.length > 1) return;
+    if (!sel) return;
+    // Clear any previously loaded options except the placeholder so re-opens don't duplicate
+    while (sel.options.length > 1) sel.remove(1);
     fetch(`api.php?action=districts`)
         .then(r => r.json())
         .then(data => {
@@ -2867,6 +2876,9 @@ AgroBusinessRevolution.prototype._regLoadDistricts = function () {
                 opt.textContent = d.name;
                 sel.appendChild(opt);
             });
+        })
+        .catch(() => {
+            if (window.app) window.app.showNotification('Failed to load districts. Please try again.', 'error');
         });
 };
 
@@ -2884,6 +2896,9 @@ AgroBusinessRevolution.prototype._regLoadCrops = function () {
                 label.innerHTML = `<input type="checkbox" value="${c.id}" data-name="${c.name}"> ${c.name}`;
                 grid.appendChild(label);
             });
+        })
+        .catch(() => {
+            if (window.app) window.app.showNotification('Failed to load crops. Please try again.', 'error');
         });
 };
 
@@ -2913,7 +2928,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (closeBtn) {
         closeBtn.addEventListener('click', () => {
             const modal = document.getElementById('register-modal');
-            if (modal) { modal.classList.remove('active'); document.body.style.overflow = ''; }
+            if (modal && window.app) { window.app.closeModal(modal); }
         });
     }
 
@@ -2948,10 +2963,10 @@ document.addEventListener('DOMContentLoaded', function () {
             const district = document.getElementById('reg-district').value;
             const village = document.getElementById('reg-village').value.trim();
 
-            if (!name || name.length < 2) { alert('Please enter your full name.'); return; }
-            if (!phone || !/\+?[\d\s\-]{8,20}/.test(phone)) { alert('Please enter a valid phone number.'); return; }
-            if (!village || village.length < 2) { alert('Please enter your village or town.'); return; }
-            if (!district) { alert('Please select your district.'); return; }
+            if (!name || name.length < 2) { window.app && window.app.showNotification('Please enter your full name.', 'error'); return; }
+            if (!phone || !/^\+?[\d\s\-]{8,20}$/.test(phone)) { window.app && window.app.showNotification('Please enter a valid phone number.', 'error'); return; }
+            if (!village || village.length < 2) { window.app && window.app.showNotification('Please enter your village or town.', 'error'); return; }
+            if (!district) { window.app && window.app.showNotification('Please select your district.', 'error'); return; }
             if (window.app) window.app._regGotoStep(3);
         });
     }
@@ -2964,8 +2979,8 @@ document.addEventListener('DOMContentLoaded', function () {
             const business = document.getElementById('reg-business-name').value.trim();
             const userType = window.app?._regState?.userType;
 
-            if (!selectedCrops.length) { alert('Please select at least one crop.'); return; }
-            if (userType && userType !== 'farmer' && !business) { alert('Please enter your business or organisation name.'); return; }
+            if (!selectedCrops.length) { window.app && window.app.showNotification('Please select at least one crop.', 'error'); return; }
+            if (userType && userType !== 'farmer' && !business) { window.app && window.app.showNotification('Please enter your business or organisation name.', 'error'); return; }
             if (window.app) window.app._regGotoStep(4);
         });
     }
@@ -3010,17 +3025,17 @@ document.addEventListener('DOMContentLoaded', function () {
                     const refEl = document.getElementById('reg-ref-number');
                     if (refEl) refEl.textContent = data.ref;
                     // Mark all steps done
-                    document.querySelectorAll('#reg-steps .reg-step').forEach(el => {
+                    document.querySelectorAll('.reg-steps .reg-step').forEach(el => {
                         el.classList.remove('reg-step-active');
                         el.classList.add('reg-step-done');
                     });
                 } else {
-                    alert('Error: ' + (data.error || 'Submission failed. Please try again.'));
+                    if (window.app) window.app.showNotification(data.error || 'Submission failed. Please try again.', 'error');
                     submitBtn.disabled = false;
                     submitBtn.textContent = 'Submit Application ✓';
                 }
             } catch (err) {
-                alert('Network error. Please check your connection and try again.');
+                if (window.app) window.app.showNotification('Network error. Please check your connection and try again.', 'error');
                 submitBtn.disabled = false;
                 submitBtn.textContent = 'Submit Application ✓';
             }
@@ -3032,9 +3047,11 @@ document.addEventListener('DOMContentLoaded', function () {
     if (checkStatusBtn) {
         checkStatusBtn.addEventListener('click', () => {
             const regModal = document.getElementById('register-modal');
-            if (regModal) { regModal.classList.remove('active'); document.body.style.overflow = ''; }
-            const statusModal = document.getElementById('status-modal');
-            if (statusModal) { statusModal.classList.add('active'); document.body.style.overflow = 'hidden'; }
+            if (regModal && window.app) { window.app.closeModal(regModal); }
+            setTimeout(() => {
+                const statusModal = document.getElementById('status-modal');
+                if (statusModal && window.app) { window.app.openModal(statusModal); }
+            }, 260);
         });
     }
 
@@ -3043,7 +3060,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (statusCloseBtn) {
         statusCloseBtn.addEventListener('click', () => {
             const modal = document.getElementById('status-modal');
-            if (modal) { modal.classList.remove('active'); document.body.style.overflow = ''; }
+            if (modal && window.app) { window.app.closeModal(modal); }
         });
     }
 
@@ -3052,7 +3069,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (statusCheckBtn) {
         statusCheckBtn.addEventListener('click', async () => {
             const ref = document.getElementById('status-ref-input').value.trim().toUpperCase();
-            if (!ref) { alert('Please enter your reference number.'); return; }
+            if (!ref) { if (window.app) window.app.showNotification('Please enter your reference number.', 'error'); return; }
             statusCheckBtn.textContent = 'Checking…';
             statusCheckBtn.disabled = true;
             const result = document.getElementById('status-result');
@@ -3089,18 +3106,8 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // Close modals on backdrop click (registration & status use same .modal-backdrop class)
-    ['register-modal', 'status-modal'].forEach(id => {
-        const modal = document.getElementById(id);
-        if (modal) {
-            modal.addEventListener('click', e => {
-                if (e.target === modal || e.target.classList.contains('modal-backdrop')) {
-                    modal.classList.remove('active');
-                    document.body.style.overflow = '';
-                }
-            });
-        }
-    });
+    // Backdrop-click for register-modal and status-modal is already handled by
+    // bindModalEvents() which covers all .modal elements. No duplicate listener needed.
 });
 
 // ─── END REGISTRATION MODULE ──────────────────────────────────────────────────

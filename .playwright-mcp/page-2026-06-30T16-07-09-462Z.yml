@@ -1,0 +1,63 @@
+- generic [active] [ref=e1]:
+  - link "Skip to main content" [ref=e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - generic [ref=e38]:
+    - banner "Main navigation" [ref=e39]:
+      - generic [ref=e40]:
+        - generic [ref=e41] [cursor=pointer]:
+          - generic [ref=e42]: 🌾
+          - generic [ref=e43]:
+            - generic [ref=e44]: AgroBusiness
+            - generic [ref=e45]: Malawi
+        - button "Change language" [ref=e47] [cursor=pointer]:
+          - generic [ref=e48]: 🇬🇧
+          - generic [ref=e49]: EN
+          - generic [ref=e50]: ▼
+    - main [ref=e51]:
+      - generic [ref=e52]:
+        - generic [ref=e53]: 28 Districts · 9 Crops · Live Weather · 24/7 Prices
+        - region "Agricultural Services" [ref=e54]:
+          - heading "Agricultural Services" [level=2] [ref=e55]
+          - generic [ref=e56]:
+            - button "View crop prices" [ref=e57] [cursor=pointer]:
+              - img [ref=e59]:
+                - generic [ref=e63]: MK
+              - heading "Crop Prices" [level=3] [ref=e64]
+              - paragraph [ref=e65]: Live market prices for all crops
+            - button "Check weather" [ref=e66] [cursor=pointer]:
+              - img [ref=e68]
+              - heading "Weather Forecast" [level=3] [ref=e74]
+              - paragraph [ref=e75]: 7-day weather predictions
+            - button "View market insights" [ref=e76] [cursor=pointer]:
+              - img [ref=e78]
+              - heading "Market Insights" [level=3] [ref=e86]
+              - paragraph [ref=e87]: District market intelligence
+            - button "Find sellers" [ref=e88] [cursor=pointer]:
+              - img [ref=e90]
+              - heading "Find Sellers" [level=3] [ref=e96]
+              - paragraph [ref=e97]: Connect with suppliers
+            - button "Find buyers" [ref=e98] [cursor=pointer]:
+              - img [ref=e100]
+              - heading "Find Buyers" [level=3] [ref=e106]
+              - paragraph [ref=e107]: Find markets for your produce
+            - button "Pest control info" [ref=e108] [cursor=pointer]:
+              - img [ref=e110]
+              - heading "Pest Control" [level=3] [ref=e117]
+              - paragraph [ref=e118]: Combat pests effectively
+            - button "Farming tips" [ref=e119] [cursor=pointer]:
+              - img [ref=e121]
+              - heading "Farming Tips" [level=3] [ref=e129]
+              - paragraph [ref=e130]: Expert farming practices
+            - button "Farming guide" [ref=e131] [cursor=pointer]:
+              - img [ref=e133]
+              - heading "Farming Guide" [level=3] [ref=e140]
+              - paragraph [ref=e141]: Step-by-step planting and care
+            - button "Basic info" [ref=e142] [cursor=pointer]:
+              - img [ref=e144]:
+                - generic [ref=e147]: i
+              - heading "Basic Information" [level=3] [ref=e148]
+              - paragraph [ref=e149]: Essential farming knowledge
+            - button "Register account" [ref=e150] [cursor=pointer]:
+              - img [ref=e152]
+              - heading "Register" [level=3] [ref=e156]
+              - paragraph [ref=e157]: Join as Farmer, Seller or Buyer

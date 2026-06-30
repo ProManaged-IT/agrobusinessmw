@@ -1,0 +1,23 @@
+- generic [ref=f13e1]:
+  - link "Skip to main content" [ref=f13e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - main "Language selection" [ref=f13e18]:
+    - generic [ref=f13e19]:
+      - generic [ref=f13e20]:
+        - generic [ref=f13e21]: 🌾
+        - heading "Welcome to AgroBusiness" [level=1] [ref=f13e22]
+        - paragraph [ref=f13e23]: Your complete agricultural platform
+      - generic [ref=f13e24]:
+        - button "Select English" [active] [ref=f13e25] [cursor=pointer]:
+          - generic [ref=f13e26]:
+            - heading "English" [level=2] [ref=f13e27]
+            - paragraph [ref=f13e28]: International Language
+            - generic [ref=f13e29]: →
+        - button "Select Chichewa" [ref=f13e30] [cursor=pointer]:
+          - generic [ref=f13e31]:
+            - heading "Chichewa" [level=2] [ref=f13e32]
+            - paragraph [ref=f13e33]: Chinenero cha Malawi
+            - generic [ref=f13e34]: →
+      - group "Primary actions" [ref=f13e35]:
+        - button "View prices" [ref=f13e36] [cursor=pointer]: Get Prices
+        - button "Register" [ref=f13e37] [cursor=pointer]
