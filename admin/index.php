@@ -353,8 +353,8 @@ tr:hover td { background: #f0ece4; transition: background 0.15s ease; }
 
     <?php if (!$priceReviewAvailable): ?>
     <div class="empty">
-        Price review is not active yet. Run the migration
-        <code>migrations/2026-07-01_community_price_review.sql</code> to enable it.
+        Price review is not active yet — the <code>crowdsourced_prices.status</code>
+        column is missing on this database.
     </div>
     <?php elseif (empty($pendingPrices)): ?>
     <div class="empty">No community prices awaiting review. 🎉</div>
