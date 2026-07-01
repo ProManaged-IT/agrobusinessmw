@@ -1,3 +1,0 @@
-[     107ms] [LOG] Page load time: 94ms @ http://localhost:8080/:761
-[   25598ms] [LOG] Page load time: 1238ms @ http://localhost:8080/:761
-[   30025ms] [INFO] Slow network is detected. See https://www.chromestatus.com/feature/5636954674692096 for more details. Fallback font will be used while loading: https://fonts.gstatic.com/s/materialsymbolsrounded/v355/sykg-zNym6YjUruM-QrEh7-nyTnjDwKNJ_190Fjzag.woff2 @ http://localhost:8080/:0

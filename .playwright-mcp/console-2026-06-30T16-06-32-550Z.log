@@ -1,4 +1,0 @@
-[    1246ms] [LOG] Page load time: 1221ms @ http://localhost:8080/:761
-[   54704ms] [INFO] Slow network is detected. See https://www.chromestatus.com/feature/5636954674692096 for more details. Fallback font will be used while loading: https://fonts.gstatic.com/s/materialsymbolsrounded/v355/sykg-zNym6YjUruM-QrEh7-nyTnjDwKNJ_190Fjzag.woff2 @ http://localhost:8080/:0
-[  445822ms] [LOG] Page load time: 1628ms @ http://localhost:8080/:761
-[  451593ms] [INFO] Slow network is detected. See https://www.chromestatus.com/feature/5636954674692096 for more details. Fallback font will be used while loading: https://fonts.gstatic.com/s/materialsymbolsrounded/v355/sykg-zNym6YjUruM-QrEh7-nyTnjDwKNJ_190Fjzag.woff2 @ http://localhost:8080/:0

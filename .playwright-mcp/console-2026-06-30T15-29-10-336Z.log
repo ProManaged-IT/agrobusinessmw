@@ -1,9 +1,0 @@
-[      84ms] [LOG] Page load time: 68ms @ http://localhost:8080/:761
-[   26601ms] [LOG] Page load time: 1094ms @ http://localhost:8080/:761
-[  123788ms] TypeError: Cannot read properties of undefined (reading 'market_insights')
-    at AgroBusinessRevolution.openService (http://localhost:8080/assets/js/app.js:975:61)
-    at http://localhost:8080/assets/js/app.js:476:18
-[  124101ms] [INFO] Slow network is detected. See https://www.chromestatus.com/feature/5636954674692096 for more details. Fallback font will be used while loading: https://fonts.gstatic.com/s/materialsymbolsrounded/v355/sykg-zNym6YjUruM-QrEh7-nyTnjDwKNJ_190Fjzag.woff2 @ http://localhost:8080/:0
-[  160234ms] TypeError: Cannot read properties of undefined (reading 'market_insights')
-    at AgroBusinessRevolution.openService (http://localhost:8080/assets/js/app.js:975:61)
-    at http://localhost:8080/assets/js/app.js:476:18

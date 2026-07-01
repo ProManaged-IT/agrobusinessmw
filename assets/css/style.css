@@ -2891,6 +2891,32 @@ a:focus-visible,
     line-height: 1.6;
 }
 
+.pr-hint {
+    display: block;
+    margin-top: 0.35rem;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.pr-price-row {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+
+.pr-price-row input {
+    flex: 1;
+    min-width: 0;
+}
+
+.pr-price-or {
+    flex: 0 0 auto;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+}
+
 /* Community price confirmation chip (in the crop-price table) */
 .price-confirm-chip {
     display: inline-block;

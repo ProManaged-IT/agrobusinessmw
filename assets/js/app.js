@@ -819,6 +819,7 @@ class AgroBusinessRevolution {
             case 'crop_prices': this.loadCropPrices(state.specificCrop || null); break;
             case 'weather': this.loadWeather(state.districtId); break;
             case 'market_insights': this.loadMarketInsights(state.districtId); break;
+            case 'district_selection': this.showDistrictSelection(this._pendingDistrictCallback || null); break;
             case 'sellers': this.loadSellers(state.districtId, state.specificCrop || null); break;
             case 'buyers': this.loadBuyers(state.districtId); break;
             case 'pest_control':
@@ -1581,6 +1582,10 @@ class AgroBusinessRevolution {
     }
 
     showDistrictSelection(callback) {
+        // Store callback so _replayState can re-open the modal when user presses back
+        this._pendingDistrictCallback = callback;
+        this.pushNavState('district_selection');
+
         this.loadDistricts().then(districts => {
 
             if (districts.length === 0) {
@@ -2333,11 +2338,18 @@ class AgroBusinessRevolution {
                         </div>
                         <div class="form-group">
                             <label>Market / Location *</label>
-                            <input type="text" id="pr-market" placeholder="e.g. Limbe Market" required>
+                            <input type="text" id="pr-market" list="pr-market-list" placeholder="Select district first, then pick or type" autocomplete="off" required>
+                            <datalist id="pr-market-list"></datalist>
+                            <small class="pr-hint">Choose an existing market or type a new one.</small>
                         </div>
                         <div class="form-group">
-                            <label>Price per kg (MWK) *</label>
-                            <input type="number" id="pr-price" min="1" max="99999" step="1" placeholder="e.g. 250" required>
+                            <label>Price — enter per kg <em>or</em> per bag *</label>
+                            <div class="pr-price-row">
+                                <input type="number" id="pr-price-kg" min="1" max="99999" step="1" placeholder="Per kg (MWK)">
+                                <span class="pr-price-or">or</span>
+                                <input type="number" id="pr-price-bag" min="1" max="9999999" step="1" placeholder="Per 50kg bag (MWK)">
+                            </div>
+                            <small class="pr-hint">Fill in whichever you know — we work out the other automatically.</small>
                         </div>
                         <div class="form-group">
                             <label>Your Phone (registered) *</label>
@@ -2423,15 +2435,16 @@ class AgroBusinessRevolution {
                 const cropId    = +document.getElementById('pr-crop').value;
                 const districtId = +document.getElementById('pr-district').value;
                 const market    = document.getElementById('pr-market').value.trim();
-                const price     = +document.getElementById('pr-price').value;
+                const priceKg   = +document.getElementById('pr-price-kg').value;
+                const priceBag  = +document.getElementById('pr-price-bag').value;
                 const phone     = document.getElementById('pr-phone').value.trim();
                 const email     = document.getElementById('pr-email').value.trim();
 
-                // All fields are required.
+                // All fields required; price may be given per kg OR per bag.
                 if (!cropId) return showErr('Please select a crop.');
                 if (!districtId) return showErr('Please select your district.');
                 if (!market) return showErr('Please enter the market / location.');
-                if (!price || price <= 0) return showErr('Please enter a valid price per kg.');
+                if ((!priceKg || priceKg <= 0) && (!priceBag || priceBag <= 0)) return showErr('Please enter a price per kg or per bag.');
                 if (!/^\+?[0-9\s\-]{8,20}$/.test(phone)) return showErr('Please enter a valid phone number.');
                 if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return showErr('Please enter a valid email address.');
 
@@ -2442,7 +2455,8 @@ class AgroBusinessRevolution {
                         body: JSON.stringify({
                             crop_id: cropId,
                             district_id: districtId,
-                            price_per_kg: price,
+                            price_per_kg: priceKg > 0 ? priceKg : undefined,
+                            price_per_bag: priceBag > 0 ? priceBag : undefined,
                             market_name: market,
                             phone: phone,
                             email: email,
@@ -2463,6 +2477,24 @@ class AgroBusinessRevolution {
                     msg.style.display = 'block'; msg.style.color = '#b94040'; msg.textContent = 'Network error.';
                 } finally { btn.disabled = false; btn.textContent = 'Submit Price Report'; }
             });
+
+            // Load the district's markets into the datalist when a district is chosen.
+            const prDistrict = document.getElementById('pr-district');
+            const prMarketList = document.getElementById('pr-market-list');
+            if (prDistrict && prMarketList) {
+                prDistrict.addEventListener('change', async () => {
+                    prMarketList.innerHTML = '';
+                    const id = +prDistrict.value;
+                    if (!id) return;
+                    try {
+                        const res = await this.apiCall(`api.php?action=markets&district_id=${id}`);
+                        if (res.success) {
+                            prMarketList.innerHTML = res.data
+                                .map(m => `<option value="${(m.name || '').replace(/"/g, '&quot;')}"></option>`).join('');
+                        }
+                    } catch (_) { /* datalist is optional; free text still works */ }
+                });
+            }
 
         } catch (error) {
             console.error('Error loading crop prices:', error);

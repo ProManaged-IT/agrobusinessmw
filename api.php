@@ -1078,23 +1078,41 @@ try {
             ]);
             break;
 
+        case 'markets':
+            // Markets/locations for a district (each district can have many).
+            $district_id = isset($_GET['district_id']) ? (int)$_GET['district_id'] : 0;
+            if (!$district_id) throw new Exception('district_id is required.');
+            $stmt = $mysqli->prepare("SELECT id, name FROM markets WHERE district_id = ? ORDER BY name");
+            $stmt->bind_param('i', $district_id);
+            $stmt->execute();
+            echo json_encode(['success' => true, 'data' => stmt_fetch_all($stmt), 'timestamp' => date('c')]);
+            break;
+
         case 'submit_price':
             // Farmer submits a crowdsourced price
             $body = json_decode(file_get_contents('php://input'), true) ?? [];
             $crop_id    = (int)($body['crop_id']    ?? 0);
             $district_id = isset($body['district_id']) ? (int)$body['district_id'] : null;
-            $price      = (float)($body['price_per_kg'] ?? 0);
             $unit       = preg_replace('/[^a-zA-Z\/]/', '', $body['unit'] ?? 'kg');
             $market     = mb_substr(trim($body['market_name'] ?? ''), 0, 200);
             $phone      = mb_substr(trim($body['phone'] ?? 'anonymous'), 0, 50);
             $email      = mb_substr(trim($body['email'] ?? ''), 0, 200);
             $channel    = in_array($body['channel'] ?? 'web', ['web', 'ussd']) ? ($body['channel'] ?? 'web') : 'web';
 
-            if (!$crop_id || $price <= 0) {
-                throw new Exception('crop_id and price_per_kg are required.');
+            // Accept a price per kg OR per 50kg bag — whichever the reporter entered.
+            $BAG_KG   = 50;
+            $price    = (float)($body['price_per_kg']  ?? 0);   // canonical: per kg
+            $bagInput = (float)($body['price_per_bag'] ?? 0);
+            if ($price <= 0 && $bagInput > 0) $price = round($bagInput / $BAG_KG, 2);
+
+            if (!$crop_id) {
+                throw new Exception('crop_id is required.');
+            }
+            if ($price <= 0) {
+                throw new Exception('Enter a price per kg or per bag.');
             }
             if ($price > 100000) {
-                throw new Exception('Price seems too high. Please enter price per kg in MWK.');
+                throw new Exception('Price seems too high. Please check the amount in MWK.');
             }
             // Web reports require full context so the price is useful and reviewable.
             if ($channel === 'web') {
@@ -1131,14 +1149,30 @@ try {
                 }
             }
 
-            $price_per_bag = round($price * 50, 2);
+            // Keep the reporter's actual bag figure when given; otherwise derive it.
+            $price_per_bag = $bagInput > 0 ? round($bagInput, 2) : round($price * $BAG_KG, 2);
             $emailVal = $email !== '' ? $email : null;
+
+            // Link to a market for this district (find-or-create), so each district
+            // accumulates its own list of markets/locations.
+            $market_id = null;
+            if ($district_id && $market !== '') {
+                $mk = $mysqli->prepare("INSERT IGNORE INTO markets (district_id, name) VALUES (?, ?)");
+                $mk->bind_param('is', $district_id, $market);
+                $mk->execute();
+                $sel = $mysqli->prepare("SELECT id FROM markets WHERE district_id = ? AND name = ? LIMIT 1");
+                $sel->bind_param('is', $district_id, $market);
+                $sel->execute();
+                $mrow = stmt_fetch_one($sel);
+                $market_id = $mrow ? (int)$mrow['id'] : null;
+            }
+
             $stmt = $mysqli->prepare(
                 "INSERT INTO crowdsourced_prices
-                 (crop_id, district_id, price_per_kg, price_per_bag, unit, market_name, submitted_by, email, channel, status, is_member, flag_reason)
-                 VALUES (?,?,?,?,?,?,?,?,?,?,?,?)"
+                 (crop_id, district_id, price_per_kg, price_per_bag, unit, market_name, market_id, submitted_by, email, channel, status, is_member, flag_reason)
+                 VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)"
             );
-            $stmt->bind_param('iiddssssssis', $crop_id, $district_id, $price, $price_per_bag, $unit, $market, $phone, $emailVal, $channel, $status, $is_member, $flag);
+            $stmt->bind_param('iiddssissssis', $crop_id, $district_id, $price, $price_per_bag, $unit, $market, $market_id, $phone, $emailVal, $channel, $status, $is_member, $flag);
             $stmt->execute();
 
             $msg = $status === 'approved'
@@ -1255,7 +1289,7 @@ try {
             break;
 
         default:
-            throw new Exception('Invalid action specified. Available actions: test, districts, crops, crop_prices, dual_crop_prices, submit_price, price_review_list, price_review, fews_prices_refresh, market_insights, sellers, buyers, pest_control, farming_tips, basic_info, submit_application, check_application, admin_applications, admin_review, test_email');
+            throw new Exception('Invalid action specified. Available actions: test, districts, crops, crop_prices, dual_crop_prices, markets, submit_price, price_review_list, price_review, fews_prices_refresh, market_insights, sellers, buyers, pest_control, farming_tips, basic_info, submit_application, check_application, admin_applications, admin_review, test_email');
     }
 } catch (Throwable $e) {
     ob_clean();
