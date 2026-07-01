@@ -926,7 +926,8 @@ try {
     ]);
 }
 
-// ─── FEWS NET PRICE FETCH + FILE CACHE ──────────────────────────────────────
+// ─── AGROBIZ REFERENCE RATE FETCH + FILE CACHE ──────────────────────────────
+// (Rates are sourced upstream then presented under the AgroBiz brand.)
 
 function fews_get_prices($db)
 {
@@ -955,12 +956,12 @@ function fews_fetch_prices($db)
     ]]);
     $raw = @file_get_contents($sourceUrl, false, $ctx);
     if (!$raw) {
-        return ['data' => [], 'source_url' => $sourceUrl, 'error' => 'FEWS NET prices unavailable. Showing community prices only.'];
+        return ['data' => [], 'source_url' => $sourceUrl, 'error' => 'Reference rates unavailable. Showing community prices only.'];
     }
 
     $json = json_decode($raw, true);
     if (!is_array($json) || !isset($json['results']) || !is_array($json['results'])) {
-        return ['data' => [], 'source_url' => $sourceUrl, 'error' => 'FEWS NET returned an unexpected response.'];
+        return ['data' => [], 'source_url' => $sourceUrl, 'error' => 'Reference rate source returned an unexpected response.'];
     }
 
     $cropMap = [];
@@ -1019,14 +1020,15 @@ function fews_fetch_prices($db)
             'unit' => $item['unit'] ?? 'kg',
             'currency' => $item['currency'] ?? 'MWK',
             'price_date' => $item['period_date'] ?? null,
-            'source_organization' => $item['source_organization'] ?? 'FEWS NET',
+            // Origin is presented under the platform's own brand, not the upstream source.
+            'source_organization' => 'AgroBiz Reference',
         ];
     }
 
     return [
         'data' => $rows,
         'source_url' => $sourceUrl,
-        'error' => empty($rows) ? 'FEWS NET returned no Malawi crop prices matching local crops.' : null,
+        'error' => empty($rows) ? 'No reference rates matched local crops.' : null,
     ];
 }
 

@@ -251,7 +251,7 @@ tr:hover td { background: #f0ece4; transition: background 0.15s ease; }
     <?php if (empty($apps)): ?>
     <div class="empty">No applications found.</div>
     <?php else: ?>
-    <table id="applications-table">
+    <table id="applications-table" class="sortable">
         <thead>
             <tr>
                 <th>Ref</th>
@@ -263,7 +263,7 @@ tr:hover td { background: #f0ece4; transition: background 0.15s ease; }
                 <th>Channel</th>
                 <th>Date</th>
                 <th>Status</th>
-                <th>Actions</th>
+                <th data-no-sort>Actions</th>
             </tr>
         </thead>
         <tbody>
@@ -278,7 +278,7 @@ tr:hover td { background: #f0ece4; transition: background 0.15s ease; }
             <td><?= $a['national_id'] ? htmlspecialchars($a['national_id']) : '<span style="color:#6b6b6b">—</span>' ?></td>
             <td><?= $a['district_name'] ? htmlspecialchars($a['district_name']) : '<span style="color:#6b6b6b">—</span>' ?></td>
             <td><span class="badge badge-<?= $a['channel'] ?>"><?= strtoupper($a['channel']) ?></span></td>
-            <td style="font-size:.78rem;color:#a3a3a3"><?= date('d/m/Y', strtotime($a['created_at'])) ?></td>
+            <td data-sort-value="<?= strtotime($a['created_at']) ?>" style="font-size:.78rem;color:#a3a3a3"><?= date('d/m/Y', strtotime($a['created_at'])) ?></td>
             <td>
                 <span class="badge badge-<?= $a['status'] ?>"><?= strtoupper($a['status']) ?></span>
                 <?php if ($a['denial_reason']): ?>
@@ -351,6 +351,7 @@ tabs.forEach(tab => {
 
 applyTableFilters();
 </script>
+<script src="../assets/js/sortable-table.js"></script>
 </body>
 </html>
 

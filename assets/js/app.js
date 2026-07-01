@@ -2064,7 +2064,7 @@ class AgroBusinessRevolution {
                 addCandidate({
                     _ts: ts,
                     source: 'fews',
-                    sourceLabel: 'FEWS NET',
+                    sourceLabel: 'AgroBiz Rate',
                     crop_id: r.crop_id,
                     crop_name: r.crop_name,
                     district: r.district_name || r.region || '—',
@@ -2134,13 +2134,13 @@ class AgroBusinessRevolution {
 
                 return `
                 <tr class="price-data-row" data-source="${esc(r.source)}" data-crop="${esc((r.crop_name || '').toLowerCase())}" data-district="${esc((r.district || '').toLowerCase())}" data-search="${esc(searchText)}" style="animation:serviceReveal .3s ease ${i * .03}s both">
-                    <td><span style="font-size:1.3rem">${this.getCropIcon(r.crop_name)}</span> <strong>${esc(r.crop_name || 'Unknown crop')}</strong><br><small style="color:var(--text-muted)">${esc(r.type)}</small></td>
-                    <td>${esc(r.district)}<br><small style="color:var(--text-muted)">${esc(r.market)}</small></td>
-                    <td><span class="price-badge ${r.source === 'fews' ? 'price-high' : ''}">${esc(fewsDisplay)}</span><div style="font-size:.78rem;color:var(--text-muted);margin-top:.25rem">${esc(fewsPer50Display)}</div></td>
-                    <td><span class="price-badge ${r.source === 'community' ? 'price-high' : ''}">${esc(communityDisplay)}</span><div style="font-size:.78rem;color:var(--text-muted);margin-top:.25rem">${esc(communityBagDisplay)}</div></td>
+                    <td data-sort-value="${esc(r.crop_name || '')}"><span style="font-size:1.3rem">${this.getCropIcon(r.crop_name)}</span> <strong>${esc(r.crop_name || 'Unknown crop')}</strong><br><small style="color:var(--text-muted)">${esc(r.type)}</small></td>
+                    <td data-sort-value="${esc(r.district || '')}">${esc(r.district)}<br><small style="color:var(--text-muted)">${esc(r.market)}</small></td>
+                    <td data-sort-value="${fewsNum ?? ''}"><span class="price-badge ${r.source === 'fews' ? 'price-high' : ''}">${esc(fewsDisplay)}</span><div style="font-size:.78rem;color:var(--text-muted);margin-top:.25rem">${esc(fewsPer50Display)}</div></td>
+                    <td data-sort-value="${communityAvg ?? communityMin ?? ''}"><span class="price-badge ${r.source === 'community' ? 'price-high' : ''}">${esc(communityDisplay)}</span><div style="font-size:.78rem;color:var(--text-muted);margin-top:.25rem">${esc(communityBagDisplay)}</div></td>
                     <td>${esc(r.unit)}</td>
-                    <td style="color:var(--text-muted);font-size:.8rem">${esc(r.reports)}</td>
-                    <td><span class="price-badge" style="background:${r.source === 'fews' ? 'rgba(22,163,74,.12)' : 'rgba(200,164,90,.12)'};color:${r.source === 'fews' ? 'var(--primary)' : 'var(--accent)'}">${esc(r.sourceLabel)}</span></td>
+                    <td data-sort-value="${r._ts || 0}" style="color:var(--text-muted);font-size:.8rem">${esc(r.reports)}</td>
+                    <td data-sort-value="${esc(r.sourceLabel || '')}"><span class="price-badge" style="background:${r.source === 'fews' ? 'rgba(22,163,74,.12)' : 'rgba(200,164,90,.12)'};color:${r.source === 'fews' ? 'var(--primary)' : 'var(--accent)'}">${esc(r.sourceLabel)}</span></td>
                 </tr>`;
             }).join('');
 
@@ -2153,7 +2153,7 @@ class AgroBusinessRevolution {
             const area = document.getElementById('content-area');
             area.innerHTML = `
                 <h2 style="font-family:'DM Serif Display',serif;margin-bottom:1rem;color:var(--text-primary)">Crop Prices</h2>
-                <p class="price-meta" style="margin-bottom:1.25rem">FEWS NET reference prices and community market reports are shown side by side in one searchable table.</p>
+                <p class="price-meta" style="margin-bottom:1.25rem">AgroBiz reference rates and community market reports are shown side by side in one searchable table.</p>
 
                 <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:1.5rem;flex-wrap:wrap">
                     <button class="price-tab active" id="tab-prices" onclick="app._priceTab('prices')">All Prices <span style="background:var(--accent);color:#fff;border-radius:20px;padding:.1rem .5rem;font-size:.75rem;margin-left:.3rem">${rows.length}</span></button>
@@ -2165,7 +2165,7 @@ class AgroBusinessRevolution {
                         <input id="price-search" type="search" placeholder="Search crop, district, market, source, price..." style="padding:.75rem;border:1px solid var(--border);border-radius:8px">
                         <select id="price-source-filter" style="padding:.75rem;border:1px solid var(--border);border-radius:8px">
                             <option value="all">All sources</option>
-                            <option value="fews">FEWS NET only</option>
+                            <option value="fews">AgroBiz Rate only</option>
                             <option value="community">Community only</option>
                         </select>
                         <select id="price-crop-filter" style="padding:.75rem;border:1px solid var(--border);border-radius:8px">
@@ -2176,11 +2176,11 @@ class AgroBusinessRevolution {
                             ${districtOptions}
                         </select>
                     </div>
-                    <p id="price-filter-stats" class="price-meta">Showing ${rows.length} price records: ${fews.length} FEWS NET, ${community.length} community.</p>
+                    <p id="price-filter-stats" class="price-meta">Showing ${rows.length} price records: ${fews.length} AgroBiz Rate, ${community.length} community.</p>
                     <div class="table-wrap" style="overflow-x:auto">
-                    <table class="data-table" id="price-combined-table">
+                    <table class="data-table sortable" id="price-combined-table">
                         <thead><tr>
-                            <th>Crop</th><th>Location</th><th>FEWS Price</th><th>Community Range</th><th>Unit</th><th>Date</th><th>Source</th>
+                            <th>Crop</th><th>Location</th><th>AgroBiz Rate</th><th>Community Range</th><th>Unit</th><th>Date</th><th>Source</th>
                         </tr></thead>
                         <tbody>
                             ${priceRows || `<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:2rem">No price data yet.</td></tr>`}
@@ -2188,7 +2188,7 @@ class AgroBusinessRevolution {
                         </tbody>
                     </table>
                     </div>
-                    <p class="price-meta" style="margin-top:1rem">FEWS NET prices are external reference prices. Community prices are farmer/trader reports from the local database.</p>
+                    <p class="price-meta" style="margin-top:1rem">AgroBiz rates are standard reference prices set for each Malawi crop. Community prices are farmer/trader reports from the local database.</p>
                 </div>
 
                 <div id="pane-report" class="price-pane" style="display:none">
@@ -3018,8 +3018,10 @@ const weatherStyle = document.createElement('style');
 weatherStyle.textContent = weatherAnimationCSS;
 document.head.appendChild(weatherStyle);
 
-// Initialize the revolutionary app
-const app = new AgroBusinessRevolution();
+// Initialize the revolutionary app and expose it on window so that
+// the registration DOMContentLoaded handlers (and any inline onclick
+// attributes) can reach it via window.app.
+window.app = new AgroBusinessRevolution();
 
 // ─── REGISTRATION / KYC MODULE ────────────────────────────────────────────────
 

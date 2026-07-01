@@ -82,7 +82,7 @@ function get_fews_ussd_prices($mysqli, $language) {
     }
 
     $sections = [];
-    if ($fewsLines) $sections[] = "FEWS NET reference prices:\n" . implode("\n", $fewsLines);
+    if ($fewsLines) $sections[] = "AgroBiz reference rates:\n" . implode("\n", $fewsLines);
     if ($communityLines) $sections[] = "Community prices from farmers/traders:\n" . implode("\n", $communityLines);
 
     return $sections ? implode("\n\n", $sections) : '';
