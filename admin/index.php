@@ -47,6 +47,18 @@ $db      = @new mysqli($host, $_ENV['DB_USER'] ?? '', $_ENV['DB_PASS'] ?? '', $_
 if ($db->connect_error) die('<p style="color:red">DB connection failed.</p>');
 $db->set_charset('utf8mb4');
 
+// Reference-price override store (district_id 0 = all districts). Created lazily.
+$db->query("CREATE TABLE IF NOT EXISTS price_overrides (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  crop_id INT NOT NULL,
+  district_id INT NOT NULL DEFAULT 0,
+  price_per_kg DECIMAL(10,2) NOT NULL,
+  note VARCHAR(255) NULL,
+  set_by VARCHAR(50) NOT NULL DEFAULT 'admin',
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE KEY uniq_crop_district (crop_id, district_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci");
+
 // ─── HANDLE APPROVE / DENY ────────────────────────────────────────────────────
 $actionMsg = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['review_id'])) {
@@ -108,6 +120,84 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['price_review_id'])) {
         }
     }
 }
+
+// ─── HANDLE PRICE MANAGEMENT (refresh source / manual price / override) ───────
+$pmMsg = '';
+$pmErr = '';
+
+// a) Refresh reference prices from the upstream source (FEWS) via the API action.
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['refresh_source'])) {
+    $token  = $_ENV['ADMIN_TOKEN'] ?? 'agro_admin_2024';
+    $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+    $root   = str_replace('/admin/index.php', '', $_SERVER['SCRIPT_NAME']);
+    $apiUrl = $scheme . '://' . $_SERVER['HTTP_HOST'] . $root . '/api.php?action=fews_prices_refresh&token=' . urlencode($token);
+    $ctx  = stream_context_create(['http' => ['timeout' => 30, 'ignore_errors' => true]]);
+    $resp = @file_get_contents($apiUrl, false, $ctx);
+    $data = $resp ? json_decode($resp, true) : null;
+    if ($data && !empty($data['success'])) {
+        $pmMsg = "Reference prices refreshed from source — {$data['rows']} rows"
+               . (!empty($data['error']) ? " (source note: {$data['error']})" : '') . '.';
+    } else {
+        $pmErr = 'Refresh failed: ' . htmlspecialchars($data['error'] ?? 'source unreachable') . '.';
+    }
+}
+
+// b) Manually add an approved community price.
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['manual_mode'] ?? '') === 'community') {
+    $cid = (int)($_POST['m_crop_id'] ?? 0);
+    $did = (int)($_POST['m_district_id'] ?? 0);
+    $kg  = (float)($_POST['m_price_kg'] ?? 0);
+    $mkt = trim($_POST['m_market'] ?? '');
+    if ($cid && $did && $kg > 0) {
+        $bag = round($kg * 50, 2);
+        $q = $db->prepare("INSERT INTO crowdsourced_prices
+            (crop_id, district_id, price_per_kg, price_per_bag, unit, market_name,
+             submitted_by, channel, verified, status, is_member, created_at)
+            VALUES (?, ?, ?, ?, 'kg', ?, 'admin', 'web', 1, 'approved', 0, NOW())");
+        if ($q) { $q->bind_param('iidds', $cid, $did, $kg, $bag, $mkt); $q->execute();
+            $pmMsg = 'Community price added and approved.'; }
+    } else {
+        $pmErr = 'Provide a crop, district and a price greater than zero.';
+    }
+}
+
+// c) Manually set / update a reference override (district 0 = all districts).
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['manual_mode'] ?? '') === 'reference') {
+    $cid  = (int)($_POST['m_crop_id'] ?? 0);
+    $did  = (int)($_POST['m_district_id'] ?? 0);
+    $kg   = (float)($_POST['m_price_kg'] ?? 0);
+    $note = trim($_POST['m_note'] ?? '');
+    if ($cid && $kg > 0) {
+        $q = $db->prepare("INSERT INTO price_overrides (crop_id, district_id, price_per_kg, note, set_by)
+            VALUES (?, ?, ?, ?, 'admin')
+            ON DUPLICATE KEY UPDATE price_per_kg=VALUES(price_per_kg), note=VALUES(note), set_by='admin'");
+        if ($q) { $q->bind_param('iids', $cid, $did, $kg, $note); $q->execute();
+            $pmMsg = 'Reference override saved.'; }
+    } else {
+        $pmErr = 'Provide a crop and a price greater than zero.';
+    }
+}
+
+// d) Delete a reference override.
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_override_id'])) {
+    $oid = (int)$_POST['delete_override_id'];
+    if ($oid > 0) {
+        $q = $db->prepare("DELETE FROM price_overrides WHERE id=?");
+        if ($q) { $q->bind_param('i', $oid); $q->execute(); $pmMsg = 'Override removed.'; }
+    }
+}
+
+// Reference data for the price-management form.
+$pmCrops = [];
+if ($r = $db->query("SELECT id, name FROM crops ORDER BY name")) { while ($x = $r->fetch_assoc()) $pmCrops[] = $x; }
+$pmDistricts = [];
+if ($r = $db->query("SELECT id, name FROM districts ORDER BY name")) { while ($x = $r->fetch_assoc()) $pmDistricts[] = $x; }
+$overrides = [];
+if ($r = $db->query("SELECT o.id, o.crop_id, o.district_id, o.price_per_kg, o.note, o.updated_at,
+                            c.name AS crop_name, d.name AS district_name
+                     FROM price_overrides o JOIN crops c ON c.id = o.crop_id
+                     LEFT JOIN districts d ON d.id = o.district_id
+                     ORDER BY c.name, d.name")) { while ($x = $r->fetch_assoc()) $overrides[] = $x; }
 
 // ─── FETCH APPLICATIONS ───────────────────────────────────────────────────────
 $filterStatus = in_array($_GET['status'] ?? 'pending', ['pending','approved','denied','all'])
@@ -405,7 +495,100 @@ tr:hover td { background: #f0ece4; transition: background 0.15s ease; }
     </table>
     <?php endif; ?>
 
+    <!-- Price management -->
+    <h2 style="margin:2.5rem 0 1rem;font-family:Inter,system-ui,sans-serif;font-size:1.25rem;color:#3e3930">
+        📈 Price Management
+    </h2>
+    <?php if ($pmMsg): ?><div class="msg">✅ <?= htmlspecialchars($pmMsg) ?></div><?php endif; ?>
+    <?php if ($pmErr): ?><div class="msg" style="background:rgba(185,64,64,.08);border-color:rgba(185,64,64,.3);color:#b94040">⚠️ <?= $pmErr ?></div><?php endif; ?>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:1.5rem">
+        <!-- Refresh from source -->
+        <div style="background:#fff;border:1px solid #e8e2d9;border-radius:12px;padding:1.5rem">
+            <h3 style="font-size:1rem;margin-bottom:.5rem;color:#3e3930">Update prices from source</h3>
+            <p style="font-size:.85rem;color:#6b5f52;margin-bottom:1rem;line-height:1.5">
+                Re-fetches the AgroBiz reference rates from the upstream source and refreshes the cache.
+            </p>
+            <form method="post">
+                <button type="submit" name="refresh_source" value="1" class="btn-approve">Refresh from source</button>
+            </form>
+        </div>
+
+        <!-- Manual price -->
+        <div style="background:#fff;border:1px solid #e8e2d9;border-radius:12px;padding:1.5rem">
+            <h3 style="font-size:1rem;margin-bottom:1rem;color:#3e3930">Set an individual price</h3>
+            <form method="post" id="manual-price-form" style="display:grid;gap:.75rem">
+                <div style="display:flex;gap:1rem;font-size:.85rem;color:#6b5f52">
+                    <label style="display:flex;align-items:center;gap:.35rem;cursor:pointer">
+                        <input type="radio" name="manual_mode" value="community" checked> Community price
+                    </label>
+                    <label style="display:flex;align-items:center;gap:.35rem;cursor:pointer">
+                        <input type="radio" name="manual_mode" value="reference"> Reference override
+                    </label>
+                </div>
+                <select name="m_crop_id" required style="padding:.6rem;border:1px solid #d5cfc4;border-radius:8px;background:#fff">
+                    <option value="">— select crop —</option>
+                    <?php foreach ($pmCrops as $c): ?><option value="<?= (int)$c['id'] ?>"><?= htmlspecialchars($c['name']) ?></option><?php endforeach; ?>
+                </select>
+                <select name="m_district_id" id="m_district" style="padding:.6rem;border:1px solid #d5cfc4;border-radius:8px;background:#fff">
+                    <option value="0" data-ref-only>All districts (reference only)</option>
+                    <?php foreach ($pmDistricts as $d): ?><option value="<?= (int)$d['id'] ?>"><?= htmlspecialchars($d['name']) ?></option><?php endforeach; ?>
+                </select>
+                <input type="text" name="m_market" id="m_market" placeholder="Market name (community price)" style="padding:.6rem;border:1px solid #d5cfc4;border-radius:8px;background:#fff">
+                <input type="text" name="m_note" id="m_note" placeholder="Note (reference override)" style="padding:.6rem;border:1px solid #d5cfc4;border-radius:8px;background:#fff;display:none">
+                <input type="number" name="m_price_kg" min="1" step="0.01" required placeholder="Price per kg (MWK)" style="padding:.6rem;border:1px solid #d5cfc4;border-radius:8px;background:#fff">
+                <button type="submit" class="btn-approve">Save price</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Current reference overrides -->
+    <?php if (!empty($overrides)): ?>
+    <h3 style="font-size:1rem;margin:1.5rem 0 .75rem;color:#3e3930">Active reference overrides (<?= count($overrides) ?>)</h3>
+    <table>
+        <thead><tr><th>Crop</th><th>District</th><th>Price/kg</th><th>Note</th><th>Updated</th><th data-no-sort>Actions</th></tr></thead>
+        <tbody>
+        <?php foreach ($overrides as $o): ?>
+            <tr>
+                <td><?= htmlspecialchars($o['crop_name']) ?></td>
+                <td><?= (int)$o['district_id'] === 0 ? '<em>All districts</em>' : htmlspecialchars($o['district_name'] ?? '—') ?></td>
+                <td>MWK <?= number_format((float)$o['price_per_kg']) ?></td>
+                <td><?= $o['note'] ? htmlspecialchars($o['note']) : '<span style="color:#9d9087">—</span>' ?></td>
+                <td style="font-size:.78rem;color:#a3a3a3"><?= date('d/m/Y H:i', strtotime($o['updated_at'])) ?></td>
+                <td class="actions">
+                    <form method="post" onsubmit="return confirm('Remove this override?')">
+                        <input type="hidden" name="delete_override_id" value="<?= (int)$o['id'] ?>">
+                        <button type="submit" class="btn-deny">Delete</button>
+                    </form>
+                </td>
+            </tr>
+        <?php endforeach; ?>
+        </tbody>
+    </table>
+    <?php endif; ?>
+
 </div>
+<script>
+// Toggle market vs note field based on the selected manual-price mode.
+(function () {
+    const form = document.getElementById('manual-price-form');
+    if (!form) return;
+    const market = document.getElementById('m_market');
+    const note = document.getElementById('m_note');
+    const district = document.getElementById('m_district');
+    function apply() {
+        const mode = form.querySelector('input[name="manual_mode"]:checked').value;
+        const isCommunity = mode === 'community';
+        market.style.display = isCommunity ? '' : 'none';
+        note.style.display = isCommunity ? 'none' : '';
+        // Community requires a specific district; "All districts" is reference-only.
+        district.querySelector('option[data-ref-only]').disabled = isCommunity;
+        if (isCommunity && district.value === '0') district.value = '';
+    }
+    form.querySelectorAll('input[name="manual_mode"]').forEach(r => r.addEventListener('change', apply));
+    apply();
+})();
+</script>
 <script>
 const rows = Array.from(document.querySelectorAll('#applications-table tbody tr'));
 const search = document.getElementById('table-search');
