@@ -1418,7 +1418,7 @@ class AgroBusinessRevolution {
 
             const regionClass = { Northern: 'r-north', Central: 'r-central', Southern: 'r-south', Malawi: 'r-central' };
             const list = districts.map(d => ({
-                id: d.id, name: d.name,
+                id: Number(d.id), name: d.name,
                 region: (this.districtCoords[d.id] && this.districtCoords[d.id].region) || 'Malawi'
             }));
             const byId = id => list.find(d => d.id === id);
