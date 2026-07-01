@@ -2403,7 +2403,7 @@ class AgroBusinessRevolution {
                 const msg = document.getElementById('pr-msg');
                 const showErr = (text) => {
                     msg.style.display = 'block';
-                    msg.style.background = 'rgba(185,64,64,.1)'; msg.style.color = '#b94040';
+                    msg.style.background = 'rgba(220,38,38,.12)'; msg.style.color = '#991b1b';
                     msg.textContent = text;
                 };
 
@@ -2440,16 +2440,16 @@ class AgroBusinessRevolution {
                     });
                     msg.style.display = 'block';
                     if (res.success) {
-                        msg.style.background = 'rgba(74,124,89,.1)'; msg.style.color = '#4a7c59';
+                        msg.style.background = 'rgba(22,163,74,.12)'; msg.style.color = '#166d42';
                         msg.textContent = res.message;
                         e.target.reset();
                         setTimeout(() => this.loadCropPrices(), 1500);
                     } else {
-                        msg.style.background = 'rgba(185,64,64,.1)'; msg.style.color = '#b94040';
+                        msg.style.background = 'rgba(220,38,38,.12)'; msg.style.color = '#991b1b';
                         msg.textContent = res.error || 'Submission failed.';
                     }
                 } catch (err) {
-                    msg.style.display = 'block'; msg.style.color = '#b94040'; msg.textContent = 'Network error.';
+                    msg.style.display = 'block'; msg.style.color = '#991b1b'; msg.textContent = 'Network error.';
                 } finally { btn.disabled = false; btn.textContent = 'Submit Price Report'; }
             });
 
@@ -3705,16 +3705,16 @@ AgroBusinessRevolution.prototype._adminSubmitReview = function (action) {
         .then(r => r.json())
         .then(data => {
             if (data.success) {
-                msgEl.style.color = '#16a34a';
+                msgEl.style.color = '#166d42';
                 const label = action === 'approve' ? 'Approved' : 'Denied';
                 msgEl.textContent = `✓ ${label} successfully. Email sent to applicant.`;
                 setTimeout(() => this._adminShowApps('pending'), 1800);
             } else {
-                msgEl.style.color = '#dc2626';
+                msgEl.style.color = '#991b1b';
                 msgEl.textContent = 'Error: ' + (data.error || 'Failed to submit');
             }
         })
-        .catch(() => { msgEl.style.color = '#dc2626'; msgEl.textContent = 'Network error.'; });
+        .catch(() => { msgEl.style.color = '#991b1b'; msgEl.textContent = 'Network error.'; });
 };
 
 // Bind admin panel events after DOM ready
