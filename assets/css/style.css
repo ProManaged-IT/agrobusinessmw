@@ -4,20 +4,20 @@
     /* Japandi Modern Palette */
     --bg: #f5f2eb;
     --text: #3e3930;
-    --accent: #8B7355;
+    --accent: #16a34a;
     --gold: #C8A45A;
     --border: #d5cfc4;
     --surface: #ffffff;
     --muted: #9a8f83;
-    --success: #4a7c59;
+    --success: #16a34a;
     --error: #b94040;
 
     /* Extended Aliases for Compatibility */
-    --primary: #8B7355;
-    --primary-light: #a08a6b;
-    --primary-glow: rgba(139, 115, 85, 0.15);
-    --accent-glow: rgba(200, 164, 90, 0.15);
-    --accent-dark: #7a6448;
+    --primary: #16a34a;
+    --primary-light: #61b86e;
+    --primary-glow: rgba(22, 163, 74, 0.15);
+    --accent-glow: rgba(22, 163, 74, 0.12);
+    --accent-dark: #15703b;
     --text-primary: #3e3930;
     --text-secondary: #6b5f52;
     --text-muted: #9a8f83;
@@ -26,14 +26,14 @@
     --gray-200: #ede9e0;
 
     /* Gradients */
-    --gradient-primary: linear-gradient(135deg, #8B7355 0%, #a08a6b 100%);
+    --gradient-primary: linear-gradient(135deg, #16a34a 0%, #61b86e 100%);
     --gradient-secondary: linear-gradient(135deg, #C8A45A 0%, #d4b578 100%);
-    --gradient-accent: linear-gradient(135deg, #C8A45A 0%, #d4b578 100%);
+    --gradient-accent: linear-gradient(135deg, #16a34a 0%, #61b86e 100%);
     --gradient-warm: linear-gradient(135deg, #c8860a 0%, #d4a040 100%);
     --gradient-cool: linear-gradient(135deg, #5a7a9d 0%, #7a9abf 100%);
 
     /* Shadows */
-    --shadow-glow: 0 0 20px rgba(139, 115, 85, 0.25);
+    --shadow-glow: 0 0 20px rgba(22, 163, 74, 0.22);
     --shadow-lg: 0 8px 24px rgba(70, 60, 50, 0.12);
     --shadow-xl: 0 16px 40px rgba(70, 60, 50, 0.14);
 
@@ -968,7 +968,7 @@ body {
 .search-box {
     display: flex;
     align-items: center;
-    background: var(--bg);
+    background: var(--surface);
     border: 1.5px solid var(--border);
     border-radius: 10px;
     padding: 0.7rem 1rem;
@@ -984,7 +984,7 @@ body {
 }
 
 .search-icon {
-    color: var(--muted);
+    color: var(--accent-dark);
     font-size: 1.2rem;
     flex-shrink: 0;
 }
@@ -995,12 +995,12 @@ body {
     background: transparent;
     outline: none;
     font-size: 0.95rem;
-    color: var(--text);
+    color: var(--text-primary);
     font-family: inherit;
 }
 
 .search-box input::placeholder {
-    color: var(--muted);
+    color: rgba(62,57,48,0.56);
 }
 
 /* =====================================================
@@ -2922,4 +2922,30 @@ a:focus-visible,
 .price-confirm-chip.early {
     background: rgba(200, 164, 90, 0.18);
     color: var(--accent-dark, var(--accent));
+}
+
+/* =====================================================
+   REGISTRATION — FIELD VALIDATION
+   ===================================================== */
+
+.form-group input.is-invalid,
+.form-group select.is-invalid,
+.form-group textarea.is-invalid {
+    border-color: #dc2626;
+    box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.12);
+    outline: none;
+}
+
+.field-error {
+    display: block;
+    margin-top: 4px;
+    font-size: 0.8rem;
+    color: #dc2626;
+    line-height: 1.4;
+}
+
+.form-group input.is-invalid:focus,
+.form-group select.is-invalid:focus {
+    border-color: #dc2626;
+    box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.18);
 }

@@ -750,6 +750,60 @@
         </div>
     </div>
 
+    <!-- Admin Panel Modal -->
+    <div id="admin-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="admin-modal-title">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content" style="max-width: 680px;">
+            <div class="modal-header">
+                <h2 id="admin-modal-title">Admin Panel</h2>
+                <button class="modal-close" id="admin-modal-close" aria-label="Close">
+                    <span class="material-symbols-rounded">close</span>
+                </button>
+            </div>
+            <div class="modal-body" id="admin-modal-body">
+                <!-- Login screen -->
+                <div id="admin-login-screen">
+                    <p style="margin-bottom:1.25rem;color:var(--text-muted);">Enter the admin token to access application management.</p>
+                    <div class="form-group">
+                        <label for="admin-token-input">Admin Token</label>
+                        <input type="password" id="admin-token-input" placeholder="Enter admin token" autocomplete="off">
+                    </div>
+                    <p id="admin-login-error" style="color:#dc2626;display:none;margin-bottom:0.75rem;font-size:0.875rem;"></p>
+                    <button class="btn-primary" id="admin-login-btn" style="width:100%;">Login</button>
+                </div>
+                <!-- Applications screen (hidden until logged in) -->
+                <div id="admin-apps-screen" style="display:none;">
+                    <div class="admin-tabs" id="admin-tabs">
+                        <button class="admin-tab active" data-status="pending">Pending</button>
+                        <button class="admin-tab" data-status="approved">Approved</button>
+                        <button class="admin-tab" data-status="denied">Denied</button>
+                    </div>
+                    <div id="admin-apps-list" style="margin-top:1rem;"></div>
+                </div>
+                <!-- Review panel (hidden until app selected) -->
+                <div id="admin-review-screen" style="display:none;">
+                    <button id="admin-back-btn" class="admin-back-btn">
+                        <span class="material-symbols-rounded">arrow_back</span> Back to list
+                    </button>
+                    <div id="admin-review-detail" style="margin-top:1rem;"></div>
+                    <div class="form-group" style="margin-top:1.25rem;">
+                        <label for="admin-notes-input">Notes / Reason (optional)</label>
+                        <textarea id="admin-notes-input" rows="3" placeholder="Add notes or reason for decision…" style="width:100%;resize:vertical;"></textarea>
+                    </div>
+                    <div style="display:flex;gap:0.75rem;margin-top:1rem;">
+                        <button class="btn-primary admin-approve-btn" id="admin-approve-btn" style="flex:1;background:#16a34a;">
+                            <span class="material-symbols-rounded" style="font-size:1rem;vertical-align:middle;">check_circle</span> Approve
+                        </button>
+                        <button class="btn-primary admin-deny-btn" id="admin-deny-btn" style="flex:1;background:#dc2626;">
+                            <span class="material-symbols-rounded" style="font-size:1rem;vertical-align:middle;">cancel</span> Deny
+                        </button>
+                    </div>
+                    <p id="admin-review-msg" style="margin-top:0.75rem;font-size:0.875rem;display:none;"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="assets/js/app.js" defer></script>
     <script src="assets/js/config.js"></script>
     <script src="assets/js/sortable-table.js" defer></script>

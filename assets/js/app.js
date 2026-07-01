@@ -3296,18 +3296,56 @@ document.addEventListener('DOMContentLoaded', function () {
     const step2Next = document.getElementById('reg-step2-next');
     if (step2Next) {
         step2Next.addEventListener('click', () => {
-            const name = document.getElementById('reg-full-name').value.trim();
-            const phone = document.getElementById('reg-phone').value.trim();
-            const district = document.getElementById('reg-district').value;
-            const village = document.getElementById('reg-village').value.trim();
+            document.querySelectorAll('#reg-step-2 .field-error').forEach(el => el.remove());
+            document.querySelectorAll('#reg-step-2 .is-invalid').forEach(el => el.classList.remove('is-invalid'));
 
-            if (!name || name.length < 2) { window.app && window.app.showNotification('Please enter your full name.', 'error'); return; }
-            if (!phone || !/^\+?[\d\s\-]{8,20}$/.test(phone)) { window.app && window.app.showNotification('Please enter a valid phone number.', 'error'); return; }
-            if (!village || village.length < 2) { window.app && window.app.showNotification('Please enter your village or town.', 'error'); return; }
-            if (!district) { window.app && window.app.showNotification('Please select your district.', 'error'); return; }
+            const setErr = (id, msg) => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                el.classList.add('is-invalid');
+                const span = document.createElement('span');
+                span.className = 'field-error';
+                span.textContent = msg;
+                el.parentNode.appendChild(span);
+            };
+
+            const name     = document.getElementById('reg-full-name').value.trim();
+            const phone    = document.getElementById('reg-phone').value.trim();
+            const email    = document.getElementById('reg-email').value.trim();
+            const district = document.getElementById('reg-district').value;
+            const village  = document.getElementById('reg-village').value.trim();
+
+            let valid = true;
+            if (!name || name.length < 2) { setErr('reg-full-name', 'Full name is required (at least 2 characters).'); valid = false; }
+
+            const digitCount = (phone.match(/\d/g) || []).length;
+            if (!phone || digitCount < 7) { setErr('reg-phone', 'Enter a valid phone number (e.g. 0999 123 456).'); valid = false; }
+
+            if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) { setErr('reg-email', 'Enter a valid email address or leave blank.'); valid = false; }
+
+            if (!village || village.length < 2) { setErr('reg-village', 'Village or town is required.'); valid = false; }
+            if (!district) { setErr('reg-district', 'Please select your district.'); valid = false; }
+
+            if (!valid) return;
             if (window.app) window.app._regGotoStep(3);
         });
     }
+
+    // Clear field errors when user types
+    ['reg-full-name', 'reg-phone', 'reg-email', 'reg-village'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('input', () => {
+            el.classList.remove('is-invalid');
+            const err = el.parentNode.querySelector('.field-error');
+            if (err) err.remove();
+        });
+    });
+    const districtSel = document.getElementById('reg-district');
+    if (districtSel) districtSel.addEventListener('change', () => {
+        districtSel.classList.remove('is-invalid');
+        const err = districtSel.parentNode.querySelector('.field-error');
+        if (err) err.remove();
+    });
 
     // Step 3 → 4
     const step3Next = document.getElementById('reg-step3-next');
