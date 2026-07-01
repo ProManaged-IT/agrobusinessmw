@@ -1,1 +1,18 @@
 .env
+
+# Log files
+*.log
+error_log
+config/error_log
+config/ussd_errors.log
+config/webapp_errors.log
+ussd/ussd_errors.log
+ussd/ussd_sessions.log
+ussd/weather_debug.log
+
+# Cache files
+config/admarc_cache.json
+config/fews_prices_cache.json
+
+# USSD sessions
+ussd/sessions/
