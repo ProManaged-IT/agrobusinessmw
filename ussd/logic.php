@@ -125,31 +125,38 @@ function process_ussd(mysqli $mysqli, array $menu_texts, array $valid_options, a
     $session_file = "$session_dir/$sessionId.json";
     if (!is_dir($session_dir)) mkdir($session_dir, 0755, true);
 
+    // ── Restore persisted language from session ──────────────────────────────
+    // Language must survive across requests because stack[0] is always rebuilt
+    // from AT's accumulated text and can't carry the toggled language forward.
+    $saved = ['language' => 'en'];
+    if (file_exists($session_file)) {
+        $saved = json_decode(file_get_contents($session_file), true) ?: ['language' => 'en'];
+    }
+    $saved_lang = $saved['language'] ?? 'en';
+
     // ── Language toggle detection: '00' at end of input → toggle language ───
     // User types "00" and presses send; AT sends accumulated text ending with '*00'.
-    $lang_toggle   = false;
-    $stripped_text = $text;
-    if (preg_match('/(?:^|\*)00$/', $text)) {
-        $stripped_text = preg_replace('/\*?00$/', '', $text);
-        $lang_toggle   = true;
-    }
+    // Strip ALL '00' tokens from the history — they are not menu choices.
+    $lang_toggle   = (bool)preg_match('/(?:^|\*)00$/', $text);
+    $stripped_text = preg_replace('/(?:^|\*)00(?=\*|$)/', '', $text);
+    $stripped_text = preg_replace('/^\*|\*$/', '', $stripped_text);
 
+    // Parse navigation on cleaned text (no '00' tokens)
     [$stack, $pages, $is_exit] = parse_navigation($stripped_text, $district_map);
 
-    // Apply language toggle
-    // When stack is empty (language selection screen), the toggle is handled
-    // below at level 0 by simply using the opposite default language.
-    if ($lang_toggle && !empty($stack)) {
-        $stack[0] = ($stack[0] === '2') ? '1' : '2';
+    // If user toggled language, flip the persisted preference
+    if ($lang_toggle) {
+        $saved_lang = ($saved_lang === 'en') ? 'ci' : 'en';
+    }
+
+    // Override stack[0] with the persisted language so that all subsequent
+    // requests continue rendering in the chosen language.
+    if (!empty($stack)) {
+        $stack[0] = ($saved_lang === 'ci') ? '2' : '1';
     }
 
     $level    = count($stack);
-    $language = ($stack[0] ?? '1') === '2' ? 'ci' : 'en';
-
-    // Language toggle at level 0 (language selection screen) — just flip the default
-    if ($lang_toggle && $level === 0) {
-        $language = ($language === 'en') ? 'ci' : 'en';
-    }
+    $language = $saved_lang;
 
     $response = '';
 
