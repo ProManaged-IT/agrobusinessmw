@@ -2214,6 +2214,7 @@ class AgroBusinessRevolution {
                     community_min_bag: Number(r.min_price_bag) || null,
                     community_avg_bag: Number(r.avg_price_bag) || null,
                     community_max_bag: Number(r.max_price_bag) || null,
+                    community_confirmed: !!r.confirmed,
                     reports: `${r.report_count} report${Number(r.report_count) === 1 ? '' : 's'} · ${ago(r.last_reported)}`,
                     unit: r.unit || 'kg',
                     type: 'Farmer/trader report'
@@ -2249,12 +2250,19 @@ class AgroBusinessRevolution {
                 const communityBagDisplay = (communityMinBag || communityAvgBag || communityMaxBag) ?
                     `Bag: ${communityMinBag ? 'MK ' + communityMinBag.toLocaleString() : '—'} / ${communityAvgBag ? 'MK ' + communityAvgBag.toLocaleString() : '—'} / ${communityMaxBag ? 'MK ' + communityMaxBag.toLocaleString() : '—'}` : '';
 
+                const hasCommunity = (communityMin || communityAvg || communityMax);
+                const confirmedChip = hasCommunity
+                    ? (r.community_confirmed
+                        ? '<span class="price-confirm-chip confirmed" title="3+ approved reports">✓ Confirmed</span>'
+                        : '<span class="price-confirm-chip early" title="1–2 approved reports">Early</span>')
+                    : '';
+
                 return `
                 <tr class="price-data-row" data-source="${esc(r.source)}" data-crop="${esc((r.crop_name || '').toLowerCase())}" data-district="${esc((r.district || '').toLowerCase())}" data-search="${esc(searchText)}" style="animation:serviceReveal .3s ease ${i * .03}s both">
                     <td data-sort-value="${esc(r.crop_name || '')}"><span style="font-size:1.3rem">${this.getCropIcon(r.crop_name)}</span> <strong>${esc(r.crop_name || 'Unknown crop')}</strong><br><small style="color:var(--text-muted)">${esc(r.type)}</small></td>
                     <td data-sort-value="${esc(r.district || '')}">${esc(r.district)}<br><small style="color:var(--text-muted)">${esc(r.market)}</small></td>
                     <td data-sort-value="${fewsNum ?? ''}"><span class="price-badge ${r.source === 'fews' ? 'price-high' : ''}">${esc(fewsDisplay)}</span><div style="font-size:.78rem;color:var(--text-muted);margin-top:.25rem">${esc(fewsPer50Display)}</div></td>
-                    <td data-sort-value="${communityAvg ?? communityMin ?? ''}"><span class="price-badge ${r.source === 'community' ? 'price-high' : ''}">${esc(communityDisplay)}</span><div style="font-size:.78rem;color:var(--text-muted);margin-top:.25rem">${esc(communityBagDisplay)}</div></td>
+                    <td data-sort-value="${communityAvg ?? communityMin ?? ''}"><span class="price-badge ${r.source === 'community' ? 'price-high' : ''}">${esc(communityDisplay)}</span>${confirmedChip}<div style="font-size:.78rem;color:var(--text-muted);margin-top:.25rem">${esc(communityBagDisplay)}</div></td>
                     <td>${esc(r.unit)}</td>
                     <td data-sort-value="${r._ts || 0}" style="color:var(--text-muted);font-size:.8rem">${esc(r.reports)}</td>
                     <td data-sort-value="${esc(r.sourceLabel || '')}"><span class="price-badge" style="background:${r.source === 'fews' ? 'rgba(22,163,74,.12)' : 'rgba(200,164,90,.12)'};color:${r.source === 'fews' ? 'var(--primary)' : 'var(--accent)'}">${esc(r.sourceLabel)}</span></td>
@@ -2305,7 +2313,7 @@ class AgroBusinessRevolution {
                         </tbody>
                     </table>
                     </div>
-                    <p class="price-meta" style="margin-top:1rem">AgroBiz rates are standard reference prices set for each Malawi crop. Community prices are farmer/trader reports from the local database.</p>
+                    <p class="price-meta" style="margin-top:1rem">AgroBiz rates are standard reference prices set for each Malawi crop. Community prices are farmer/trader reports, shown only after review — the value is the median of approved reports, marked <strong>✓ Confirmed</strong> once 3+ reports agree.</p>
                 </div>
 
                 <div id="pane-report" class="price-pane" style="display:none">

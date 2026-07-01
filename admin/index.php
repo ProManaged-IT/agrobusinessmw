@@ -90,6 +90,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['review_id'])) {
     }
 }
 
+// ─── HANDLE COMMUNITY PRICE REVIEW (approve / reject) ─────────────────────────
+$priceMsg = '';
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['price_review_id'])) {
+    $pid   = (int)$_POST['price_review_id'];
+    $pact  = $_POST['price_action'] ?? '';
+    $pnote = trim($_POST['price_notes'] ?? '');
+    $pmap  = ['approve' => 'approved', 'reject' => 'rejected'];
+    if (isset($pmap[$pact]) && $pid > 0) {
+        $pstatus = $pmap[$pact];
+        $pn = $pact === 'reject' ? ($pnote !== '' ? $pnote : null) : null;
+        $ps = $db->prepare("UPDATE crowdsourced_prices SET status=?, flag_reason=?, reviewed_by='admin', reviewed_at=NOW() WHERE id=?");
+        if ($ps) {
+            $ps->bind_param('ssi', $pstatus, $pn, $pid);
+            $ps->execute();
+            $priceMsg = "Price report #{$pid} {$pstatus}.";
+        }
+    }
+}
+
 // ─── FETCH APPLICATIONS ───────────────────────────────────────────────────────
 $filterStatus = in_array($_GET['status'] ?? 'pending', ['pending','approved','denied','all'])
     ? ($_GET['status'] ?? 'pending') : 'pending';
@@ -109,6 +128,26 @@ $counts = [];
 foreach (['pending','approved','denied'] as $s) {
     $r = $db->query("SELECT COUNT(*) as n FROM onboarding_applications WHERE status='{$s}'");
     $counts[$s] = $r->fetch_assoc()['n'];
+}
+
+// ─── FETCH COMMUNITY PRICES AWAITING REVIEW ───────────────────────────────────
+// Guarded: the review columns are added by the community-price-review migration.
+$priceReviewAvailable = false;
+$pendingPrices = [];
+$colCheck = $db->query("SHOW COLUMNS FROM crowdsourced_prices LIKE 'status'");
+if ($colCheck && $colCheck->num_rows > 0) {
+    $priceReviewAvailable = true;
+    $pr = $db->query(
+        "SELECT cp.id, c.name AS crop_name, d.name AS district_name, cp.market_name,
+                cp.price_per_kg, cp.price_per_bag, cp.unit, cp.submitted_by, cp.channel,
+                cp.status, cp.is_member, cp.flag_reason, cp.created_at
+         FROM crowdsourced_prices cp
+         JOIN crops c ON cp.crop_id = c.id
+         LEFT JOIN districts d ON cp.district_id = d.id
+         WHERE cp.status IN ('pending','flagged')
+         ORDER BY cp.created_at ASC LIMIT 200"
+    );
+    if ($pr) while ($row = $pr->fetch_assoc()) $pendingPrices[] = $row;
 }
 
 // ─── LOGOUT ───────────────────────────────────────────────────────────────────
@@ -298,6 +337,69 @@ tr:hover td { background: #f0ece4; transition: background 0.15s ease; }
                 <?php endif; ?>
             </td>
         </tr>
+        <?php endforeach; ?>
+        </tbody>
+    </table>
+    <?php endif; ?>
+
+    <!-- Community price review queue -->
+    <h2 style="margin:2.5rem 0 1rem;font-family:Inter,system-ui,sans-serif;font-size:1.25rem;color:#3e3930">
+        🧺 Community Price Review
+        <?php if ($priceReviewAvailable): ?><span style="font-size:.85rem;color:#8B7355">(<?= count($pendingPrices) ?> awaiting)</span><?php endif; ?>
+    </h2>
+    <?php if ($priceMsg): ?>
+    <div class="msg">✅ <?= htmlspecialchars($priceMsg) ?></div>
+    <?php endif; ?>
+
+    <?php if (!$priceReviewAvailable): ?>
+    <div class="empty">
+        Price review is not active yet. Run the migration
+        <code>migrations/2026-07-01_community_price_review.sql</code> to enable it.
+    </div>
+    <?php elseif (empty($pendingPrices)): ?>
+    <div class="empty">No community prices awaiting review. 🎉</div>
+    <?php else: ?>
+    <table id="prices-table" class="sortable">
+        <thead>
+            <tr>
+                <th>Crop</th>
+                <th>District / Market</th>
+                <th>Price/kg</th>
+                <th>Price/bag</th>
+                <th>Submitted by</th>
+                <th>Channel</th>
+                <th>Member</th>
+                <th>Status</th>
+                <th>Date</th>
+                <th data-no-sort>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+        <?php foreach ($pendingPrices as $p): ?>
+            <tr>
+                <td><?= htmlspecialchars($p['crop_name']) ?></td>
+                <td><?= htmlspecialchars($p['district_name'] ?? '—') ?>
+                    <?php if ($p['market_name']): ?><br><small style="color:#a3a3a3"><?= htmlspecialchars($p['market_name']) ?></small><?php endif; ?>
+                </td>
+                <td data-sort-value="<?= (float)$p['price_per_kg'] ?>">MWK <?= number_format((float)$p['price_per_kg']) ?></td>
+                <td data-sort-value="<?= (float)$p['price_per_bag'] ?>">MWK <?= number_format((float)$p['price_per_bag']) ?></td>
+                <td><?= htmlspecialchars($p['submitted_by']) ?></td>
+                <td><span class="badge badge-<?= htmlspecialchars($p['channel']) ?>"><?= strtoupper($p['channel']) ?></span></td>
+                <td><?= $p['is_member'] ? '✅' : '<span style="color:#6b6b6b">—</span>' ?></td>
+                <td>
+                    <span class="badge badge-<?= $p['status'] === 'flagged' ? 'denied' : 'pending' ?>"><?= strtoupper($p['status']) ?></span>
+                    <?php if ($p['flag_reason']): ?><br><small style="color:#b94040;font-size:.72rem"><?= htmlspecialchars($p['flag_reason']) ?></small><?php endif; ?>
+                </td>
+                <td data-sort-value="<?= strtotime($p['created_at']) ?>" style="font-size:.78rem;color:#a3a3a3"><?= date('d/m/Y H:i', strtotime($p['created_at'])) ?></td>
+                <td class="actions">
+                    <form method="post">
+                        <input type="hidden" name="price_review_id" value="<?= $p['id'] ?>">
+                        <input type="text" name="price_notes" placeholder="Reason (if rejecting)">
+                        <button type="submit" name="price_action" value="approve" class="btn-approve">Approve</button>
+                        <button type="submit" name="price_action" value="reject" class="btn-deny">Reject</button>
+                    </form>
+                </td>
+            </tr>
         <?php endforeach; ?>
         </tbody>
     </table>

@@ -54,45 +54,101 @@ function stmt_fetch_one(mysqli_stmt $stmt): ?array
     return $rows[0] ?? null;
 }
 
+// ── Community price moderation helpers (Phase 1: statistical gate) ──────────
+/** Median of a numeric list — outlier-resistant central value. */
+function cp_median(array $vals): float
+{
+    $vals = array_values(array_filter(array_map('floatval', $vals), fn($v) => $v > 0));
+    sort($vals);
+    $n = count($vals);
+    if ($n === 0) return 0.0;
+    $mid = intdiv($n, 2);
+    return $n % 2 ? (float)$vals[$mid] : ($vals[$mid - 1] + $vals[$mid]) / 2;
+}
+
 /**
- * Send an email via SMTPS (port 465 / implicit TLS) using credentials from .env.
+ * Approved reference prices (per kg) used by the submission gate and the admin
+ * queue. Prefers the crop+district scope; falls back to crop-wide when thin.
+ * A 45-day window keeps the baseline current.
+ */
+function cp_reference_prices(mysqli $db, int $crop_id, ?int $district_id): array
+{
+    $out = [];
+    if ($district_id) {
+        $s = $db->prepare("SELECT price_per_kg FROM crowdsourced_prices WHERE status='approved' AND crop_id=? AND district_id=? AND created_at >= (NOW() - INTERVAL 45 DAY)");
+        $s->bind_param('ii', $crop_id, $district_id);
+        $s->execute();
+        foreach (stmt_fetch_all($s) as $r) $out[] = (float)$r['price_per_kg'];
+    }
+    if (count($out) < 3) {
+        $s = $db->prepare("SELECT price_per_kg FROM crowdsourced_prices WHERE status='approved' AND crop_id=? AND created_at >= (NOW() - INTERVAL 45 DAY)");
+        $s->bind_param('i', $crop_id);
+        $s->execute();
+        $out = [];
+        foreach (stmt_fetch_all($s) as $r) $out[] = (float)$r['price_per_kg'];
+    }
+    return $out;
+}
+
+/**
+ * Send an HTML + plain-text multipart email via SMTPS (port 465 / implicit TLS).
  * Falls back to PHP mail() if the socket connection fails.
  *
- * @return bool  true on success, false on failure
+ * @param string $to        Primary recipient address
+ * @param string $subject   Email subject
+ * @param string $htmlBody  Full HTML body
+ * @param string $plainBody Plain-text fallback (auto-stripped from HTML if empty)
+ * @param string $cc        Optional CC address (single address)
+ * @return bool
  */
-function send_smtp_email(string $to, string $subject, string $plainBody): bool
+function send_smtp_email(string $to, string $subject, string $htmlBody, string $plainBody = '', string $cc = ''): bool
 {
     $smtpHost = trim($_ENV['Outgoing Server'] ?? 'blue.webhostingireland.ie');
-    $smtpPort = (int)trim($_ENV['SMTP Port']       ?? '465');
-    $smtpUser = trim($_ENV['Username']             ?? '');
-    $smtpPass = trim($_ENV['Password']             ?? '');
+    $smtpPort = (int)trim($_ENV['SMTP Port']  ?? '465');
+    $smtpUser = trim($_ENV['Username']        ?? '');
+    $smtpPass = trim($_ENV['Password']        ?? '');
     $fromAddr = $smtpUser ?: 'noreply@agrobusinessmw.com';
     $fromName = 'AgroBusiness Malawi';
 
-    // Build raw email message
-    $boundary = uniqid('', true);
-    $msgId    = '<' . uniqid('agro-') . '@agrobusinessmw.com>';
-    $rawMsg   = "From: {$fromName} <{$fromAddr}>\r\n"
-              . "To: {$to}\r\n"
-              . "Subject: {$subject}\r\n"
-              . "Message-ID: {$msgId}\r\n"
-              . "Date: " . date('r') . "\r\n"
-              . "MIME-Version: 1.0\r\n"
-              . "Content-Type: text/plain; charset=utf-8\r\n"
-              . "Content-Transfer-Encoding: 8bit\r\n"
-              . "\r\n"
-              . $plainBody;
+    if ($plainBody === '') {
+        $plainBody = trim(strip_tags(preg_replace(['/<br\s*\/?>/i', '/<\/p>/i'], "\n", $htmlBody)));
+    }
 
-    // Dot-stuffing: lines starting with "." must be doubled
+    $boundary = 'agro_' . md5(uniqid('', true));
+    $msgId    = '<' . uniqid('agro-') . '@agrobusinessmw.com>';
+
+    $ccLine = $cc ? "Cc: {$cc}\r\n" : '';
+    $rawMsg = "From: {$fromName} <{$fromAddr}>\r\n"
+            . "To: {$to}\r\n"
+            . $ccLine
+            . "Subject: =?UTF-8?B?" . base64_encode($subject) . "?=\r\n"
+            . "Message-ID: {$msgId}\r\n"
+            . "Date: " . date('r') . "\r\n"
+            . "MIME-Version: 1.0\r\n"
+            . "Content-Type: multipart/alternative; boundary=\"{$boundary}\"\r\n"
+            . "\r\n"
+            . "--{$boundary}\r\n"
+            . "Content-Type: text/plain; charset=utf-8\r\n"
+            . "Content-Transfer-Encoding: 8bit\r\n"
+            . "\r\n"
+            . $plainBody . "\r\n"
+            . "--{$boundary}\r\n"
+            . "Content-Type: text/html; charset=utf-8\r\n"
+            . "Content-Transfer-Encoding: 8bit\r\n"
+            . "\r\n"
+            . $htmlBody . "\r\n"
+            . "--{$boundary}--";
+
+    // Dot-stuffing: lone dots on a line must be doubled
     $rawMsg = preg_replace('/^\.$/m', '..', $rawMsg);
 
     $ctx = stream_context_create([
         'ssl' => [
-            // Peer verification is disabled to support shared-hosting certs that may
-            // not be trusted in the local CA bundle. The connection is still encrypted.
-            'verify_peer'      => false,
-            'verify_peer_name' => false,
-            'allow_self_signed'=> true,
+            // Peer verification disabled for shared-hosting certs not in local CA bundle.
+            // Connection is still encrypted.
+            'verify_peer'       => false,
+            'verify_peer_name'  => false,
+            'allow_self_signed' => true,
         ],
     ]);
 
@@ -106,42 +162,38 @@ function send_smtp_email(string $to, string $subject, string $plainBody): bool
     );
 
     if (!$socket) {
-        // Fallback to system mail()
-        $headers = "From: {$fromName} <{$fromAddr}>\r\nContent-Type: text/plain; charset=utf-8";
-        return @mail($to, $subject, $plainBody, $headers);
+        $headers = "From: {$fromName} <{$fromAddr}>\r\n"
+                 . ($cc ? "Cc: {$cc}\r\n" : '')
+                 . "MIME-Version: 1.0\r\n"
+                 . "Content-Type: text/html; charset=utf-8";
+        return @mail($to, $subject, $htmlBody, $headers);
     }
 
     stream_set_timeout($socket, 10);
 
-    // Read a full (possibly multi-line) SMTP response; returns the last line.
     $readResp = function () use ($socket): string {
         $last = '';
         while (true) {
             $line = fgets($socket, 1024);
             if ($line === false || $line === '') break;
             $last = $line;
-            // A line like "250-..." means more follows; "250 ..." means done.
             if (strlen($line) >= 4 && $line[3] !== '-') break;
         }
         return $last;
     };
     $write = function (string $cmd) use ($socket): void { fwrite($socket, $cmd . "\r\n"); };
 
-    // Consume greeting
-    $readResp();
-
-    // EHLO
+    $readResp(); // greeting
     $helo = $_SERVER['HTTP_HOST'] ?? 'localhost';
     $write("EHLO {$helo}");
-    $readResp(); // consume full EHLO response (may be many lines)
+    $readResp();
 
-    // AUTH LOGIN
     $write('AUTH LOGIN');
-    $readResp();                            // 334 VXNlcm5hbWU6
+    $readResp();
     $write(base64_encode($smtpUser));
-    $readResp();                            // 334 UGFzc3dvcmQ6
+    $readResp();
     $write(base64_encode($smtpPass));
-    $authResp = $readResp();               // 235 or 535
+    $authResp = $readResp();
 
     if (substr($authResp, 0, 3) !== '235') {
         $write('QUIT');
@@ -153,17 +205,57 @@ function send_smtp_email(string $to, string $subject, string $plainBody): bool
     $readResp();
     $write("RCPT TO:<{$to}>");
     $readResp();
+    if ($cc) {
+        $write("RCPT TO:<{$cc}>");
+        $readResp();
+    }
     $write('DATA');
-    $readResp(); // 354
+    $readResp();
 
     fwrite($socket, $rawMsg . "\r\n.\r\n");
-    $dataResp = $readResp(); // 250 or error
+    $dataResp = $readResp();
 
     $write('QUIT');
     $readResp();
     fclose($socket);
 
     return substr($dataResp, 0, 3) === '250';
+}
+
+/**
+ * Wrap content in the branded HTML email shell.
+ */
+function email_html(string $bodyContent): string
+{
+    return '<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>'
+        . '<body style="margin:0;padding:0;background:#f5f2eb;font-family:Arial,Helvetica,sans-serif;">'
+        . '<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f5f2eb;">'
+        . '<tr><td align="center" style="padding:40px 16px;">'
+        . '<table width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:8px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.08);">'
+        // Header
+        . '<tr><td style="background:#16a34a;padding:28px 36px;">'
+        . '<p style="margin:0;font-size:11px;color:#bbf7d0;letter-spacing:0.12em;text-transform:uppercase;">AgroBusiness Malawi</p>'
+        . '<h1 style="margin:4px 0 0;color:#ffffff;font-size:22px;font-weight:700;line-height:1.3;">Agricultural Platform</h1>'
+        . '</td></tr>'
+        // Body
+        . '<tr><td style="padding:36px;">'
+        . $bodyContent
+        . '</td></tr>'
+        // Footer
+        . '<tr><td style="background:#f5f2eb;padding:20px 36px;border-top:1px solid #e5e0d8;">'
+        . '<p style="margin:0;font-size:12px;color:#8B7355;text-align:center;">AgroBusiness Malawi &bull; Empowering Malawian Farmers<br>'
+        . '<a href="https://agrobusinessmw.com" style="color:#16a34a;text-decoration:none;">agrobusinessmw.com</a></p>'
+        . '</td></tr>'
+        . '</table></td></tr></table></body></html>';
+}
+
+/** Reusable info row for detail tables in admin notification emails. */
+function email_row(string $label, string $value): string
+{
+    return '<tr>'
+        . '<td style="padding:8px 12px;font-size:13px;color:#6b7280;width:130px;border-bottom:1px solid #f0ece4;">' . htmlspecialchars($label) . '</td>'
+        . '<td style="padding:8px 12px;font-size:13px;color:#1f2937;font-weight:600;border-bottom:1px solid #f0ece4;">' . htmlspecialchars($value) . '</td>'
+        . '</tr>';
 }
 
 // Set JSON header & CORS
@@ -588,6 +680,27 @@ try {
                 $business = null;
             }
 
+            // Duplicate check — one application per person (phone, email, or national ID)
+            $dupSql = "SELECT application_ref, status, user_type
+                       FROM onboarding_applications
+                       WHERE phone_number = ?
+                          OR (? <> '' AND email <> '' AND email = ?)
+                          OR (? <> '' AND national_id <> '' AND national_id = ?)
+                       LIMIT 1";
+            $dupStmt = $mysqli->prepare($dupSql);
+            $dupStmt->bind_param('sssss', $phone, $email, $email, $nationalId, $nationalId);
+            $dupStmt->execute();
+            $dup = stmt_fetch_one($dupStmt);
+            if ($dup) {
+                $dupStatus = ucfirst($dup['status']);
+                $dupType   = ucfirst($dup['user_type']);
+                throw new Exception(
+                    "An application for this phone number, email or National ID already exists. " .
+                    "Reference: {$dup['application_ref']} ({$dupType} — {$dupStatus}). " .
+                    "Use the 'Already applied? Check status' button to track your application."
+                );
+            }
+
             // Generate unique reference
             $ref = 'AGR-' . date('Ymd') . '-' . strtoupper(substr(bin2hex(random_bytes(3)), 0, 5));
 
@@ -613,15 +726,56 @@ try {
             );
             $stmt->execute();
 
-            // Send confirmation email if provided
+            $adminEmail = trim($_ENV['Username'] ?? 'info@promanaged-it.com');
+            $adminCc    = 'johnpaulchirwa@gmail.com';
+            $roleLabel  = ucfirst($userType);
+
+            // Confirmation email to applicant
             if ($email) {
-                $subject = "AgroBusiness Malawi — Application Received ({$ref})";
-                $message = "Dear {$fullName},\n\nYour application has been received.\n"
-                    . "Reference: {$ref}\nType: " . ucfirst($userType) . "\n\n"
-                    . "We will review and notify you within 2-3 business days.\n\n"
-                    . "AgroBusiness Malawi Team";
-                send_smtp_email($email, $subject, $message);
+                $html = email_html(
+                    '<h2 style="margin:0 0 16px;font-size:20px;color:#1f2937;">Application Received!</h2>'
+                    . '<p style="margin:0 0 12px;font-size:15px;color:#374151;">Dear <strong>' . htmlspecialchars($fullName) . '</strong>,</p>'
+                    . '<p style="margin:0 0 20px;font-size:15px;color:#374151;">Thank you for registering with AgroBusiness Malawi. Your application has been received and is currently under review.</p>'
+                    . '<table cellpadding="0" cellspacing="0" border="0" style="width:100%;background:#f9fafb;border-radius:6px;border:1px solid #e5e7eb;margin-bottom:24px;">'
+                    . '<tbody>'
+                    . email_row('Reference', $ref)
+                    . email_row('Role', $roleLabel)
+                    . email_row('District', $village)
+                    . '</tbody></table>'
+                    . '<p style="margin:0 0 24px;font-size:15px;color:#374151;">We will review your application and notify you within <strong>2–3 business days</strong>. You can also check your status anytime using your reference number.</p>'
+                    . '<a href="https://agrobusinessmw.com/?ref=' . urlencode($ref) . '" style="display:inline-block;background:#16a34a;color:#ffffff;text-decoration:none;padding:12px 28px;border-radius:6px;font-weight:600;font-size:15px;">Check Application Status</a>'
+                    . '<p style="margin:28px 0 0;font-size:13px;color:#6b7280;">If you have any questions, contact us at <a href="mailto:info@agrobusinessmw.com" style="color:#16a34a;">info@agrobusinessmw.com</a></p>'
+                );
+                send_smtp_email($email, "Application Received — {$ref}", $html);
             }
+
+            // Admin notification
+            $districtStmt2 = $mysqli->prepare("SELECT name FROM districts WHERE id=?");
+            $districtStmt2->bind_param('i', $districtId);
+            $districtStmt2->execute();
+            $districtRow = stmt_fetch_one($districtStmt2);
+            $districtName = $districtRow['name'] ?? 'Unknown';
+
+            $adminHtml = email_html(
+                '<h2 style="margin:0 0 16px;font-size:20px;color:#1f2937;">New Application Submitted</h2>'
+                . '<p style="margin:0 0 20px;font-size:15px;color:#374151;">A new registration application has been submitted and is awaiting your review.</p>'
+                . '<table cellpadding="0" cellspacing="0" border="0" style="width:100%;background:#f9fafb;border-radius:6px;border:1px solid #e5e7eb;margin-bottom:24px;">'
+                . '<tbody>'
+                . email_row('Reference', $ref)
+                . email_row('Full Name', $fullName)
+                . email_row('Role', $roleLabel)
+                . email_row('Phone', $phone)
+                . email_row('Email', $email ?: '—')
+                . email_row('District', $districtName)
+                . email_row('Village', $village)
+                . email_row('Business', $business ?: '—')
+                . email_row('Crops', $crops ?: '—')
+                . email_row('Channel', strtoupper($channel))
+                . email_row('Submitted', date('d M Y, H:i'))
+                . '</tbody></table>'
+                . '<a href="https://agrobusinessmw.com/?admin" style="display:inline-block;background:#16a34a;color:#ffffff;text-decoration:none;padding:12px 28px;border-radius:6px;font-weight:600;font-size:15px;">Review in Admin Panel</a>'
+            );
+            send_smtp_email($adminEmail, "New Application: {$ref} — {$roleLabel}", $adminHtml, '', $adminCc);
 
             echo json_encode([
                 'success'   => true,
@@ -716,36 +870,119 @@ try {
             $stmt->bind_param('sssi', $newStatus, $adminNotes, $denial, $appId);
             $stmt->execute();
 
-            // Fetch applicant details to send notification
+            // Fetch full applicant details
             $stmt2 = $mysqli->prepare(
-                "SELECT full_name, email, phone_number, application_ref, user_type
+                "SELECT full_name, email, phone_number, application_ref, user_type,
+                        district_id, village, business_name, crops_of_interest
                  FROM onboarding_applications WHERE id=?"
             );
             $stmt2->bind_param('i', $appId);
             $stmt2->execute();
             $app = stmt_fetch_one($stmt2);
 
-            if ($app && $app['email']) {
-                if ($action === 'approve') {
-                    $subject = "AgroBusiness Malawi — Application Approved! ({$app['application_ref']})";
-                    $msg     = "Dear {$app['full_name']},\n\nGreat news! Your application ({$app['application_ref']}) "
-                        . "has been APPROVED.\n\nYou can now use all features of AgroBusiness Malawi.\n\n"
-                        . ($notes ? "Admin notes: {$notes}\n\n" : '')
-                        . "Welcome to the platform!\nAgroBusiness Malawi Team";
-                } else {
-                    $subject = "AgroBusiness Malawi — Application Update ({$app['application_ref']})";
-                    $msg     = "Dear {$app['full_name']},\n\nUnfortunately, your application ({$app['application_ref']}) "
-                        . "could not be approved at this time.\n\n"
-                        . ($notes ? "Reason: {$notes}\n\n" : '')
-                        . "Please contact us if you have questions.\nAgroBusiness Malawi Team";
+            $promoted = false;
+            if ($action === 'approve' && $app) {
+                if ($app['user_type'] === 'seller') {
+                    $cStmt = $mysqli->prepare(
+                        "INSERT INTO seller_contact_details (phone_number, email, address) VALUES (?,?,?)"
+                    );
+                    $addr = $app['village'] ?? '';
+                    $cStmt->bind_param('sss', $app['phone_number'], $app['email'], $addr);
+                    $cStmt->execute();
+                    $contactId = $mysqli->insert_id;
+                    $sStmt = $mysqli->prepare(
+                        "INSERT INTO sellers (name, district_id, contact_id) VALUES (?,?,?)"
+                    );
+                    $sStmt->bind_param('sii', $app['full_name'], $app['district_id'], $contactId);
+                    $sStmt->execute();
+                    $promoted = true;
+                } elseif ($app['user_type'] === 'buyer') {
+                    $cStmt = $mysqli->prepare(
+                        "INSERT INTO buyer_contact_details (phone_number, email, address) VALUES (?,?,?)"
+                    );
+                    $addr = $app['village'] ?? '';
+                    $cStmt->bind_param('sss', $app['phone_number'], $app['email'], $addr);
+                    $cStmt->execute();
+                    $contactId = $mysqli->insert_id;
+                    $bStmt = $mysqli->prepare(
+                        "INSERT INTO buyers (name, district_id, contact_id) VALUES (?,?,?)"
+                    );
+                    $bStmt->bind_param('sii', $app['full_name'], $app['district_id'], $contactId);
+                    $bStmt->execute();
+                    $promoted = true;
                 }
-                send_smtp_email($app['email'], $subject, $msg);
+                // farmers have no separate table; their approval is tracked in onboarding_applications only
             }
+
+            $adminEmail2 = trim($_ENV['Username'] ?? 'info@promanaged-it.com');
+            $adminCc2    = 'johnpaulchirwa@gmail.com';
+
+            if ($app && $app['email']) {
+                $roleLabel2 = ucfirst($app['user_type'] ?? 'member');
+                if ($action === 'approve') {
+                    $subject = "Your Application is Approved — {$app['application_ref']}";
+                    $html    = email_html(
+                        '<div style="text-align:center;margin-bottom:28px;">'
+                        . '<div style="display:inline-block;background:#dcfce7;border-radius:50%;width:64px;height:64px;line-height:64px;font-size:32px;">✓</div>'
+                        . '</div>'
+                        . '<h2 style="margin:0 0 16px;font-size:20px;color:#1f2937;text-align:center;">Application Approved!</h2>'
+                        . '<p style="margin:0 0 12px;font-size:15px;color:#374151;">Dear <strong>' . htmlspecialchars($app['full_name']) . '</strong>,</p>'
+                        . '<p style="margin:0 0 20px;font-size:15px;color:#374151;">Great news! Your application has been <strong style="color:#16a34a;">approved</strong> and you are now officially registered as a <strong>' . $roleLabel2 . '</strong> on AgroBusiness Malawi.</p>'
+                        . '<table cellpadding="0" cellspacing="0" border="0" style="width:100%;background:#f9fafb;border-radius:6px;border:1px solid #e5e7eb;margin-bottom:24px;">'
+                        . '<tbody>'
+                        . email_row('Reference', $app['application_ref'])
+                        . email_row('Role', $roleLabel2)
+                        . email_row('Approved', date('d M Y'))
+                        . ($notes ? email_row('Admin Notes', $notes) : '')
+                        . '</tbody></table>'
+                        . '<p style="margin:0 0 24px;font-size:15px;color:#374151;">You can now access all platform features — live crop prices, market insights, buyer and seller listings, farming tips, and weather forecasts.</p>'
+                        . '<a href="https://agrobusinessmw.com" style="display:inline-block;background:#16a34a;color:#ffffff;text-decoration:none;padding:12px 28px;border-radius:6px;font-weight:600;font-size:15px;">Visit AgroBusiness Malawi</a>'
+                        . '<p style="margin:28px 0 0;font-size:13px;color:#6b7280;">Welcome to the platform! Questions? <a href="mailto:info@agrobusinessmw.com" style="color:#16a34a;">info@agrobusinessmw.com</a></p>'
+                    );
+                } else {
+                    $subject = "Application Update — {$app['application_ref']}";
+                    $html    = email_html(
+                        '<h2 style="margin:0 0 16px;font-size:20px;color:#1f2937;">Application Update</h2>'
+                        . '<p style="margin:0 0 12px;font-size:15px;color:#374151;">Dear <strong>' . htmlspecialchars($app['full_name']) . '</strong>,</p>'
+                        . '<p style="margin:0 0 20px;font-size:15px;color:#374151;">Thank you for applying to AgroBusiness Malawi. After review, we are unable to approve your application <strong>' . htmlspecialchars($app['application_ref']) . '</strong> at this time.</p>'
+                        . ($notes
+                            ? '<table cellpadding="0" cellspacing="0" border="0" style="width:100%;background:#fff7ed;border-radius:6px;border:1px solid #fed7aa;margin-bottom:24px;"><tbody>'
+                              . email_row('Reason', $notes)
+                              . '</tbody></table>'
+                            : '')
+                        . '<p style="margin:0 0 24px;font-size:15px;color:#374151;">If you believe this is an error or wish to reapply, please contact us and we will be happy to assist you.</p>'
+                        . '<a href="mailto:info@agrobusinessmw.com" style="display:inline-block;background:#16a34a;color:#ffffff;text-decoration:none;padding:12px 28px;border-radius:6px;font-weight:600;font-size:15px;">Contact Us</a>'
+                        . '<p style="margin:28px 0 0;font-size:13px;color:#6b7280;">We appreciate your interest in AgroBusiness Malawi.</p>'
+                    );
+                }
+                send_smtp_email($app['email'], $subject, $html);
+            }
+
+            // Admin confirmation of the decision
+            $decisionLabel = $action === 'approve' ? 'APPROVED' : 'DENIED';
+            $decisionColor = $action === 'approve' ? '#16a34a' : '#dc2626';
+            $adminDecisionHtml = email_html(
+                '<h2 style="margin:0 0 16px;font-size:20px;color:#1f2937;">Application ' . $decisionLabel . '</h2>'
+                . '<p style="margin:0 0 20px;font-size:15px;color:#374151;">You have <strong style="color:' . $decisionColor . ';">' . strtolower($decisionLabel) . '</strong> the following application.</p>'
+                . '<table cellpadding="0" cellspacing="0" border="0" style="width:100%;background:#f9fafb;border-radius:6px;border:1px solid #e5e7eb;margin-bottom:24px;">'
+                . '<tbody>'
+                . email_row('Reference', $app['application_ref'] ?? '—')
+                . email_row('Applicant', $app['full_name'] ?? '—')
+                . email_row('Role', ucfirst($app['user_type'] ?? '—'))
+                . email_row('Decision', $decisionLabel)
+                . email_row('Reviewed', date('d M Y, H:i'))
+                . ($notes ? email_row('Notes', $notes) : '')
+                . ($promoted ? email_row('Promoted to DB', 'Yes — added to ' . ($app['user_type'] === 'seller' ? 'sellers' : 'buyers') . ' table') : '')
+                . '</tbody></table>'
+                . '<a href="https://agrobusinessmw.com/?admin" style="display:inline-block;background:#16a34a;color:#ffffff;text-decoration:none;padding:12px 28px;border-radius:6px;font-weight:600;font-size:15px;">Admin Panel</a>'
+            );
+            send_smtp_email($adminEmail2, "Decision: {$decisionLabel} — " . ($app['application_ref'] ?? ''), $adminDecisionHtml, '', $adminCc2);
 
             echo json_encode([
                 'success'   => true,
                 'message'   => "Application {$newStatus}",
                 'ref'       => $app['application_ref'] ?? '',
+                'promoted'  => $promoted,
                 'timestamp' => date('c')
             ]);
             break;
@@ -768,56 +1005,62 @@ try {
                 }));
             }
 
+            // Community prices: only APPROVED reports from the last 45 days count.
+            // The headline value is the MEDIAN (outlier-resistant); a group with
+            // 3+ reports is "confirmed". Aggregation is done in PHP so we can use a
+            // true median rather than the average.
             $community = [];
             $community_error = null;
             try {
+                $sql = "SELECT cp.crop_id, c.name AS crop_name, cp.district_id, d.name AS district_name,
+                               cp.market_name, cp.price_per_kg, cp.price_per_bag, cp.unit, cp.created_at
+                        FROM crowdsourced_prices cp
+                        JOIN crops c ON cp.crop_id = c.id
+                        LEFT JOIN districts d ON cp.district_id = d.id
+                        WHERE cp.status = 'approved' AND cp.created_at >= (NOW() - INTERVAL 45 DAY)";
                 if ($crop_id) {
-                    $stmt2 = $mysqli->prepare(
-                        "SELECT cp.crop_id, c.name as crop_name,
-                                d.name as district_name, cp.district_id,
-                                cp.market_name,
-                                ROUND(AVG(cp.price_per_kg),0) as avg_price,
-                                ROUND(AVG(cp.price_per_bag),0) as avg_price_bag,
-                                MIN(cp.price_per_kg) as min_price,
-                                MIN(cp.price_per_bag) as min_price_bag,
-                                MAX(cp.price_per_kg) as max_price,
-                                MAX(cp.price_per_bag) as max_price_bag,
-                                COUNT(*) as report_count,
-                                MAX(cp.created_at) as last_reported,
-                                cp.unit
-                         FROM crowdsourced_prices cp
-                         JOIN crops c ON cp.crop_id = c.id
-                         LEFT JOIN districts d ON cp.district_id = d.id
-                         WHERE cp.crop_id = ?
-                         GROUP BY cp.crop_id, cp.district_id, cp.market_name
-                         ORDER BY report_count DESC, last_reported DESC"
-                    );
+                    $stmt2 = $mysqli->prepare($sql . " AND cp.crop_id = ?");
                     if (!$stmt2) throw new Exception($mysqli->error);
                     $stmt2->bind_param('i', $crop_id);
                 } else {
-                    $stmt2 = $mysqli->prepare(
-                        "SELECT cp.crop_id, c.name as crop_name,
-                                d.name as district_name, cp.district_id,
-                                cp.market_name,
-                                ROUND(AVG(cp.price_per_kg),0) as avg_price,
-                                ROUND(AVG(cp.price_per_bag),0) as avg_price_bag,
-                                MIN(cp.price_per_kg) as min_price,
-                                MIN(cp.price_per_bag) as min_price_bag,
-                                MAX(cp.price_per_kg) as max_price,
-                                MAX(cp.price_per_bag) as max_price_bag,
-                                COUNT(*) as report_count,
-                                MAX(cp.created_at) as last_reported,
-                                cp.unit
-                         FROM crowdsourced_prices cp
-                         JOIN crops c ON cp.crop_id = c.id
-                         LEFT JOIN districts d ON cp.district_id = d.id
-                         GROUP BY cp.crop_id, cp.district_id, cp.market_name
-                         ORDER BY c.name, report_count DESC"
-                    );
+                    $stmt2 = $mysqli->prepare($sql);
                     if (!$stmt2) throw new Exception($mysqli->error);
                 }
                 $stmt2->execute();
-                $community = stmt_fetch_all($stmt2);
+                $raw = stmt_fetch_all($stmt2);
+
+                $groups = [];
+                foreach ($raw as $r) {
+                    $key = $r['crop_id'] . '|' . ($r['district_id'] ?? '0') . '|' . ($r['market_name'] ?? '');
+                    if (!isset($groups[$key])) $groups[$key] = ['meta' => $r, 'kg' => [], 'bag' => [], 'ts' => []];
+                    $groups[$key]['kg'][]  = (float)$r['price_per_kg'];
+                    $groups[$key]['bag'][] = (float)$r['price_per_bag'];
+                    $groups[$key]['ts'][]  = $r['created_at'];
+                }
+                foreach ($groups as $g) {
+                    $count = count($g['kg']);
+                    $community[] = [
+                        'crop_id'       => (int)$g['meta']['crop_id'],
+                        'crop_name'     => $g['meta']['crop_name'],
+                        'district_id'   => $g['meta']['district_id'] !== null ? (int)$g['meta']['district_id'] : null,
+                        'district_name' => $g['meta']['district_name'],
+                        'market_name'   => $g['meta']['market_name'],
+                        'avg_price'     => round(cp_median($g['kg'])),   // headline = median of approved
+                        'avg_price_bag' => round(cp_median($g['bag'])),
+                        'min_price'     => round(min($g['kg'])),
+                        'min_price_bag' => round(min($g['bag'])),
+                        'max_price'     => round(max($g['kg'])),
+                        'max_price_bag' => round(max($g['bag'])),
+                        'report_count'  => $count,
+                        'confirmed'     => $count >= 3,
+                        'last_reported' => max($g['ts']),
+                        'unit'          => $g['meta']['unit'] ?? 'kg',
+                    ];
+                }
+                // Confirmed first, then most reports, then most recent.
+                usort($community, fn($a, $b) => ((int)$b['confirmed'] <=> (int)$a['confirmed'])
+                    ?: ($b['report_count'] <=> $a['report_count'])
+                    ?: strcmp((string)$b['last_reported'], (string)$a['last_reported']));
             } catch (Throwable $ce) {
                 $community_error = $ce->getMessage();
             }
@@ -853,20 +1096,110 @@ try {
                 throw new Exception('Price seems too high. Please enter price per kg in MWK.');
             }
 
+            // Match submitter to an approved member by the trailing phone digits
+            // (tolerates +265 / 0 / spacing differences). Members can be auto-approved.
+            $is_member = 0;
+            $digits = preg_replace('/\D/', '', $phone);
+            if (strlen($digits) >= 8) {
+                $tail = '%' . substr($digits, -9);
+                $ms = $mysqli->prepare("SELECT id FROM onboarding_applications WHERE status='approved' AND REPLACE(REPLACE(REPLACE(phone_number,' ',''),'-',''),'+','') LIKE ? LIMIT 1");
+                $ms->bind_param('s', $tail);
+                $ms->execute();
+                if (stmt_fetch_one($ms)) $is_member = 1;
+            }
+
+            // Statistical gate: compare against the median of approved reference prices.
+            $refs   = cp_reference_prices($mysqli, $crop_id, $district_id);
+            $status = 'pending';   // default: held for review (non-member or cold start)
+            $flag   = null;
+            if (count($refs) >= 3) {
+                $median = cp_median($refs);
+                $inBand = $median > 0 && $price >= $median * 0.4 && $price <= $median * 2.5;
+                if ($inBand) {
+                    $status = $is_member ? 'approved' : 'pending';
+                } else {
+                    $status = $is_member ? 'flagged' : 'pending';
+                    $flag   = 'Outside reference band (~' . round($median) . ' MWK/kg)';
+                }
+            }
+
             $price_per_bag = round($price * 50, 2);
             $stmt = $mysqli->prepare(
                 "INSERT INTO crowdsourced_prices
-                 (crop_id, district_id, price_per_kg, price_per_bag, unit, market_name, submitted_by, channel)
-                 VALUES (?,?,?,?,?,?,?,?)"
+                 (crop_id, district_id, price_per_kg, price_per_bag, unit, market_name, submitted_by, channel, status, is_member, flag_reason)
+                 VALUES (?,?,?,?,?,?,?,?,?,?,?)"
             );
-            $stmt->bind_param('iiddssss', $crop_id, $district_id, $price, $price_per_bag, $unit, $market, $phone, $channel);
+            $stmt->bind_param('iiddsssssis', $crop_id, $district_id, $price, $price_per_bag, $unit, $market, $phone, $channel, $status, $is_member, $flag);
             $stmt->execute();
 
+            $msg = $status === 'approved'
+                ? 'Price confirmed and published. Thank you for helping fellow farmers!'
+                : ($status === 'flagged'
+                    ? 'Thank you! Your price looks unusual, so our team will check it before it shows.'
+                    : 'Thank you! Your price has been received and will appear once reviewed.');
             echo json_encode([
-                'success' => true,
-                'message' => 'Price report submitted. Thank you for helping fellow farmers!',
-                'id'      => $mysqli->insert_id,
+                'success'   => true,
+                'status'    => $status,
+                'is_member' => (bool)$is_member,
+                'message'   => $msg,
+                'id'        => $mysqli->insert_id,
             ]);
+            break;
+
+        // ── COMMUNITY PRICE REVIEW: admin queue ─────────────────────
+        case 'price_review_list':
+            $adminToken = $_SERVER['HTTP_X_ADMIN_TOKEN'] ?? ($_GET['token'] ?? '');
+            if ($adminToken !== ($_ENV['ADMIN_TOKEN'] ?? 'agro_admin_2024')) {
+                echo json_encode(['success' => false, 'error' => 'Unauthorized']);
+                exit;
+            }
+            $filter = $_GET['status'] ?? 'review';
+            if ($filter === 'review' || !in_array($filter, ['pending', 'flagged', 'approved', 'rejected'])) {
+                $where = "cp.status IN ('pending','flagged')";
+            } else {
+                $where = "cp.status = '" . $filter . "'";
+            }
+            $res = $mysqli->query(
+                "SELECT cp.id, cp.crop_id, c.name AS crop_name, cp.district_id, d.name AS district_name,
+                        cp.market_name, cp.price_per_kg, cp.price_per_bag, cp.unit, cp.submitted_by,
+                        cp.channel, cp.status, cp.is_member, cp.flag_reason, cp.created_at
+                 FROM crowdsourced_prices cp
+                 JOIN crops c ON cp.crop_id = c.id
+                 LEFT JOIN districts d ON cp.district_id = d.id
+                 WHERE $where
+                 ORDER BY cp.created_at ASC LIMIT 200"
+            );
+            $rows = $res ? $res->fetch_all(MYSQLI_ASSOC) : [];
+            foreach ($rows as &$row) {
+                $refs = cp_reference_prices($mysqli, (int)$row['crop_id'], $row['district_id'] !== null ? (int)$row['district_id'] : null);
+                $row['reference_median']  = count($refs) ? round(cp_median($refs)) : null;
+                $row['reference_samples'] = count($refs);
+            }
+            unset($row);
+            echo json_encode(['success' => true, 'data' => $rows, 'count' => count($rows), 'timestamp' => date('c')]);
+            break;
+
+        case 'price_review':
+            if ($_SERVER['REQUEST_METHOD'] !== 'POST') throw new Exception('POST method required');
+            $adminToken = $_SERVER['HTTP_X_ADMIN_TOKEN'] ?? '';
+            if ($adminToken !== ($_ENV['ADMIN_TOKEN'] ?? 'agro_admin_2024')) {
+                echo json_encode(['success' => false, 'error' => 'Unauthorized']);
+                exit;
+            }
+            $body     = json_decode(file_get_contents('php://input'), true) ?? [];
+            $priceId  = (int)($body['price_id'] ?? 0);
+            $decision = $body['decision'] ?? '';
+            $reviewer = mb_substr(trim($body['reviewer'] ?? 'admin'), 0, 50);
+            $map = ['approve' => 'approved', 'reject' => 'rejected', 'flag' => 'flagged'];
+            if (!$priceId || !isset($map[$decision])) {
+                throw new Exception('price_id and decision (approve/reject/flag) are required');
+            }
+            $newStatus = $map[$decision];
+            $note = $decision === 'reject' ? mb_substr(trim($body['notes'] ?? ''), 0, 255) : null;
+            $stmt = $mysqli->prepare("UPDATE crowdsourced_prices SET status=?, flag_reason=?, reviewed_by=?, reviewed_at=NOW() WHERE id=?");
+            $stmt->bind_param('sssi', $newStatus, $note, $reviewer, $priceId);
+            $stmt->execute();
+            echo json_encode(['success' => true, 'message' => "Price {$newStatus}", 'affected' => $mysqli->affected_rows, 'timestamp' => date('c')]);
             break;
 
         case 'fews_prices_refresh':
@@ -913,7 +1246,7 @@ try {
             break;
 
         default:
-            throw new Exception('Invalid action specified. Available actions: test, districts, crops, crop_prices, dual_crop_prices, submit_price, fews_prices_refresh, market_insights, sellers, buyers, pest_control, farming_tips, basic_info, submit_application, check_application, admin_applications, admin_review, test_email');
+            throw new Exception('Invalid action specified. Available actions: test, districts, crops, crop_prices, dual_crop_prices, submit_price, price_review_list, price_review, fews_prices_refresh, market_insights, sellers, buyers, pest_control, farming_tips, basic_info, submit_application, check_application, admin_applications, admin_review, test_email');
     }
 } catch (Throwable $e) {
     ob_clean();
