@@ -88,6 +88,18 @@ function get_fews_ussd_prices($mysqli, $language) {
     return $sections ? implode("\n\n", $sections) : '';
 }
 
+// A standard Malawi produce bag is 50 kg. Used to derive a per-bag price
+// from a per-kg price for USSD display.
+if (!defined('USSD_BAG_KG')) define('USSD_BAG_KG', 50);
+
+function ussd_is_kg(?string $unit): bool {
+    return in_array(strtolower(trim((string)$unit)), ['kg', 'kilogram', 'kilo', ''], true);
+}
+
+function ussd_bag_price($per_kg): string {
+    return 'MWK' . number_format((float)$per_kg * USSD_BAG_KG);
+}
+
 // mysqlnd-free fetch: works without get_result() / mysqlnd driver
 function ussd_fetch_all(mysqli_stmt $stmt): array {
     $meta = $stmt->result_metadata();
@@ -136,7 +148,11 @@ function get_prices_by_district(mysqli $mysqli, int $district_id, string $lang):
         $stmt->execute();
         $rows = ussd_fetch_all($stmt);
         if ($rows) {
-            return implode("\n", array_map(fn($r) => "{$r['crop_name']}: MWK{$r['avg_price']}/{$r['unit']}", $rows));
+            return implode("\n", array_map(function ($r) {
+                $line = "{$r['crop_name']}: MWK{$r['avg_price']}/{$r['unit']}";
+                if (ussd_is_kg($r['unit'])) $line .= "\n  50kg bag: " . ussd_bag_price($r['avg_price']);
+                return $line;
+            }, $rows));
         }
     }
     // National reference fallback
@@ -144,7 +160,11 @@ function get_prices_by_district(mysqli $mysqli, int $district_id, string $lang):
     if (!$r) return '';
     $lines = [];
     while ($row = $r->fetch_assoc()) {
-        $lines[] = "{$row['name']}: MWK{$row['min_price']}-{$row['market_price']}/{$row['unit']}";
+        $line = "{$row['name']}: MWK{$row['min_price']}-{$row['market_price']}/{$row['unit']}";
+        if (ussd_is_kg($row['unit'])) {
+            $line .= "\n  50kg bag: " . ussd_bag_price($row['min_price']) . '-' . ussd_bag_price($row['market_price']);
+        }
+        $lines[] = $line;
     }
     return $lines ? "(National ref)\n" . implode("\n", $lines) : '';
 }
@@ -167,10 +187,12 @@ function get_prices_by_crop_district(mysqli $mysqli, int $crop_id, int $district
         $rows = ussd_fetch_all($stmt);
         if ($rows) {
             $r = $rows[0];
-            return "{$r['crop_name']} - {$r['district_name']}:\n"
-                 . "Avg: MWK{$r['avg_price']}/{$r['unit']}\n"
-                 . "Range: MWK{$r['min_price']}-{$r['max_price']}\n"
+            $out = "{$r['crop_name']} - {$r['district_name']}:\n"
+                 . "Avg: MWK{$r['avg_price']}/{$r['unit']}\n";
+            if (ussd_is_kg($r['unit'])) $out .= "50kg bag: " . ussd_bag_price($r['avg_price']) . "\n";
+            $out .= "Range: MWK{$r['min_price']}-{$r['max_price']}\n"
                  . "({$r['reports']} farmer reports)";
+            return $out;
         }
     }
     // National reference fallback
@@ -183,7 +205,9 @@ function get_prices_by_crop_district(mysqli $mysqli, int $crop_id, int $district
         $rows2 = ussd_fetch_all($stmt2);
         if ($rows2) {
             $r = $rows2[0];
-            return "{$r['name']} (National ref):\nMin: MWK{$r['min_price']}/{$r['unit']}\nMkt: MWK{$r['market_price']}/{$r['unit']}";
+            $out = "{$r['name']} (National ref):\nMin: MWK{$r['min_price']}/{$r['unit']}\nMkt: MWK{$r['market_price']}/{$r['unit']}";
+            if (ussd_is_kg($r['unit'])) $out .= "\n50kg bag: " . ussd_bag_price($r['min_price']) . '-' . ussd_bag_price($r['market_price']);
+            return $out;
         }
     }
     return '';

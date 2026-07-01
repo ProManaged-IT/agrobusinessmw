@@ -120,32 +120,9 @@ $practice_types = [
     '3' => 'Growing'
 ];
 
-// District mapping for weather API
-$district_coords = [
-    '1' => ['lat' => -13.9833, 'lon' => 33.7833],  // Lilongwe
-    '2' => ['lat' => -15.7861, 'lon' => 35.0058],  // Blantyre
-    '3' => ['lat' => -11.4581, 'lon' => 34.0156],  // Mzuzu
-    '4' => ['lat' => -13.7986, 'lon' => 33.6856],  // Mchinji
-    '5' => ['lat' => -13.3744, 'lon' => 34.0033],  // Ntchisi
-    '6' => ['lat' => -14.3833, 'lon' => 34.3333],  // Dedza
-    '7' => ['lat' => -13.0333, 'lon' => 33.4833],  // Kasungu
-    '8' => ['lat' => -11.6000, 'lon' => 34.3000],  // Nkhata Bay
-    '9' => ['lat' => -10.9833, 'lon' => 34.0167],  // Rumphi
-    '10' => ['lat' => -9.9333, 'lon' => 33.9333],  // Karonga
-    '11' => ['lat' => -16.0667, 'lon' => 35.1333], // Thyolo
-    '12' => ['lat' => -9.7167, 'lon' => 33.2667],  // Chitipa
-    '13' => ['lat' => -14.4833, 'lon' => 35.2667], // Mangochi
-    '14' => ['lat' => -16.9167, 'lon' => 35.2667], // Chikwawa
-    '15' => ['lat' => -15.6833, 'lon' => 34.9667], // Zomba
-    '16' => ['lat' => -12.9167, 'lon' => 34.3000], // Nkhotakota
-    '17' => ['lat' => -14.8167, 'lon' => 35.6500], // Balaka
-    '18' => ['lat' => -15.3833, 'lon' => 35.3333], // Mulanje
-    '19' => ['lat' => -14.4667, 'lon' => 35.3167], // Machinga
-    '20' => ['lat' => -15.3000, 'lon' => 34.9167], // Phalombe
-    '21' => ['lat' => -13.6333, 'lon' => 32.6333], // Dowa
-    '22' => ['lat' => -12.1333, 'lon' => 34.0167], // Likoma
-    '23' => ['lat' => -14.0000, 'lon' => 33.7833], // Salima
-    '24' => ['lat' => -12.4667, 'lon' => 34.0333], // Ntcheu
-    '25' => ['lat' => -11.8833, 'lon' => 33.6000]  // Mzimba
-];
+// NOTE: District weather coordinates live in config.php ($district_coords),
+// keyed by real DB district IDs. A duplicate table used to live here but had
+// IDs 17-24 shifted by one (17=Balaka instead of Ntcheu, etc.), and because
+// menus.php loads after config.php it silently overrode the correct table —
+// making page-3 weather return the wrong location. Do not redefine it here.
 ?>
