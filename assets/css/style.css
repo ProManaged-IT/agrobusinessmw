@@ -65,6 +65,19 @@ body {
     -webkit-font-smoothing: antialiased;
 }
 
+/* Global input/select/textarea styling */
+input,
+select,
+textarea {
+    background-color: #ffffff !important;
+    color: #1f2937 !important;
+}
+
+input::placeholder,
+textarea::placeholder {
+    color: #9ca3af;
+}
+
 /* Layout Basics */
 .container {
     max-width: 1200px;
@@ -2178,7 +2191,7 @@ a:focus-visible,
     }
 
     .search-box:focus-within {
-        background: #342d28;
+        background: var(--surface);
     }
 
     .item-list button {
@@ -2191,12 +2204,14 @@ a:focus-visible,
 
     .form-group input,
     .form-group select {
-        background: var(--surface);
+        background: #ffffff !important;
+        color: #1f2937 !important;
     }
 
     .form-group input:focus,
     .form-group select:focus {
-        background: #342d28;
+        background: #ffffff !important;
+        color: #1f2937 !important;
     }
 }
 
@@ -2224,15 +2239,15 @@ a:focus-visible,
     display: flex;
     flex-direction: column;
     gap: 0;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.75rem;
 }
 
 .district-region-header {
     position: sticky;
     top: 0;
     background: var(--surface);
-    padding: 0.75rem 0.5rem 0.5rem;
-    font-size: 0.75rem;
+    padding: 0.5rem 0.25rem 0.35rem;
+    font-size: 0.65rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.1em;
@@ -2241,25 +2256,37 @@ a:focus-visible,
     z-index: 5;
 }
 
-/* Individual district cards */
+/* Grid for district buttons */
+.district-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.4rem;
+    padding: 0.4rem 0;
+}
+
+/* Compact district button cards */
 .district-card {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
-    padding: 0.75rem 0.5rem;
+    justify-content: center;
+    padding: 0.6rem 0.5rem;
     background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 8px;
+    border: 1.5px solid var(--border);
+    border-radius: 4px;
     cursor: pointer;
-    transition: all 0.2s ease;
-    margin-bottom: 0.4rem;
-    min-height: 48px;
+    transition: all 0.15s ease;
+    min-height: 44px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text);
+    text-align: center;
+    line-height: 1.2;
 }
 
 .district-card:hover {
     border-color: var(--accent);
     background: var(--bg);
-    box-shadow: 0 2px 8px rgba(139, 115, 85, 0.1);
+    box-shadow: 0 2px 6px rgba(22, 163, 74, 0.08);
 }
 
 .district-card:focus-visible {
@@ -2269,111 +2296,38 @@ a:focus-visible,
 
 .district-card.selected {
     border-color: var(--accent);
-    background: rgba(139, 115, 85, 0.08);
+    background: var(--accent);
+    color: white;
 }
 
-.district-card-checkbox {
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    border: 2px solid var(--border);
+/* "All Districts" full-width button at top */
+.district-all-card {
+    width: 100%;
     display: flex;
     align-items: center;
     justify-content: center;
-    flex-shrink: 0;
-    transition: all 0.2s ease;
-}
-
-.district-card.selected .district-card-checkbox {
+    padding: 0.65rem 1rem;
     background: var(--accent);
-    border-color: var(--accent);
-}
-
-.district-card-checkbox::after {
-    content: '✓';
     color: white;
-    font-size: 0.75rem;
-    font-weight: 700;
-    opacity: 0;
-    transition: opacity 0.2s ease;
-}
-
-.district-card.selected .district-card-checkbox::after {
-    opacity: 1;
-}
-
-.district-card-info {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 0.15rem;
-    min-width: 0;
-}
-
-.district-card-name {
+    border: 1.5px solid var(--accent);
+    border-radius: 4px;
     font-size: 0.9rem;
     font-weight: 600;
-    color: var(--text);
-}
-
-.district-card-region {
-    font-size: 0.75rem;
-    color: var(--muted);
-}
-
-/* "All Districts" special card at top */
-.district-all-card {
-    background: linear-gradient(135deg, rgba(139, 115, 85, 0.08) 0%, rgba(200, 164, 90, 0.06) 100%);
-    border: 1.5px solid var(--accent);
-    border-radius: 10px;
-    padding: 0.85rem 0.75rem;
-    margin-bottom: 1rem;
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.15s ease;
+    margin-bottom: 0.75rem;
+    min-height: 44px;
 }
 
 .district-all-card:hover {
-    background: linear-gradient(135deg, rgba(139, 115, 85, 0.12) 0%, rgba(200, 164, 90, 0.1) 100%);
-    box-shadow: 0 2px 8px rgba(139, 115, 85, 0.15);
+    background: var(--accent-dark);
+    border-color: var(--accent-dark);
+    box-shadow: 0 2px 8px rgba(22, 163, 74, 0.15);
 }
 
 .district-all-card:focus-visible {
-    outline: 2px solid var(--accent);
+    outline: 2px solid white;
     outline-offset: 2px;
-}
-
-.district-all-card-icon {
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    background: var(--accent);
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.75rem;
-    font-weight: 700;
-    flex-shrink: 0;
-}
-
-.district-all-card-text {
-    flex: 1;
-}
-
-.district-all-card-text strong {
-    display: block;
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: var(--text);
-}
-
-.district-all-card-text small {
-    display: block;
-    font-size: 0.75rem;
-    color: var(--muted);
 }
 
 /* Empty state message */
@@ -2900,6 +2854,41 @@ a:focus-visible,
     border-top: 1px solid var(--border);
     padding-top: 1rem;
     margin-top: 1rem;
+}
+
+/* Price-report form (Report a Price pane) */
+.pr-form {
+    max-width: 480px;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.pr-form .btn-primary {
+    align-self: flex-start;
+}
+
+.pr-note {
+    background: rgba(200, 164, 90, 0.1);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    border-radius: 8px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 1.5rem;
+    max-width: 560px;
+}
+
+.pr-note strong {
+    display: block;
+    margin-bottom: 0.4rem;
+    color: var(--text-primary);
+}
+
+.pr-note p {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
 }
 
 /* Community price confirmation chip (in the crop-price table) */

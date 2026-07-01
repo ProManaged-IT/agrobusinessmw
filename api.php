@@ -1087,6 +1087,7 @@ try {
             $unit       = preg_replace('/[^a-zA-Z\/]/', '', $body['unit'] ?? 'kg');
             $market     = mb_substr(trim($body['market_name'] ?? ''), 0, 200);
             $phone      = mb_substr(trim($body['phone'] ?? 'anonymous'), 0, 50);
+            $email      = mb_substr(trim($body['email'] ?? ''), 0, 200);
             $channel    = in_array($body['channel'] ?? 'web', ['web', 'ussd']) ? ($body['channel'] ?? 'web') : 'web';
 
             if (!$crop_id || $price <= 0) {
@@ -1094,6 +1095,13 @@ try {
             }
             if ($price > 100000) {
                 throw new Exception('Price seems too high. Please enter price per kg in MWK.');
+            }
+            // Web reports require full context so the price is useful and reviewable.
+            if ($channel === 'web') {
+                if (!$district_id)                                throw new Exception('District is required.');
+                if (mb_strlen($market) < 2)                       throw new Exception('Market / location is required.');
+                if (!preg_match('/^\+?[0-9\s\-]{8,20}$/', $phone)) throw new Exception('A valid phone number is required.');
+                if (!filter_var($email, FILTER_VALIDATE_EMAIL))   throw new Exception('A valid email is required.');
             }
 
             // Match submitter to an approved member by the trailing phone digits
@@ -1124,12 +1132,13 @@ try {
             }
 
             $price_per_bag = round($price * 50, 2);
+            $emailVal = $email !== '' ? $email : null;
             $stmt = $mysqli->prepare(
                 "INSERT INTO crowdsourced_prices
-                 (crop_id, district_id, price_per_kg, price_per_bag, unit, market_name, submitted_by, channel, status, is_member, flag_reason)
-                 VALUES (?,?,?,?,?,?,?,?,?,?,?)"
+                 (crop_id, district_id, price_per_kg, price_per_bag, unit, market_name, submitted_by, email, channel, status, is_member, flag_reason)
+                 VALUES (?,?,?,?,?,?,?,?,?,?,?,?)"
             );
-            $stmt->bind_param('iiddsssssis', $crop_id, $district_id, $price, $price_per_bag, $unit, $market, $phone, $channel, $status, $is_member, $flag);
+            $stmt->bind_param('iiddssssssis', $crop_id, $district_id, $price, $price_per_bag, $unit, $market, $phone, $emailVal, $channel, $status, $is_member, $flag);
             $stmt->execute();
 
             $msg = $status === 'approved'

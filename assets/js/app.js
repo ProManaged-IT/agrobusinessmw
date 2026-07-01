@@ -1620,15 +1620,11 @@ class AgroBusinessRevolution {
             };
             modal.addEventListener('modalclosed', onDistrictModalClose);
 
-            // Render district picker with "All Districts" option
+            // Render district picker with "All Districts" option in compact grid
             const renderPicker = () => {
                 let html = `
                     <button type="button" class="district-all-card" data-id="all" aria-label="Select all districts">
-                        <div class="district-all-card-icon">✓</div>
-                        <div class="district-all-card-text">
-                            <strong>All Districts</strong>
-                            <small>View data across Malawi</small>
-                        </div>
+                        All Districts
                     </button>
                 `;
 
@@ -1637,15 +1633,13 @@ class AgroBusinessRevolution {
                     if (regionDistricts.length > 0) {
                         html += `<div class="district-region-group">
                             <div class="district-region-header">${region} Region</div>
-                            ${regionDistricts.map(district => `
-                                <button type="button" class="district-card" data-id="${district.id}" data-name="${district.name}" data-region="${region}" aria-label="Select ${district.name}, ${region}">
-                                    <div class="district-card-checkbox"></div>
-                                    <div class="district-card-info">
-                                        <div class="district-card-name">${district.name}</div>
-                                        <div class="district-card-region">${region} Region</div>
-                                    </div>
-                                </button>
-                            `).join('')}
+                            <div class="district-grid">
+                                ${regionDistricts.map(district => `
+                                    <button type="button" class="district-card" data-id="${district.id}" data-name="${district.name}" data-region="${region}" aria-label="Select ${district.name}">
+                                        ${district.name}
+                                    </button>
+                                `).join('')}
+                            </div>
                         </div>`;
                     }
                 });
@@ -1678,15 +1672,13 @@ class AgroBusinessRevolution {
                             hasResults = true;
                             html += `<div class="district-region-group">
                                 <div class="district-region-header">${region} Region</div>
-                                ${filtered.map(district => `
-                                    <button type="button" class="district-card" data-id="${district.id}" data-name="${district.name}" data-region="${region}" aria-label="Select ${district.name}, ${region}">
-                                        <div class="district-card-checkbox"></div>
-                                        <div class="district-card-info">
-                                            <div class="district-card-name">${district.name}</div>
-                                            <div class="district-card-region">${region} Region</div>
-                                        </div>
-                                    </button>
-                                `).join('')}
+                                <div class="district-grid">
+                                    ${filtered.map(district => `
+                                        <button type="button" class="district-card" data-id="${district.id}" data-name="${district.name}" data-region="${region}" aria-label="Select ${district.name}">
+                                            ${district.name}
+                                        </button>
+                                    `).join('')}
+                                </div>
                             </div>`;
                             visibleCount += filtered.length;
                         }
@@ -2274,6 +2266,9 @@ class AgroBusinessRevolution {
             const districtOptions = ['<option value="all">All districts</option>'].concat(
                 districtsList.map(d => `<option value="${esc((d.name || '').toLowerCase())}">${esc(d.name)}</option>`)
             ).join('');
+            // District options for the price-report form (value = id, required select).
+            const districtReportOptions = districtsList
+                .map(d => `<option value="${esc(d.id)}">${esc(d.name)}</option>`).join('');
 
             const area = document.getElementById('content-area');
             area.innerHTML = `
@@ -2317,28 +2312,42 @@ class AgroBusinessRevolution {
                 </div>
 
                 <div id="pane-report" class="price-pane" style="display:none">
-                    <p style="color:var(--text-muted);font-size:.85rem;margin-bottom:1.5rem">Seen a price at your local market? Report it to help other farmers make better decisions.</p>
-                    <form id="price-report-form" style="max-width:480px;display:flex;flex-direction:column;gap:1rem">
-                        <div class="reg-field">
+                    <div class="pr-note">
+                        <strong>How price reporting works</strong>
+                        <p>Report a price you have seen at a market. Enter the phone number you registered with — prices from approved members that match recent prices are published straight away, while unusual ones are checked by our team first. All fields are required so the price is useful to other farmers.</p>
+                    </div>
+                    <form id="price-report-form" class="pr-form">
+                        <div class="form-group">
                             <label>Crop *</label>
                             <select id="pr-crop" required>
                                 <option value="">Select crop...</option>
                                 ${cropOptions}
                             </select>
                         </div>
-                        <div class="reg-field">
+                        <div class="form-group">
+                            <label>District *</label>
+                            <select id="pr-district" required>
+                                <option value="">Select district...</option>
+                                ${districtReportOptions}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Market / Location *</label>
+                            <input type="text" id="pr-market" placeholder="e.g. Limbe Market" required>
+                        </div>
+                        <div class="form-group">
                             <label>Price per kg (MWK) *</label>
                             <input type="number" id="pr-price" min="1" max="99999" step="1" placeholder="e.g. 250" required>
                         </div>
-                        <div class="reg-field">
-                            <label>Market / Location</label>
-                            <input type="text" id="pr-market" placeholder="e.g. Limbe Market (optional)">
+                        <div class="form-group">
+                            <label>Your Phone (registered) *</label>
+                            <input type="tel" id="pr-phone" placeholder="e.g. 0999 123 456" required>
                         </div>
-                        <div class="reg-field">
-                            <label>Your Phone (optional)</label>
-                            <input type="tel" id="pr-phone" placeholder="+265...">
+                        <div class="form-group">
+                            <label>Email *</label>
+                            <input type="email" id="pr-email" placeholder="you@example.com" required>
                         </div>
-                        <button type="submit" class="btn-primary" style="align-self:flex-start">Submit Price Report</button>
+                        <button type="submit" class="btn-primary">Submit Price Report</button>
                         <p id="pr-msg" style="display:none;padding:.75rem 1rem;border-radius:8px;font-weight:600"></p>
                     </form>
                 </div>
@@ -2404,16 +2413,39 @@ class AgroBusinessRevolution {
             area.querySelector('#price-report-form').addEventListener('submit', async e => {
                 e.preventDefault();
                 const btn = e.target.querySelector('button[type=submit]');
-                btn.disabled = true; btn.textContent = 'Submitting...';
                 const msg = document.getElementById('pr-msg');
+                const showErr = (text) => {
+                    msg.style.display = 'block';
+                    msg.style.background = 'rgba(185,64,64,.1)'; msg.style.color = '#b94040';
+                    msg.textContent = text;
+                };
+
+                const cropId    = +document.getElementById('pr-crop').value;
+                const districtId = +document.getElementById('pr-district').value;
+                const market    = document.getElementById('pr-market').value.trim();
+                const price     = +document.getElementById('pr-price').value;
+                const phone     = document.getElementById('pr-phone').value.trim();
+                const email     = document.getElementById('pr-email').value.trim();
+
+                // All fields are required.
+                if (!cropId) return showErr('Please select a crop.');
+                if (!districtId) return showErr('Please select your district.');
+                if (!market) return showErr('Please enter the market / location.');
+                if (!price || price <= 0) return showErr('Please enter a valid price per kg.');
+                if (!/^\+?[0-9\s\-]{8,20}$/.test(phone)) return showErr('Please enter a valid phone number.');
+                if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return showErr('Please enter a valid email address.');
+
+                btn.disabled = true; btn.textContent = 'Submitting...';
                 try {
                     const res = await this.apiCall('api.php?action=submit_price', {
                         method: 'POST',
                         body: JSON.stringify({
-                            crop_id: +document.getElementById('pr-crop').value,
-                            price_per_kg: +document.getElementById('pr-price').value,
-                            market_name: document.getElementById('pr-market').value.trim(),
-                            phone: document.getElementById('pr-phone').value.trim() || 'web-anonymous',
+                            crop_id: cropId,
+                            district_id: districtId,
+                            price_per_kg: price,
+                            market_name: market,
+                            phone: phone,
+                            email: email,
                             channel: 'web',
                         })
                     });
