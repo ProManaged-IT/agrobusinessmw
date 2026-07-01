@@ -1395,22 +1395,80 @@ class AgroBusinessRevolution {
     showDistrictsOverview() {
         this.loadDistricts().then(districts => {
             const modal = document.getElementById('districts-overview-modal');
-            const content = document.getElementById('districts-overview-content');
+            const grid = document.getElementById('districts-overview-content');
+            if (!modal || !grid) return;
+            const body = grid.parentElement;
 
-            if (!modal || !content) return;
+            // Annotate with region so we can filter/group.
+            const list = districts.map(d => ({
+                id: d.id,
+                name: d.name,
+                region: (this.districtCoords[d.id] && this.districtCoords[d.id].region) || 'Malawi'
+            }));
 
-            content.innerHTML = districts.map((district, index) => {
-                const coords = this.districtCoords[district.id];
-                return `
-                    <div class="overview-item" style="animation-delay: ${index * 0.05}s" onclick="app.selectDistrictFromOverview(${district.id})">
-                        <span class="overview-badge mono">${(district.name || '?').charAt(0).toUpperCase()}</span>
-                        <span class="overview-title">${district.name}</span>
-                        <span class="overview-chip">${coords ? coords.region : 'Malawi'}</span>
+            const cardHtml = (d, i) => `
+                <button type="button" class="overview-item" style="animation-delay:${i * 0.02}s"
+                    data-region="${d.region}" data-name="${(d.name || '').toLowerCase()}"
+                    onclick="app.selectDistrictFromOverview(${d.id})">
+                    <span class="overview-badge mono">${(d.name || '?').charAt(0).toUpperCase()}</span>
+                    <span class="overview-title">${d.name}</span>
+                    <span class="overview-chip">${d.region}</span>
+                </button>`;
+
+            body.innerHTML = `
+                <div class="picker-toolbar">
+                    <div class="picker-search">
+                        <span class="material-symbols-rounded" aria-hidden="true">search</span>
+                        <input id="district-search" type="search" placeholder="Search district…" autocomplete="off" aria-label="Search districts">
                     </div>
-                `;
-            }).join('');
+                    <div class="picker-chips" id="district-region-chips" role="tablist">
+                        <button type="button" class="picker-chip active" data-region="all">All</button>
+                        <button type="button" class="picker-chip" data-region="Northern">Northern</button>
+                        <button type="button" class="picker-chip" data-region="Central">Central</button>
+                        <button type="button" class="picker-chip" data-region="Southern">Southern</button>
+                    </div>
+                </div>
+                <p class="picker-count" id="district-count"></p>
+                <div id="districts-overview-content" class="overview-grid" aria-live="polite"></div>`;
 
+            const newGrid = document.getElementById('districts-overview-content');
+            const countEl = document.getElementById('district-count');
+            const searchEl = document.getElementById('district-search');
+            const chipsEl = document.getElementById('district-region-chips');
+            let region = 'all';
+            let matches = [];
+
+            const render = () => {
+                const t = (searchEl.value || '').trim().toLowerCase();
+                matches = list.filter(d =>
+                    (region === 'all' || d.region === region) &&
+                    (!t || d.name.toLowerCase().includes(t)));
+                newGrid.innerHTML = matches.length
+                    ? matches.map(cardHtml).join('')
+                    : `<p class="picker-empty">No districts match “${t}”.</p>`;
+                countEl.textContent = `${matches.length} district${matches.length === 1 ? '' : 's'}`;
+            };
+
+            searchEl.addEventListener('input', render);
+            // Enter selects the district when the search narrows to one result.
+            searchEl.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && matches.length === 1) {
+                    e.preventDefault();
+                    this.selectDistrictFromOverview(matches[0].id);
+                }
+            });
+            chipsEl.addEventListener('click', (e) => {
+                const chip = e.target.closest('.picker-chip');
+                if (!chip) return;
+                region = chip.dataset.region;
+                chipsEl.querySelectorAll('.picker-chip').forEach(c => c.classList.toggle('active', c === chip));
+                render();
+                searchEl.focus();
+            });
+
+            render();
             this.openModal(modal);
+            setTimeout(() => searchEl && searchEl.focus(), 120);
         });
     }
 

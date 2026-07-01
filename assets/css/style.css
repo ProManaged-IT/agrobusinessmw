@@ -1543,11 +1543,107 @@ textarea::placeholder {
     }
 }
 
+/* Picker toolbar — search + region filter chips (sticky within the modal) */
+.picker-toolbar {
+    position: sticky;
+    top: 0;
+    z-index: 3;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding-bottom: 0.85rem;
+    margin-bottom: 0.25rem;
+    background: var(--surface);
+}
+
+.picker-search {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    background: var(--bg);
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    padding: 0.65rem 0.9rem;
+    transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.picker-search:focus-within {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--primary-glow);
+}
+
+.picker-search .material-symbols-rounded {
+    color: var(--muted);
+    font-size: 1.3rem;
+}
+
+.picker-search input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    outline: none;
+    font: inherit;
+    font-size: 0.95rem;
+    color: var(--text);
+}
+
+.picker-chips {
+    display: flex;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+}
+
+.picker-chip {
+    border: 1.5px solid var(--border);
+    background: var(--surface);
+    color: var(--text-secondary);
+    font: inherit;
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 0.35rem 0.9rem;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.picker-chip:hover {
+    border-color: var(--gold);
+    color: var(--text);
+}
+
+.picker-chip.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+}
+
+.picker-count {
+    font-size: 0.75rem;
+    color: var(--muted);
+    margin: 0 0 0.85rem;
+    letter-spacing: 0.02em;
+}
+
+.picker-empty {
+    grid-column: 1 / -1;
+    text-align: center;
+    color: var(--muted);
+    padding: 2rem 1rem;
+    font-size: 0.9rem;
+}
+
 /* Overview Grid — district / crop picker cards */
 .overview-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(136px, 1fr));
     gap: 0.85rem;
+}
+
+/* Reset button defaults when a picker card is a <button> */
+button.overview-item {
+    font: inherit;
+    color: inherit;
+    width: 100%;
 }
 
 .overview-item {
