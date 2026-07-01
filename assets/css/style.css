@@ -2199,3 +2199,371 @@ a:focus-visible,
         background: #342d28;
     }
 }
+
+/* =====================================================
+   DISTRICT PICKER — REDESIGNED
+   ===================================================== */
+
+.district-picker-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.district-picker-list {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    padding-top: 0.5rem;
+}
+
+/* Regional grouping with sticky headers */
+.district-region-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    margin-bottom: 0.5rem;
+}
+
+.district-region-header {
+    position: sticky;
+    top: 0;
+    background: var(--surface);
+    padding: 0.75rem 0.5rem 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    border-bottom: 1px solid var(--border);
+    z-index: 5;
+}
+
+/* Individual district cards */
+.district-card {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 0.5rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-bottom: 0.4rem;
+    min-height: 48px;
+}
+
+.district-card:hover {
+    border-color: var(--accent);
+    background: var(--bg);
+    box-shadow: 0 2px 8px rgba(139, 115, 85, 0.1);
+}
+
+.district-card:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
+.district-card.selected {
+    border-color: var(--accent);
+    background: rgba(139, 115, 85, 0.08);
+}
+
+.district-card-checkbox {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.2s ease;
+}
+
+.district-card.selected .district-card-checkbox {
+    background: var(--accent);
+    border-color: var(--accent);
+}
+
+.district-card-checkbox::after {
+    content: '✓';
+    color: white;
+    font-size: 0.75rem;
+    font-weight: 700;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.district-card.selected .district-card-checkbox::after {
+    opacity: 1;
+}
+
+.district-card-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    min-width: 0;
+}
+
+.district-card-name {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.district-card-region {
+    font-size: 0.75rem;
+    color: var(--muted);
+}
+
+/* "All Districts" special card at top */
+.district-all-card {
+    background: linear-gradient(135deg, rgba(139, 115, 85, 0.08) 0%, rgba(200, 164, 90, 0.06) 100%);
+    border: 1.5px solid var(--accent);
+    border-radius: 10px;
+    padding: 0.85rem 0.75rem;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.district-all-card:hover {
+    background: linear-gradient(135deg, rgba(139, 115, 85, 0.12) 0%, rgba(200, 164, 90, 0.1) 100%);
+    box-shadow: 0 2px 8px rgba(139, 115, 85, 0.15);
+}
+
+.district-all-card:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
+.district-all-card-icon {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.district-all-card-text {
+    flex: 1;
+}
+
+.district-all-card-text strong {
+    display: block;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.district-all-card-text small {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--muted);
+}
+
+/* Empty state message */
+.district-no-results {
+    text-align: center;
+    padding: 2rem 1rem;
+    color: var(--muted);
+}
+
+.district-no-results p {
+    font-size: 0.9rem;
+    margin: 0 0 0.5rem;
+}
+
+/* Mobile bottom sheet behaviour — when modal is open on mobile */
+@media (max-width: 640px) {
+    .district-picker-list {
+        max-height: calc(100vh - 280px);
+    }
+}
+
+@media (min-width: 768px) {
+    .district-picker-list {
+        max-height: 400px;
+    }
+}
+
+/* =====================================================
+   MODAL FILTERS — IMPROVED UI
+   ===================================================== */
+
+.modal-filter-bar {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 1rem;
+}
+
+.modal-filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.modal-filter-label {
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+}
+
+/* Active filter pills */
+.modal-filter-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.modal-filter-pill {
+    background: var(--accent);
+    color: white;
+    padding: 0.5rem 0.85rem;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    border: none;
+    cursor: default;
+}
+
+.modal-filter-pill-remove {
+    background: rgba(255, 255, 255, 0.3);
+    border: none;
+    color: white;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    font-size: 0.75rem;
+    transition: background 0.2s ease;
+}
+
+.modal-filter-pill-remove:hover {
+    background: rgba(255, 255, 255, 0.5);
+}
+
+.modal-filter-clear-all {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--accent);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    text-decoration: underline;
+    transition: color 0.2s ease;
+}
+
+.modal-filter-clear-all:hover {
+    color: var(--primary-light);
+}
+
+.modal-filter-clear-all:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Filter controls — like trade filters but improved */
+.filter-control {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    padding: 0.75rem 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.filter-control:focus-within {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--primary-glow);
+}
+
+.filter-control-icon {
+    color: var(--muted);
+    flex-shrink: 0;
+    font-size: 1.25rem;
+}
+
+.filter-control input,
+.filter-control select {
+    flex: 1;
+    border: none;
+    background: transparent;
+    color: var(--text);
+    font: inherit;
+    font-size: 0.9rem;
+    outline: none;
+    padding: 0;
+}
+
+.filter-control input::placeholder {
+    color: var(--muted);
+}
+
+.filter-chip-group {
+    display: flex;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+    margin-top: 0.5rem;
+}
+
+.filter-chip {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: 999px;
+    padding: 0.4rem 0.9rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+}
+
+.filter-chip:hover {
+    border-color: var(--accent);
+    background: var(--bg);
+}
+
+.filter-chip.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: white;
+}
+
+.filter-result-count {
+    font-size: 0.8rem;
+    color: var(--muted);
+    margin-top: 0.5rem;
+}

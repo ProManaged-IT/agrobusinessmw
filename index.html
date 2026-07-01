@@ -534,14 +534,16 @@
             </div>
 
             <div class="modal-body">
-                <div class="search-box">
-                    <span class="search-icon material-symbols-rounded">search</span>
-                    <input type="text" id="district-search" placeholder="Search district or region..."
-                        aria-label="Search districts">
-                </div>
-                <p id="search-stats" class="selection-count">Districts loading</p>
-                <div id="district-list" class="item-list district-picker" aria-live="polite">
-                    <!-- Populated by JS -->
+                <div class="district-picker-container">
+                    <div class="search-box">
+                        <span class="search-icon material-symbols-rounded">search</span>
+                        <input type="text" id="district-search" placeholder="Search district or region..."
+                            aria-label="Search districts">
+                    </div>
+                    <p id="search-stats" class="selection-count">Districts loading</p>
+                    <div id="district-list" class="district-picker-list" aria-live="polite">
+                        <!-- Populated by JS -->
+                    </div>
                 </div>
             </div>
         </div>

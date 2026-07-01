@@ -721,14 +721,7 @@ class AgroBusinessRevolution {
     }
 
     bindSearchEvents() {
-        const districtSearch = document.getElementById('district-search');
         const cropSearch = document.getElementById('crop-search');
-
-        if (districtSearch) {
-            districtSearch.addEventListener('input', (e) => {
-                this.filterDistricts(e.target.value);
-            });
-        }
 
         if (cropSearch) {
             cropSearch.addEventListener('input', (e) => {
@@ -738,24 +731,20 @@ class AgroBusinessRevolution {
     }
 
     filterDistricts(searchTerm) {
-        const items = document.querySelectorAll('.district-item');
-        const intro = document.querySelector('.district-picker-intro');
+        const cards = document.querySelectorAll('.district-card');
         const term = searchTerm.toLowerCase().trim();
         let visibleCount = 0;
 
-        items.forEach(item => {
-            const haystack = `${item.dataset.name || ''} ${item.dataset.region || ''}`.toLowerCase();
+        cards.forEach(card => {
+            const haystack = `${card.dataset.name || ''} ${card.dataset.region || ''}`.toLowerCase();
             const matches = haystack.includes(term);
-            item.hidden = !matches;
+            card.hidden = !matches;
             if (matches) visibleCount++;
         });
 
-        // Hide intro block while searching so it doesn't clutter the filtered results
-        if (intro) intro.hidden = term.length > 0;
-
         const searchStats = document.getElementById('search-stats');
         if (searchStats) {
-            searchStats.textContent = term ? `${visibleCount} district${visibleCount !== 1 ? 's' : ''} found` : `${items.length} districts available`;
+            searchStats.textContent = term ? `${visibleCount} district${visibleCount !== 1 ? 's' : ''} found` : `${cards.length} districts available`;
         }
     }
 
@@ -1494,39 +1483,13 @@ class AgroBusinessRevolution {
 
             // Clear search
             if (searchBox) searchBox.value = '';
-            if (searchStats) searchStats.textContent = `${districts.length} districts available`;
 
-            const regions = ['Central', 'Northern', 'Southern'];
-            const regionSummary = regions.map(region => {
-                const count = districts.filter(district => (this.districtCoords[district.id]?.region || 'Malawi') === region).length;
-                return `<span>${region}: ${count}</span>`;
-            }).join('');
-            const popularDistricts = districts.filter(district => ['Lilongwe', 'Blantyre', 'Mzuzu', 'Zomba'].includes(district.name));
-            const quickPicks = popularDistricts.length ? `
-                <div class="district-quick-picks" aria-label="Common district choices">
-                    ${popularDistricts.map(district => `<button type="button" class="district-chip" data-id="${district.id}">${district.name}</button>`).join('')}
-                </div>
-            ` : '';
-
-            list.innerHTML = `
-                <div class="district-picker-intro">
-                    <p>${this.texts[this.currentLang].district_picker_intro}</p>
-                    <div class="district-region-summary">${regionSummary}</div>
-                    ${quickPicks}
-                </div>
-                ${districts.map(district => {
-                const coords = this.districtCoords[district.id];
-                const region = coords ? coords.region : 'Malawi';
-                return `
-                        <button class="district-item" data-id="${district.id}" data-name="${district.name}" data-region="${region}" type="button">
-                            <span class="district-copy">
-                                <strong>${district.name}</strong>
-                                <small>${region} Region</small>
-                            </span>
-                        </button>
-                    `;
-            }).join('')}
-            `;
+            // Group districts by region
+            const regions = ['Northern', 'Central', 'Southern'];
+            const districtsByRegion = {};
+            regions.forEach(region => {
+                districtsByRegion[region] = districts.filter(d => (this.districtCoords[d.id]?.region || 'Malawi') === region);
+            });
 
             // Track whether user selected before closing
             let districtSelected = false;
@@ -1540,16 +1503,124 @@ class AgroBusinessRevolution {
             };
             modal.addEventListener('modalclosed', onDistrictModalClose);
 
+            // Render district picker with "All Districts" option
+            const renderPicker = () => {
+                let html = `
+                    <button type="button" class="district-all-card" data-id="all" aria-label="Select all districts">
+                        <div class="district-all-card-icon">✓</div>
+                        <div class="district-all-card-text">
+                            <strong>All Districts</strong>
+                            <small>View data across Malawi</small>
+                        </div>
+                    </button>
+                `;
+
+                regions.forEach(region => {
+                    const regionDistricts = districtsByRegion[region];
+                    if (regionDistricts.length > 0) {
+                        html += `<div class="district-region-group">
+                            <div class="district-region-header">${region} Region</div>
+                            ${regionDistricts.map(district => `
+                                <button type="button" class="district-card" data-id="${district.id}" data-name="${district.name}" data-region="${region}" aria-label="Select ${district.name}, ${region}">
+                                    <div class="district-card-checkbox"></div>
+                                    <div class="district-card-info">
+                                        <div class="district-card-name">${district.name}</div>
+                                        <div class="district-card-region">${region} Region</div>
+                                    </div>
+                                </button>
+                            `).join('')}
+                        </div>`;
+                    }
+                });
+
+                list.innerHTML = html;
+            };
+
+            renderPicker();
+
+            // Update search stats
+            if (searchStats) searchStats.textContent = `${districts.length} districts available`;
+
+            // Search/filter functionality with regional grouping preservation
+            const updateSearch = () => {
+                const term = searchBox.value.toLowerCase().trim();
+                let visibleCount = 0;
+
+                if (!term) {
+                    renderPicker();
+                    if (searchStats) searchStats.textContent = `${districts.length} districts available`;
+                } else {
+                    let html = '';
+                    let hasResults = false;
+
+                    regions.forEach(region => {
+                        const filtered = districtsByRegion[region].filter(d =>
+                            d.name.toLowerCase().includes(term) || region.toLowerCase().includes(term)
+                        );
+                        if (filtered.length > 0) {
+                            hasResults = true;
+                            html += `<div class="district-region-group">
+                                <div class="district-region-header">${region} Region</div>
+                                ${filtered.map(district => `
+                                    <button type="button" class="district-card" data-id="${district.id}" data-name="${district.name}" data-region="${region}" aria-label="Select ${district.name}, ${region}">
+                                        <div class="district-card-checkbox"></div>
+                                        <div class="district-card-info">
+                                            <div class="district-card-name">${district.name}</div>
+                                            <div class="district-card-region">${region} Region</div>
+                                        </div>
+                                    </button>
+                                `).join('')}
+                            </div>`;
+                            visibleCount += filtered.length;
+                        }
+                    });
+
+                    if (hasResults) {
+                        list.innerHTML = html;
+                        if (searchStats) searchStats.textContent = `${visibleCount} district${visibleCount !== 1 ? 's' : ''} found`;
+                    } else {
+                        list.innerHTML = `<div class="district-no-results"><p>No districts match "${term}"</p></div>`;
+                        if (searchStats) searchStats.textContent = 'No results';
+                    }
+                }
+
+                // Re-attach click handlers
+                attachClickHandlers();
+            };
+
             const selectDistrict = (districtId) => {
-                this.selectedDistrict = districtId;
+                if (districtId === 'all') {
+                    this.selectedDistrict = null; // Clear to indicate all districts
+                } else {
+                    this.selectedDistrict = districtId;
+                }
                 districtSelected = true;
                 this.closeModal(modal);
                 if (callback) callback();
             };
 
-            list.querySelectorAll('.district-item, .district-chip').forEach(item => {
-                item.addEventListener('click', () => selectDistrict(item.dataset.id));
-            });
+            const attachClickHandlers = () => {
+                list.querySelectorAll('.district-card, .district-all-card').forEach(card => {
+                    card.addEventListener('click', () => {
+                        const id = card.dataset.id;
+                        selectDistrict(id);
+                    });
+                    card.addEventListener('keydown', (e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            const id = card.dataset.id;
+                            selectDistrict(id);
+                        }
+                    });
+                });
+            };
+
+            attachClickHandlers();
+
+            // Search input listener
+            if (searchBox) {
+                searchBox.addEventListener('input', updateSearch);
+            }
 
             this.openModal(modal);
         }).catch(error => {
@@ -2515,19 +2586,43 @@ class AgroBusinessRevolution {
         if (!input || !countEl || !cards.length) return;
 
         let activeCrop = '';
+        let searchTerm = '';
 
         const applyFilter = () => {
-            const term = input.value.toLowerCase().trim();
+            searchTerm = input.value.toLowerCase().trim();
             let visible = 0;
             cards.forEach(card => {
-                const show = (!term || card.dataset.search.includes(term))
+                const show = (!searchTerm || card.dataset.search.includes(searchTerm))
                     && (!activeCrop || (card.dataset.crops || '').includes(activeCrop));
                 card.hidden = !show;
                 if (show) visible++;
             });
-            countEl.textContent = (term || activeCrop)
+            countEl.textContent = (searchTerm || activeCrop)
                 ? `${visible} match${visible === 1 ? '' : 'es'}`
                 : `${cards.length} showing`;
+
+            // Update chip visual states
+            updateChipStates();
+        };
+
+        const updateChipStates = () => {
+            chips.forEach(chip => {
+                const cropFilter = chip.dataset.cropFilter || '';
+                if (cropFilter === activeCrop) {
+                    chip.classList.add('active');
+                } else {
+                    chip.classList.remove('active');
+                }
+            });
+        };
+
+        const clearAllFilters = () => {
+            input.value = '';
+            activeCrop = '';
+            chips.forEach(c => c.classList.remove('active'));
+            const allChip = document.querySelector('[data-crop-filter=""]');
+            if (allChip) allChip.classList.add('active');
+            applyFilter();
         };
 
         chips.forEach(chip => {
@@ -2537,9 +2632,27 @@ class AgroBusinessRevolution {
                 activeCrop = chip.dataset.cropFilter;
                 applyFilter();
             });
+
+            chip.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    chip.click();
+                }
+            });
         });
 
         input.addEventListener('input', applyFilter);
+
+        // Enhance filter focus states
+        input.addEventListener('focus', () => {
+            const filterControl = input.closest('.trade-filter');
+            if (filterControl) filterControl.classList.add('focused');
+        });
+
+        input.addEventListener('blur', () => {
+            const filterControl = input.closest('.trade-filter');
+            if (filterControl) filterControl.classList.remove('focused');
+        });
     }
 
     async loadSellers(districtId, specificCrop = null) {
