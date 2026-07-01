@@ -16,3 +16,6 @@ config/fews_prices_cache.json
 
 # USSD sessions
 ussd/sessions/
+
+# Playwright MCP snapshots and logs
+.playwright-mcp/
