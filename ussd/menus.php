@@ -32,13 +32,13 @@ $menu_texts = [
     // District selection - paginated
     'district_selection' => [
         'en' => [
-            1 => "📍[DISTRICTS PAGE 1/3]📍\nSelect district:\n1. Lilongwe 🏙️\n2. Blantyre 🏢\n3. Mzuzu 🌄\n4. Mchinji 🌍\n5. Ntchisi 🗺️\n6. Dedza ⛰️\n7. Kasungu 🌳\n8. Nkhata-Bay 🌊\n9. Next Page ▶️",
-           2 => "📍[DISTRICTS PAGE 2/3]📍\nSelect district:\n1. Rumphi 🏞️\n2. Karonga 🐟\n3. Thyolo 🍵\n4. Chitipa 🛤️\n5. Mangochi 🏝️\n6. Chikwawa 🌅\n7. Zomba 🏫\n8. Nkhotakota ⛵\n9. Next Page ▶️",
+            1 => "📍[DISTRICTS PAGE 1/3]📍\nSelect district:\n1. Lilongwe 🏙️\n2. Blantyre 🏢\n3. Mzuzu 🌄\n4. Mchinji 🌍\n5. Ntchisi 🗺️\n6. Dedza ⛰️\n7. Kasungu 🌳\n8. Nkhata-Bay 🌊\n0. Back 🔙\n9. Next Page ▶️",
+            2 => "📍[DISTRICTS PAGE 2/3]📍\nSelect district:\n1. Rumphi 🏞️\n2. Karonga 🐟\n3. Thyolo 🍵\n4. Chitipa 🛤️\n5. Mangochi 🏝️\n6. Chikwawa 🌅\n7. Zomba 🏫\n8. Nkhotakota ⛵\n0. Back 🔙\n9. Next Page ▶️",
            3 => "📍[DISTRICTS PAGE 3/3]📍\nSelect district:\n1. Ntcheu 🌄\n2. Balaka 🛣️\n3. Mulanje ⛰️\n4. Machinga 🌄\n5. Phalombe 🌿\n6. Dowa 🌱\n7. Likoma 🏝️\n8. Salima ⛵\n0. Back 🔙\n9. Main Menu"
         ],
         'ci' => [
-            1 => "📍[MAGAWO PEJI 1/3]📍\nSankhani chigawo:\n1. Lilongwe 🏙️\n2. Blantyre 🏢\n3. Mzuzu 🌄\n4. Mchinji 🌍\n5. Ntchisi 🗺️\n6. Dedza ⛰️\n7. Kasungu 🌳\n8. Nkhata-Bay 🌊\n9. Peji Yotsatira ▶️",
-           2 => "📍[MAGAWO PEJI 2/3]📍\nSankhani chigawo:\n1. Rumphi 🏞️\n2. Karonga 🐟\n3. Thyolo 🍵\n4. Chitipa 🛤️\n5. Mangochi 🏝️\n6. Chikwawa 🌅\n7. Zomba 🏫\n8. Nkhotakota ⛵\n9. Peji Yotsatira ▶️",
+            1 => "📍[MAGAWO PEJI 1/3]📍\nSankhani chigawo:\n1. Lilongwe 🏙️\n2. Blantyre 🏢\n3. Mzuzu 🌄\n4. Mchinji 🌍\n5. Ntchisi 🗺️\n6. Dedza ⛰️\n7. Kasungu 🌳\n8. Nkhata-Bay 🌊\n0. Kubwerera 🔙\n9. Peji Yotsatira ▶️",
+            2 => "📍[MAGAWO PEJI 2/3]📍\nSankhani chigawo:\n1. Rumphi 🏞️\n2. Karonga 🐟\n3. Thyolo 🍵\n4. Chitipa 🛤️\n5. Mangochi 🏝️\n6. Chikwawa 🌅\n7. Zomba 🏫\n8. Nkhotakota ⛵\n0. Kubwerera 🔙\n9. Peji Yotsatira ▶️",
            3 => "📍[MAGAWO PEJI 3/3]📍\nSankhani chigawo:\n1. Ntcheu 🌄\n2. Balaka 🛣️\n3. Mulanje ⛰️\n4. Machinga 🌄\n5. Phalombe 🌿\n6. Dowa 🌱\n7. Likoma 🏝️\n8. Salima ⛵\n0. Kubwerera 🔙\n9. Menu Yaikulu"
         ]
     ],
@@ -97,13 +97,13 @@ $valid_options = [
     'language' => ['1', '2'],
     'main_menu' => ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0'],
     'weather_districts' => [
-        1 => ['1', '2', '3', '4', '5', '6', '7', '8', '9'], // Page 1
-        2 => ['1', '2', '3', '4', '5', '6', '7', '8', '9'], // Page 2
+        1 => ['1', '2', '3', '4', '5', '6', '7', '8', '0', '9'], // Page 1 — 0=Back
+        2 => ['1', '2', '3', '4', '5', '6', '7', '8', '0', '9'], // Page 2 — 0=Back
         3 => ['1', '2', '3', '4', '5', '6', '7', '8', '0', '9'] // Page 3 — 0=Back, 9=Main Menu
     ],
     'districts' => [
-        1 => ['1', '2', '3', '4', '5', '6', '7', '8', '9'], // Page 1
-        2 => ['1', '2', '3', '4', '5', '6', '7', '8', '9'], // Page 2
+        1 => ['1', '2', '3', '4', '5', '6', '7', '8', '0', '9'], // Page 1 — 0=Back
+        2 => ['1', '2', '3', '4', '5', '6', '7', '8', '0', '9'], // Page 2 — 0=Back
         3 => ['1', '2', '3', '4', '5', '6', '7', '8', '0', '9'] // Page 3 — 0=Back, 9=Main Menu
     ],
     'crop_prices' => ['1', '2', '0'],

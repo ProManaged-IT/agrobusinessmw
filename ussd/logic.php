@@ -39,22 +39,40 @@ function parse_navigation(string $text, array $district_map): array {
 
         if ($input === '0') {
             if (!empty($stack)) {
-                // Reset page counters only when leaving the paginated menu itself.
+                // If on a paginated menu with page > 1, '0' goes to previous page.
+                $prev_page = false;
                 if ($level === 2) {
-                    if (in_array($main, ['2', '3', '5', '7', '8'])) $pages['district'] = 1;
-                    elseif ($main === '9')                            $pages['weather']  = 1;
+                    if (in_array($main, ['2', '5', '7', '8']) && $pages['district'] > 1) {
+                        $pages['district']--; $prev_page = true;
+                    } elseif ($main === '9' && $pages['weather'] > 1) {
+                        $pages['weather']--; $prev_page = true;
+                    }
+                } elseif ($level === 3 && $main === '3' && $pages['district'] > 1) {
+                    $pages['district']--; $prev_page = true;
+                } elseif ($level === 3 && $main === '1' && ($stack[2] ?? '') === '1' && $pages['district'] > 1) {
+                    $pages['district']--; $prev_page = true;
+                } elseif ($level === 4 && $main === '1' && ($stack[2] ?? '') === '2' && $pages['district'] > 1) {
+                    $pages['district']--; $prev_page = true;
                 }
-                if ($level === 3 && $main === '3') $pages['district'] = 1;
-                // Crop Prices path A: backing from district list → crop_prices sub-menu
-                if ($level === 3 && $main === '1' && ($stack[2] ?? '') === '1') $pages['district'] = 1;
-                // Crop Prices path B: backing from district list → crop selection
-                if ($level === 4 && $main === '1' && ($stack[2] ?? '') === '2') $pages['district'] = 1;
 
-                if (count($stack) === 1) {
-                    // At main menu (stack=[lang]): '0' → language selection, not session exit
-                    $going_to_language = true;
+                if (!$prev_page) {
+                    // Normal back — pop the stack and reset page counters
+                    if ($level === 2) {
+                        if (in_array($main, ['2', '3', '5', '7', '8'])) $pages['district'] = 1;
+                        elseif ($main === '9')                            $pages['weather']  = 1;
+                    }
+                    if ($level === 3 && $main === '3') $pages['district'] = 1;
+                    // Crop Prices path A: backing from district list → crop_prices sub-menu
+                    if ($level === 3 && $main === '1' && ($stack[2] ?? '') === '1') $pages['district'] = 1;
+                    // Crop Prices path B: backing from district list → crop selection
+                    if ($level === 4 && $main === '1' && ($stack[2] ?? '') === '2') $pages['district'] = 1;
+
+                    if (count($stack) === 1) {
+                        // At main menu (stack=[lang]): '0' → language selection, not session exit
+                        $going_to_language = true;
+                    }
+                    array_pop($stack);
                 }
-                array_pop($stack);
             }
             // If stack was already empty (user pressed '0' at language selection) → true exit
         } elseif ($input === '9') {
