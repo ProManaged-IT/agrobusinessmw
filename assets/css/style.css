@@ -184,21 +184,23 @@ textarea::placeholder {
 
 .stat-pill {
     background: var(--surface);
-    border: 1px solid var(--border);
-    padding: 0.75rem 1.25rem;
-    border-radius: 20px;
-    font-size: 0.75rem;
+    border: 1.5px solid var(--border);
+    padding: 1rem 1.5rem;
+    border-radius: 12px;
+    font-size: 0.8rem;
     color: var(--muted);
     letter-spacing: 0.05em;
     white-space: nowrap;
+    box-shadow: 0 2px 8px rgba(70, 60, 50, 0.06);
+    font-weight: 500;
 }
 
 .stat-count {
     display: block;
-    font-size: 1.25rem;
-    font-weight: 600;
+    font-size: 1.6rem;
+    font-weight: 700;
     color: var(--accent);
-    margin-bottom: 0.25rem;
+    margin-bottom: 0.3rem;
 }
 
 /* Header */
@@ -408,19 +410,24 @@ textarea::placeholder {
     align-items: center;
 }
 
-/* Main Content */
+/* =====================================================
+   MAIN CONTENT — Modern Japandi: Bold Spacing, Premium Feel
+   ===================================================== */
+
 .main-content {
     flex: 1;
     overflow-y: auto;
-    padding: 1.5rem 0;
+    padding: 2.5rem 0 3.5rem;
 }
 
 .content-title {
     font-family: 'DM Serif Display', serif;
-    font-size: 1.5rem;
+    font-size: clamp(1.6rem, 3.5vw, 2.2rem);
     margin: 0;
     flex: 1;
     text-align: center;
+    font-weight: 400;
+    letter-spacing: 0.01em;
 }
 
 .content-area {
@@ -448,14 +455,17 @@ textarea::placeholder {
 
 .lang-header h1 {
     font-family: 'DM Serif Display', serif;
-    font-size: 2rem;
-    margin-bottom: 0.5rem;
-    letter-spacing: 0.02em;
+    font-size: clamp(2.2rem, 6vw, 3.5rem);
+    margin-bottom: 1rem;
+    letter-spacing: 0.01em;
+    font-weight: 400;
+    line-height: 1.1;
 }
 
 .lang-header p {
     color: var(--muted);
-    font-size: 0.95rem;
+    font-size: 1.05rem;
+    letter-spacing: 0.03em;
 }
 
 .lang-cards {
@@ -469,34 +479,53 @@ textarea::placeholder {
 .lang-card {
     background: var(--surface);
     border: 1px solid var(--border);
-    padding: 1.75rem 1.5rem;
-    border-radius: 2px;
+    padding: 2.5rem 2rem;
+    border-radius: 4px;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all 0.35s ease;
     text-align: center;
-    box-shadow: 0 2px 8px rgba(70, 60, 50, 0.06);
+    box-shadow: 0 4px 16px rgba(70, 60, 50, 0.10);
+    position: relative;
+}
+
+.lang-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--accent);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.35s ease;
 }
 
 .lang-card:hover {
     border-color: var(--accent);
-    box-shadow: 0 4px 16px rgba(70, 60, 50, 0.10);
-    transform: translateY(-2px);
+    box-shadow: 0 12px 32px rgba(70, 60, 50, 0.16);
+    transform: translateY(-4px);
+}
+
+.lang-card:hover::before {
+    transform: scaleX(1);
 }
 
 .lang-card:active {
-    transform: translateY(0);
+    transform: translateY(-2px);
 }
 
 .lang-card-content h2 {
-    font-size: 1.25rem;
-    margin-bottom: 0.5rem;
+    font-size: 1.4rem;
+    margin-bottom: 0.75rem;
     font-weight: 600;
+    letter-spacing: 0.01em;
 }
 
 .lang-card-content p {
-    font-size: 0.8rem;
+    font-size: 0.9rem;
     color: var(--muted);
-    margin-bottom: 1rem;
+    margin-bottom: 1.25rem;
 }
 
 .lang-arrow {
@@ -543,20 +572,21 @@ textarea::placeholder {
 }
 
 /* =====================================================
-   DASHBOARD — Stats & Overview Sections
+   DASHBOARD — Stats & Overview Sections (Modern Japandi)
    ===================================================== */
 
 .stats-bar {
     text-align: center;
-    padding: 1.5rem;
+    padding: 1.75rem 2rem;
     background: var(--surface);
-    border-radius: 2px;
+    border-radius: 4px;
     border: 1px solid var(--border);
-    margin-bottom: 2rem;
-    font-size: 0.85rem;
+    margin-bottom: 3rem;
+    font-size: 0.9rem;
     color: var(--muted);
     letter-spacing: 0.05em;
-    box-shadow: 0 2px 6px rgba(70, 60, 50, 0.04);
+    box-shadow: 0 2px 12px rgba(70, 60, 50, 0.08);
+    font-weight: 500;
 }
 
 .stat {
@@ -568,98 +598,131 @@ textarea::placeholder {
     margin: 0 0.5rem;
 }
 
-/* Services */
+/* =====================================================
+   SERVICES — Modern Grid with Prominent Cards
+   ===================================================== */
+
 .services {
-    margin-bottom: 3rem;
+    margin-bottom: 4rem;
+    padding: 0 0;
 }
 
 .section-title {
     font-family: 'DM Serif Display', serif;
-    font-size: 1.5rem;
-    margin-bottom: 1.5rem;
+    font-size: clamp(1.8rem, 4vw, 2.8rem);
+    margin-bottom: 3rem;
     color: var(--text);
-    letter-spacing: 0.02em;
+    letter-spacing: 0.01em;
+    font-weight: 400;
+    line-height: 1.15;
 }
 
 .services-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-    gap: 1rem;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1.5rem;
 }
 
 .service-card {
     background: var(--surface);
     border: 1px solid var(--border);
-    padding: 1.5rem 1.25rem;
-    border-radius: 2px;
+    padding: 2.5rem 2rem;
+    border-radius: 4px;
     cursor: pointer;
     text-align: center;
-    transition: all 0.3s ease;
+    transition: all 0.35s ease;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 0.75rem;
-    min-height: 160px;
+    gap: 1rem;
+    min-height: 200px;
     justify-content: center;
-    box-shadow: 0 2px 8px rgba(70, 60, 50, 0.06);
+    box-shadow: 0 2px 12px rgba(70, 60, 50, 0.08);
+    position: relative;
+    overflow: hidden;
+}
+
+.service-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent), transparent);
+    opacity: 0;
+    transition: opacity 0.35s ease;
 }
 
 .service-card:hover {
     border-color: var(--accent);
-    box-shadow: 0 4px 16px rgba(70, 60, 50, 0.10);
-    transform: translateY(-2px);
+    box-shadow: 0 12px 32px rgba(70, 60, 50, 0.15);
+    transform: translateY(-4px);
+}
+
+.service-card:hover::before {
+    opacity: 1;
 }
 
 .service-card:active {
-    transform: translateY(0);
+    transform: translateY(-2px);
 }
 
 .service-icon {
-    font-size: 2rem;
+    font-size: 2.8rem;
     line-height: 1;
-    color: var(--primary, #8B7355);
+    color: var(--accent);
     display: flex;
     align-items: center;
     justify-content: center;
+    transition: transform 0.35s ease;
+}
+
+.service-card:hover .service-icon {
+    transform: scale(1.1);
 }
 
 .service-icon svg {
-    width: 2.4rem;
-    height: 2.4rem;
+    width: 3.2rem;
+    height: 3.2rem;
     display: block;
     flex-shrink: 0;
 }
 
 .service-card h3 {
-    font-size: 0.95rem;
+    font-size: 1.15rem;
     font-weight: 600;
     margin: 0;
+    color: var(--text);
+    letter-spacing: 0.01em;
 }
 
 .service-card p {
-    font-size: 0.75rem;
+    font-size: 0.85rem;
     color: var(--muted);
     margin: 0;
+    line-height: 1.5;
 }
 
 .guide-hero {
     display: grid;
-    gap: 1.5rem;
-    background: #faf8f4;
+    gap: 2rem;
+    background: linear-gradient(135deg, #faf8f4 0%, #f5f2eb 100%);
     border: 1px solid #e8e2d6;
-    border-radius: 2px;
-    padding: 2rem;
-    margin-bottom: 2rem;
+    border-radius: 4px;
+    padding: 3.5rem 3rem;
+    margin-bottom: 3.5rem;
     align-items: center;
-    box-shadow: 0 2px 8px rgba(70, 60, 50, 0.05);
+    box-shadow: 0 8px 24px rgba(70, 60, 50, 0.10);
 }
 
 .guide-hero h2 {
     font-family: 'DM Serif Display', serif;
-    font-size: clamp(1.8rem, 2.4vw, 2.4rem);
-    margin-bottom: 0.75rem;
+    font-size: clamp(2.2rem, 4vw, 3rem);
+    margin-bottom: 1rem;
     color: var(--text);
-    line-height: 1.2;
+    line-height: 1.15;
+    font-weight: 400;
 }
 
 .guide-hero .eyebrow {
@@ -694,30 +757,34 @@ textarea::placeholder {
 .guide-step-card {
     display: grid;
     grid-template-columns: auto 1fr;
-    gap: 1rem;
+    gap: 1.5rem;
     background: var(--white);
     border: 1px solid var(--border);
-    border-radius: 2px;
-    padding: 1.25rem;
-    box-shadow: 0 2px 8px rgba(70, 60, 50, 0.06);
+    border-radius: 4px;
+    padding: 2rem 2.25rem;
+    box-shadow: 0 4px 16px rgba(70, 60, 50, 0.08);
     align-items: start;
-    transition: box-shadow 0.3s ease, border-color 0.3s ease;
+    transition: all 0.35s ease;
 }
 
 .guide-step-card:hover {
-    box-shadow: 0 4px 12px rgba(70, 60, 50, 0.10);
+    box-shadow: 0 8px 24px rgba(70, 60, 50, 0.12);
     border-color: var(--accent);
+    transform: translateY(-2px);
 }
 
 .guide-step-icon {
-    width: 3rem;
-    height: 3rem;
-    min-width: 3rem;
-    min-height: 3rem;
+    width: 3.5rem;
+    height: 3.5rem;
+    min-width: 3.5rem;
+    min-height: 3.5rem;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--accent-dark);
+    color: var(--accent);
+    font-size: 1.6rem;
+    background: rgba(139, 115, 85, 0.08);
+    border-radius: 50%;
 }
 
 .guide-step-card h3 {
@@ -757,19 +824,20 @@ textarea::placeholder {
 .insight-card {
     background: var(--white);
     border: 1px solid #e8e2d6;
-    border-radius: 2px;
-    padding: 2rem;
+    border-radius: 4px;
+    padding: 2.5rem;
     position: relative;
     overflow: hidden;
-    box-shadow: 0 4px 16px rgba(70, 60, 50, 0.10);
-    transition: box-shadow 0.3s ease, border-color 0.3s ease;
+    box-shadow: 0 6px 20px rgba(70, 60, 50, 0.10);
+    transition: all 0.35s ease;
 }
 
 .tip-card:hover,
 .info-card:hover,
 .insight-card:hover {
-    box-shadow: 0 6px 20px rgba(70, 60, 50, 0.12);
-    border-color: var(--border);
+    box-shadow: 0 12px 32px rgba(70, 60, 50, 0.15);
+    border-color: var(--accent);
+    transform: translateY(-3px);
 }
 
 .card-accent-bar {
@@ -784,14 +852,16 @@ textarea::placeholder {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 1.5rem;
-    gap: 0.75rem;
+    margin-bottom: 1.75rem;
+    gap: 1rem;
+    padding-bottom: 1.25rem;
+    border-bottom: 1px solid #f0e8d8;
 }
 
 .card-text {
     color: var(--text-secondary);
-    line-height: 1.7;
-    font-size: 1rem;
+    line-height: 1.75;
+    font-size: 0.95rem;
 }
 
 .tip-badge,
@@ -1007,12 +1077,13 @@ textarea::placeholder {
 
 .modal-header h2 {
     font-family: 'DM Serif Display', serif;
-    font-size: 1.4rem;
+    font-size: clamp(1.3rem, 2.5vw, 1.8rem);
     margin: 0;
     flex: 1;
     color: var(--text);
-    line-height: 1.25;
+    line-height: 1.2;
     letter-spacing: 0.01em;
+    font-weight: 400;
 }
 
 /* Close button — circular with clear hover */
@@ -1429,17 +1500,18 @@ textarea::placeholder {
 .trade-card {
     background: var(--surface);
     border: 1px solid var(--border);
-    border-radius: 2px;
+    border-radius: 4px;
     display: grid;
     grid-template-columns: 4px 1fr;
     overflow: hidden;
-    transition: box-shadow 0.25s ease, border-color 0.25s ease;
-    box-shadow: 0 2px 8px rgba(70, 60, 50, 0.06);
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 16px rgba(70, 60, 50, 0.08);
 }
 
 .trade-card:hover {
     border-color: var(--accent);
-    box-shadow: 0 4px 16px rgba(70, 60, 50, 0.10);
+    box-shadow: 0 8px 24px rgba(70, 60, 50, 0.12);
+    transform: translateY(-2px);
 }
 
 .trade-card-accent {
@@ -2245,54 +2317,63 @@ button.overview-item {
     letter-spacing: 0.04em;
 }
 
-/* Primary buttons — warm accent, flat, no gradient */
+/* Primary buttons — Warm accent, flat, prominent */
 .btn-primary,
 .reg-submit-btn {
     background: var(--accent);
     color: var(--surface);
     width: 100%;
-    box-shadow: none;
+    box-shadow: 0 4px 16px rgba(139, 115, 85, 0.25);
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    font-size: 0.85rem;
 }
 
 .btn-primary:hover,
 .reg-submit-btn:hover {
     background: var(--accent-dark);
-    box-shadow: 0 4px 16px rgba(70, 60, 50, 0.15);
+    box-shadow: 0 12px 28px rgba(70, 60, 50, 0.25);
+    transform: translateY(-2px);
 }
 
 .btn-primary:active,
 .reg-submit-btn:active {
-    transform: translateY(1px);
-    box-shadow: 0 2px 8px rgba(70, 60, 50, 0.1);
+    transform: translateY(0);
+    box-shadow: 0 6px 16px rgba(70, 60, 50, 0.15);
 }
 
 .btn-primary:focus-visible,
 .reg-submit-btn:focus-visible {
     outline: none;
-    box-shadow: 0 0 0 4px var(--primary-glow), 0 4px 16px rgba(70, 60, 50, 0.15);
+    box-shadow: 0 0 0 4px var(--primary-glow), 0 8px 20px rgba(70, 60, 50, 0.25);
 }
 
-/* Secondary buttons — subtle, bordered */
+/* Secondary buttons — bordered, subtle */
 .btn-secondary {
-    background: var(--bg);
+    background: var(--surface);
     color: var(--text);
     border: 1.5px solid var(--border);
     width: 100%;
+    font-weight: 600;
+    letter-spacing: 0.03em;
 }
 
 .btn-secondary:hover {
-    background: var(--surface);
+    background: var(--bg);
     border-color: var(--accent);
-    box-shadow: 0 2px 8px rgba(139, 115, 85, 0.1);
+    box-shadow: 0 4px 12px rgba(139, 115, 85, 0.12);
+    transform: translateY(-1px);
 }
 
 .btn-secondary:active {
-    transform: translateY(1px);
+    transform: translateY(0);
 }
 
 .btn-secondary:focus-visible {
     outline: none;
     box-shadow: 0 0 0 4px var(--primary-glow);
+    border-color: var(--accent);
 }
 
 .reg-secondary-btn {
@@ -2533,11 +2614,11 @@ a:focus-visible,
     }
 
     .container {
-        padding: 0 0.75rem;
+        padding: 0 0.875rem;
     }
 
     .main-content {
-        padding: 1rem 0;
+        padding: 1.5rem 0 2.5rem;
     }
 
     .modal-content {
@@ -2578,35 +2659,36 @@ a:focus-visible,
 
     .services-grid {
         grid-template-columns: repeat(2, 1fr);
-        gap: 0.65rem;
+        gap: 1rem;
     }
 
     .section-title {
-        font-size: 1.25rem;
-        margin-bottom: 1.25rem;
+        font-size: 1.6rem;
+        margin-bottom: 2rem;
     }
 
     .service-card {
-        padding: 1rem 0.75rem;
-        min-height: 130px;
-        gap: 0.5rem;
+        padding: 1.75rem 1.25rem;
+        min-height: 160px;
+        gap: 0.75rem;
+        border-radius: 3px;
     }
 
     .service-card h3 {
-        font-size: 0.85rem;
+        font-size: 0.95rem;
     }
 
     .service-card p {
-        font-size: 0.7rem;
+        font-size: 0.75rem;
     }
 
     .service-icon {
-        font-size: 1.75rem;
+        font-size: 2.2rem;
     }
 
     .service-icon svg {
-        width: 1.8rem;
-        height: 1.8rem;
+        width: 2.4rem;
+        height: 2.4rem;
     }
 
     .reg-nav {
