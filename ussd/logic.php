@@ -125,10 +125,31 @@ function process_ussd(mysqli $mysqli, array $menu_texts, array $valid_options, a
     $session_file = "$session_dir/$sessionId.json";
     if (!is_dir($session_dir)) mkdir($session_dir, 0755, true);
 
-    [$stack, $pages, $is_exit] = parse_navigation($text, $district_map);
+    // ── Language toggle detection: '00' at end of input → toggle language ───
+    // User types "00" and presses send; AT sends accumulated text ending with '*00'.
+    $lang_toggle   = false;
+    $stripped_text = $text;
+    if (preg_match('/(?:^|\*)00$/', $text)) {
+        $stripped_text = preg_replace('/\*?00$/', '', $text);
+        $lang_toggle   = true;
+    }
+
+    [$stack, $pages, $is_exit] = parse_navigation($stripped_text, $district_map);
+
+    // Apply language toggle
+    // When stack is empty (language selection screen), the toggle is handled
+    // below at level 0 by simply using the opposite default language.
+    if ($lang_toggle && !empty($stack)) {
+        $stack[0] = ($stack[0] === '2') ? '1' : '2';
+    }
 
     $level    = count($stack);
     $language = ($stack[0] ?? '1') === '2' ? 'ci' : 'en';
+
+    // Language toggle at level 0 (language selection screen) — just flip the default
+    if ($lang_toggle && $level === 0) {
+        $language = ($language === 'en') ? 'ci' : 'en';
+    }
 
     $response = '';
 
