@@ -1543,33 +1543,103 @@ textarea::placeholder {
     }
 }
 
-/* Overview Grid */
+/* Overview Grid — district / crop picker cards */
 .overview-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-    gap: 0.75rem;
+    grid-template-columns: repeat(auto-fill, minmax(136px, 1fr));
+    gap: 0.85rem;
 }
 
 .overview-item {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.55rem;
     background: var(--surface);
     border: 1px solid var(--border);
-    padding: 1.1rem 1rem;
-    border-radius: 12px;
+    padding: 1.25rem 0.9rem 1.1rem;
+    border-radius: 16px;
     text-align: center;
     cursor: pointer;
+    overflow: hidden;
     transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
-    font-size: 0.85rem;
     box-shadow: 0 1px 2px rgba(70, 60, 50, 0.04);
+}
+
+/* Soft warm wash that appears on hover */
+.overview-item::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(200, 164, 90, 0.12), rgba(200, 164, 90, 0));
+    opacity: 0;
+    transition: opacity 0.18s ease;
+    pointer-events: none;
 }
 
 .overview-item:hover {
     border-color: var(--gold);
-    transform: translateY(-3px);
-    box-shadow: 0 10px 24px -8px rgba(70, 60, 50, 0.22);
+    transform: translateY(-4px);
+    box-shadow: 0 14px 28px -10px rgba(70, 60, 50, 0.28);
+}
+
+.overview-item:hover::before {
+    opacity: 1;
 }
 
 .overview-item:active {
     transform: translateY(-1px);
+}
+
+/* Icon / monogram badge */
+.overview-badge {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: transform 0.18s ease;
+}
+
+.overview-badge.mono {
+    background: linear-gradient(135deg, #8B7355 0%, #C8A45A 100%);
+    color: #fff;
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.35rem;
+    line-height: 1;
+    box-shadow: 0 4px 10px -3px rgba(139, 115, 85, 0.5);
+}
+
+.overview-badge.emoji {
+    background: radial-gradient(circle at 50% 40%, rgba(200, 164, 90, 0.22), rgba(139, 115, 85, 0.12));
+    font-size: 1.6rem;
+    line-height: 1;
+}
+
+.overview-item:hover .overview-badge {
+    transform: scale(1.08);
+}
+
+.overview-title {
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: var(--text);
+    line-height: 1.2;
+    margin: 0;
+}
+
+.overview-chip {
+    font-size: 0.62rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--accent-dark);
+    background: rgba(139, 115, 85, 0.1);
+    padding: 0.15rem 0.55rem;
+    border-radius: 999px;
 }
 
 /* =====================================================
@@ -2244,24 +2314,6 @@ a:focus-visible,
 }
 
 /* Overview Items */
-.overview-icon {
-    display: block;
-    font-size: 1.75rem;
-    margin-bottom: 0.5rem;
-}
-
-.overview-title {
-    font-size: 0.95rem;
-    font-weight: 600;
-    margin: 0.5rem 0 0.25rem;
-}
-
-.overview-desc {
-    font-size: 0.75rem;
-    color: var(--muted);
-    margin: 0;
-}
-
 /* Button Content */
 .cta-text {
     display: block;

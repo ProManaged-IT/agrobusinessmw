@@ -1403,9 +1403,9 @@ class AgroBusinessRevolution {
                 const coords = this.districtCoords[district.id];
                 return `
                     <div class="overview-item" style="animation-delay: ${index * 0.05}s" onclick="app.selectDistrictFromOverview(${district.id})">
-                        <span class="overview-icon">📍</span>
-                        <h3 class="overview-title">${district.name}</h3>
-                        <p class="overview-desc">${coords ? coords.region + ' Region' : 'Malawi'}</p>
+                        <span class="overview-badge mono">${(district.name || '?').charAt(0).toUpperCase()}</span>
+                        <span class="overview-title">${district.name}</span>
+                        <span class="overview-chip">${coords ? coords.region : 'Malawi'}</span>
                     </div>
                 `;
             }).join('');
@@ -1425,9 +1425,9 @@ class AgroBusinessRevolution {
                 const category = this.getCropCategory(crop.name);
                 return `
                     <div class="overview-item" style="animation-delay: ${index * 0.05}s" onclick="app.selectCropFromOverview(${crop.id})">
-                        <span class="overview-icon">${this.getCropIcon(crop.name)}</span>
-                        <h3 class="overview-title">${crop.name}</h3>
-                        <p class="overview-desc">${category} crop</p>
+                        <span class="overview-badge emoji">${this.getCropIcon(crop.name)}</span>
+                        <span class="overview-title">${crop.name}</span>
+                        <span class="overview-chip">${category}</span>
                     </div>
                 `;
             }).join('');
