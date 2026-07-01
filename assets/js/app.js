@@ -1111,69 +1111,8 @@ class AgroBusinessRevolution {
         if (!area) return;
 
         const isCi = this.currentLang === 'ci';
-        const guide = isCi ? {
-            label: 'Malangizo Ulimi',
-            intro: 'Njira yosavuta ya ulimi yotsogoleredwa sitepe ndi sitepe, yopangidwa kuti alimi oyamba azitha kuchita bwino.',
-            story: 'Kuyambira kusankha mbeu mpaka kukonza malo, kuteteza tizirombo, ndi kugulitsa bwino.',
-            steps: [
-                {
-                    title: 'Sankhani Mbeu Yoyenera',
-                    text: "Onetsetsani kuti mbeu yanu ili yoyenera kwambiri pa nthaka yanu komanso nyengo ya m'dera lanu.",
-                    icon: '<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="24" cy="24" r="10" fill="currentColor" opacity=".15"/><path d="M24 14v20M14 24h20" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>'
-                },
-                {
-                    title: 'Konzani Nthaka',
-                    text: 'Chotsa udzu wa weed ndi miyala, onjezerani udzu wabwino, ndi kuyang anzira zoyenera kuti madzi azigwira bwino.',
-                    icon: '<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="10" y="18" width="28" height="16" rx="2" fill="currentColor" opacity=".15"/><path d="M14 22h20M14 26h20M14 30h20" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>'
-                },
-                {
-                    title: 'Dzipondere Mbeu',
-                    text: 'Dzipondani mbeu mu mizere yofanana pa mtunda wabwino, ndi kuzilima mosamala kuti zizikulirapo bwino.',
-                    icon: '<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M16 34h16" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><path d="M20 34v-8c0-2 1.5-4 4-4s4 2 4 4v8" stroke="currentColor" stroke-width="3" stroke-linecap="round" fill="none"/><circle cx="24" cy="18" r="3" fill="currentColor"/></svg>'
-                },
-                {
-                    title: 'Tetezani ndi Madzi',
-                    text: 'Madzifupi akhale pafupi ndi mbeu ndi ndondomeko yokhazikika yokonza madzi, musakhale ndi madzi ambiri.',
-                    icon: '<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M24 14c-4 4-6 6-6 9a6 6 0 0 0 12 0c0-3-2-5-6-9Z" fill="currentColor" opacity=".2"/><path d="M24 14c-4 4-6 6-6 9a6 6 0 0 0 12 0c0-3-2-5-6-9Z" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M24 28v6" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>'
-                },
-                {
-                    title: 'Gulitsani Mzitini',
-                    text: 'Mukamaloledwa zidzakulire, gwirani mzitini pogwiritsa ntchito ndalama zochepa komanso mugulitse malo oyenera.',
-                    icon: '<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="12" y="18" width="24" height="16" rx="3" fill="currentColor" opacity=".15"/><path d="M18 24h12M18 30h12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><path d="M24 18v-4" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>'
-                }
-            ]
-        } : {
-            label: 'Farming Guide',
-            intro: 'A simple step-by-step farming story built for every beginner. Follow the field journey from seed to market with clear actions and friendly visuals.',
-            story: 'Start with crop choice, move into soil preparation, plant carefully, protect your field, and harvest with confidence.',
-            steps: [
-                {
-                    title: 'Choose the Right Crop',
-                    text: 'Pick a crop that matches your soil, weather, and available tools. Start with what grows well in your area.',
-                    icon: '<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="24" cy="24" r="10" fill="currentColor" opacity=".15"/><path d="M24 14v20M14 24h20" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>'
-                },
-                {
-                    title: 'Prepare the Soil',
-                    text: 'Clear weeds and stones, then add organic matter so water drains well and roots have room to grow.',
-                    icon: '<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="10" y="18" width="28" height="16" rx="2" fill="currentColor" opacity=".15"/><path d="M14 22h20M14 26h20M14 30h20" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>'
-                },
-                {
-                    title: 'Plant with Care',
-                    text: 'Plant seeds at the right depth and spacing. Use straight rows so you can water, weed, and harvest easily.',
-                    icon: '<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M16 34h16" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><path d="M20 34v-8c0-2 1.5-4 4-4s4 2 4 4v8" stroke="currentColor" stroke-width="3" stroke-linecap="round" fill="none"/><circle cx="24" cy="18" r="3" fill="currentColor"/></svg>'
-                },
-                {
-                    title: 'Protect and Water',
-                    text: 'Keep pests away, water on schedule, and check your plants often. Healthy crops need both care and balance.',
-                    icon: '<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M24 14c-4 4-6 6-6 9a6 6 0 0 0 12 0c0-3-2-5-6-9Z" fill="currentColor" opacity=".2"/><path d="M24 14c-4 4-6 6-6 9a6 6 0 0 0 12 0c0-3-2-5-6-9Z" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M24 28v6" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>'
-                },
-                {
-                    title: 'Harvest and Sell',
-                    text: 'Pick crops when they are ready, keep them clean, and choose buyers who pay fairly for quality produce.',
-                    icon: '<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="12" y="18" width="24" height="16" rx="3" fill="currentColor" opacity=".15"/><path d="M18 24h12M18 30h12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><path d="M24 18v-4" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>'
-                }
-            ]
-        };
+        const guide = this._farmingGuideData(isCi);
+        const ic = this._guideIcons();
 
         area.dataset.view = 'farming_guide';
         area.innerHTML = `
@@ -1183,11 +1122,13 @@ class AgroBusinessRevolution {
                     <h2>${this.texts[this.currentLang].farming_guide}</h2>
                     <p class="guide-intro-text">${guide.intro}</p>
                     <p class="guide-subtitle">${guide.story}</p>
+                    <p class="guide-source-pill">${guide.sourcePill}</p>
                 </div>
                 <div class="guide-hero-illustration" aria-hidden="true">
                     <svg width="100%" preserveAspectRatio="xMidYMid meet" viewBox="0 0 360 220" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <rect x="0" y="84" width="360" height="136" fill="#f5f2eb"/>
                         <path d="M0 140h360" stroke="#8B7355" stroke-width="4"/>
+                        <path d="M20 140c0-10 6-18 14-18s14 8 14 18M52 140c0-14 8-24 18-24s18 10 18 24" stroke="#6f9d54" stroke-width="3" fill="none"/>
                         <path d="M48 140c16-22 42-26 72-24 28 2 46 14 68 24 18 8 40 10 58 2 14-6 28-18 42-20 16-2 34 6 50 16" stroke="#C8A45A" stroke-width="5" fill="none"/>
                         <path d="M180 64c-14 0-26 8-32 18-4 8-4 18 2 24 6 8 18 10 30 8 10-2 18-8 22-16 4-8 4-18-2-24-6-8-16-10-20-10Z" fill="#3e3930" opacity=".15"/>
                         <circle cx="40" cy="40" r="20" fill="#C8A45A" opacity=".35"/>
@@ -1195,18 +1136,194 @@ class AgroBusinessRevolution {
                     </svg>
                 </div>
             </section>
-            <section class="guide-steps">
-                ${guide.steps.map((step, index) => `
-                    <article class="guide-step-card">
-                        <div class="guide-step-icon" aria-hidden="true">${step.icon}</div>
-                        <div>
-                            <h3>${index + 1}. ${step.title}</h3>
-                            <p>${step.text}</p>
+
+            <section class="guide-block">
+                <h3 class="guide-section-title">${ic.calendar}${guide.calendarTitle}</h3>
+                <p class="guide-section-sub">${guide.calendarSub}</p>
+                <div class="guide-calendar">
+                    ${guide.calendar.map(c => `
+                        <div class="guide-cal-item">
+                            <span class="guide-cal-months">${c.months}</span>
+                            <span class="guide-cal-phase">${c.phase}</span>
+                            <span class="guide-cal-detail">${c.detail}</span>
                         </div>
-                    </article>
-                `).join('')}
+                    `).join('<div class="guide-cal-arrow" aria-hidden="true">→</div>')}
+                </div>
             </section>
+
+            <section class="guide-block">
+                <h3 class="guide-section-title">${ic.steps}${guide.stepsTitle}</h3>
+                <p class="guide-section-sub">${guide.stepsSub}</p>
+                <div class="guide-steps">
+                    ${guide.steps.map((step, index) => `
+                        <article class="guide-step-card">
+                            <div class="guide-step-icon" aria-hidden="true">${ic[step.icon] || ''}</div>
+                            <div>
+                                <h3>${index + 1}. ${step.title}</h3>
+                                <p>${step.text}</p>
+                                <div class="guide-step-note"><span class="guide-note-tag">${guide.bestPracticeLabel}</span> ${step.note}</div>
+                            </div>
+                        </article>
+                    `).join('')}
+                </div>
+            </section>
+
+            <section class="guide-block">
+                <h3 class="guide-section-title">${ic.crop}${guide.cropsTitle}</h3>
+                <p class="guide-section-sub">${guide.cropsSub}</p>
+                <div class="guide-crop-grid">
+                    ${guide.crops.map(c => `
+                        <article class="guide-crop-card">
+                            <div class="guide-crop-head"><span class="guide-crop-emoji" aria-hidden="true">${c.emoji}</span><h4>${c.name}</h4></div>
+                            <dl>
+                                <div><dt>${guide.rowSpacing}</dt><dd>${c.spacing}</dd></div>
+                                <div><dt>${guide.rowFertilizer}</dt><dd>${c.fertilizer}</dd></div>
+                                <div><dt>${guide.rowTip}</dt><dd>${c.tip}</dd></div>
+                            </dl>
+                        </article>
+                    `).join('')}
+                </div>
+            </section>
+
+            <section class="guide-block">
+                <h3 class="guide-section-title">${ic.science}${guide.scienceTitle}</h3>
+                <p class="guide-section-sub">${guide.scienceSub}</p>
+                <div class="guide-science-grid">
+                    ${guide.science.map(s => `
+                        <article class="guide-science-card">
+                            <h4>${s.title}</h4>
+                            <p>${s.text}</p>
+                        </article>
+                    `).join('')}
+                </div>
+            </section>
+
+            <p class="guide-sources">${guide.sources}</p>
         `;
+    }
+
+    // Reusable inline SVG icons for the farming guide (stroke = currentColor).
+    _guideIcons() {
+        return {
+            calendar: '<svg class="gs-ic" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="5" width="18" height="16" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M3 9h18M8 3v4M16 3v4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',
+            steps: '<svg class="gs-ic" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 20h4v-4H4v4ZM10 20h4V10h-4v10ZM16 20h4V4h-4v16Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>',
+            crop: '<svg class="gs-ic" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 21V9M12 9c0-3 2-5 5-5 0 3-2 5-5 5Zm0 3c0-3-2-5-5-5 0 3 2 5 5 5Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+            science: '<svg class="gs-ic" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 2 3h10a2 2 0 0 0 2-3l-5-9V3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+            seed: '<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M24 34c-8 0-14-6-14-14 8 0 14 6 14 14Z" fill="currentColor" opacity=".2"/><path d="M24 34c-8 0-14-6-14-14 8 0 14 6 14 14Zm0 0c0-8 6-14 14-14 0 8-6 14-14 14Z" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/><path d="M24 40v-6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>',
+            soil: '<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 32h32M8 32l6-8h6l4-6h4l6 14" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/><path d="M8 32v6h32v-6Z" fill="currentColor" opacity=".18"/><path d="M14 38v2M22 38v2M30 38v2M38 38v2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
+            plant: '<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M14 36h20" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><path d="M24 36V22" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><path d="M24 24c-5 0-9-4-9-9 5 0 9 4 9 9Zm0-2c0-5 4-9 9-9 0 5-4 9-9 9Z" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/><path d="M18 36l-4 4M30 36l4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" opacity=".5"/></svg>',
+            fertilizer: '<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="16" y="14" width="16" height="24" rx="3" fill="currentColor" opacity=".15"/><rect x="16" y="14" width="16" height="24" rx="3" stroke="currentColor" stroke-width="2.4"/><path d="M20 20h8M20 26h8M20 32h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M24 14v-4" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>',
+            water: '<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M24 12c-5 6-8 9-8 13a8 8 0 0 0 16 0c0-4-3-7-8-13Z" fill="currentColor" opacity=".2"/><path d="M24 12c-5 6-8 9-8 13a8 8 0 0 0 16 0c0-4-3-7-8-13Z" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/></svg>',
+            pest: '<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><ellipse cx="24" cy="26" rx="8" ry="10" fill="currentColor" opacity=".15"/><ellipse cx="24" cy="26" rx="8" ry="10" stroke="currentColor" stroke-width="2.4"/><path d="M24 16v-4M16 22l-5-3M32 22l5-3M16 30l-5 3M32 30l5 3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
+            store: '<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M14 20l10-6 10 6v16H14V20Z" fill="currentColor" opacity=".15"/><path d="M12 20l12-7 12 7M14 20v16h20V20" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/><path d="M20 36V26h8v10" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/></svg>'
+        };
+    }
+
+    // Malawi-specific, research-based farming guide content (bilingual).
+    // Sources: Malawi Ministry of Agriculture Guide to Agricultural Production (GAP);
+    // CIMMYT & DARS Chitedze conservation-agriculture trials; Africa RISING doubled-up
+    // legumes; ICRISAT groundnut/aflatoxin guidance.
+    _farmingGuideData(isCi) {
+        if (isCi) {
+            return {
+                label: 'Malangizo a Ulimi',
+                intro: 'Njira ya ulimi yotsatira sitepe ndi sitepe, yozikidwa pa kafukufuku wabwino wa ku Malawi — kuchokera ku Unduna wa Zaulimi (GAP), CIMMYT/DARS Chitedze, ndi Africa RISING.',
+                story: 'Kuyambira kusankha mbeu mpaka kukolola ndi kusunga — ndi manambala enieni a mtunda, feteleza ndi nthawi yoyenera m\'dziko la Malawi.',
+                sourcePill: 'Zozikidwa pa kafukufuku · Yopangira Malawi',
+                bestPracticeLabel: 'Njira Yabwino',
+                calendarTitle: 'Nyengo ya Ulimi ku Malawi',
+                calendarSub: 'Malawi ili ndi mvula imodzi pa chaka (Novembala–Epulo). Konzekerani molingana ndi kalendala iyi.',
+                calendar: [
+                    { months: 'Sep–Okt', phase: 'Konzani Munda', detail: 'Pangani mizere (ridges) ndi kuthira manyowa nyengo yowuma' },
+                    { months: 'Nov–Dis', phase: 'Bzalani', detail: 'Bzalani ndi mvula yoyamba yabwino (25mm+); thirani basal feteleza' },
+                    { months: 'Dis–Jan', phase: 'Palani & Urea', detail: 'Palani pa masabata 2–3; thirani Urea pa masabata 4–5' },
+                    { months: 'Jan–Feb', phase: 'Onani Tizirombo', detail: 'Yang\'anani fall armyworm sabata iliyonse; palaninso' },
+                    { months: 'Mar–Epu', phase: 'Kukhwima', detail: 'Onani chilala kapena kusefukira; tetezani mbewu' },
+                    { months: 'Epu–Jun', phase: 'Kolola & Sunga', detail: 'Kolola pakukhwima, anitsani, sungani mu matumba a PICS' }
+                ],
+                stepsTitle: 'Sitepe ndi Sitepe',
+                stepsSub: 'Njira zisanu ndi ziwiri zofunika, ndi malangizo enieni a ku Malawi pa iliyonse.',
+                steps: [
+                    { icon: 'seed', title: 'Sankhani Mbeu Yabwino', text: 'Sankhani mbeu yovomerezeka yoyenera dera lanu — mwachitsanzo chimanga hybrid (SC403, MH-40), nthola CG7/Chalimbana, soya Tikolore, kapena nyemba zovomerezeka.', note: 'Gulani mbeu yovomerezeka (certified) pa maseasoni 2–3 aliwonse kuti mbeu ikhale yamphamvu ndi yobala bwino.' },
+                    { icon: 'soil', title: 'Konzani Munda Msanga & Tetezani Nthaka', text: 'Nyengo yowuma, konzani mizere pa mtunda wa 75–90cm. Zabwino: gwiritsani ntchito Conservation Agriculture — lima pang\'ono, siyani zotsalira za mbewu ngati mulch, ndi kusinthanitsa chimanga ndi nyemba.', note: 'Kusiya zotsalira za mbewu (mulch) ndi kusinthanitsa mbewu kumasunga madzi m\'nthaka ndi kuchulukitsa zokolola, malinga ndi mayeso a CIMMYT/DARS.' },
+                    { icon: 'plant', title: 'Bzalani pa Nthawi & Mtunda Woyenera', text: 'Bzalani ndi mvula yoyamba yabwino. Chimanga: mizere 75cm, malo obzalira 25cm, mbeu IMODZI pa malo (Sasakawa) ≈ mbewu 53,000 pa hekitala.', note: 'Nthola: 10cm mumzere. Soya: 5cm mu mizere 45–75cm. Kubzala molunjika kumathandiza kupala, kuthira madzi ndi kukolola.' },
+                    { icon: 'fertilizer', title: 'Dyetsani Mbewu Molondola', text: 'Chimanga: thirani basal NPK 23:21:0+4S pobzala, ndi Urea pa masabata 3–4 mbewu itamera (pafupifupi matumba 2 a iliyonse pa eka).', note: 'Nyemba (soya, nthola) zimapanga naitrogeni zokha — ikani inoculant ya rhizobium pa soya; musawononge feteleza wa naitrogeni pa iwo.' },
+                    { icon: 'water', title: 'Thanani Udzu & Madzi', text: 'Palani mkati mwa masabata 2–3 ndiponso mbewu isanaphuke maluwa. Udzu umawononga chimanga kwambiri m\'masabata 6 oyamba.', note: 'Pangani mizere yotchinga (tied/box ridges) kuti musunge mvula ndi kupulumuka nthawi ya chilala — malangizo a DARS.' },
+                    { icon: 'pest', title: 'Tetezani ku Tizirombo (IPM)', text: 'Yang\'anani munda sabata iliyonse. Pa fall armyworm: chotsani mazira ndi manja, thirani phulusa kapena dothi mu funnel, ndi push-pull (Desmodium + Brachiaria).', note: 'Gwiritsani mankhwala ovomerezeka pokhapokha tizirombo tikafika pa mlingo woopsa — mumasunga ndalama ndi chilengedwe.' },
+                    { icon: 'store', title: 'Kolola & Sungani Bwino', text: 'Kolola pakukhwima, anitsani mbewu kufika 12.5% madzi, opoolani moyera, ndi kusunga mu matumba a PICS/hermetic kuti muletse kafadala ndi aflatoxin.', note: 'Kulamulira aflatoxin ndikofunika kwambiri pa nthola — kumateteza thanzi ndi mtengo wogulitsa.' }
+                ],
+                cropsTitle: 'Malangizo a Mbewu Zikuluzikulu',
+                cropsSub: 'Mtunda, feteleza ndi malangizo ofunika pa mbewu iliyonse.',
+                rowSpacing: 'Mtunda',
+                rowFertilizer: 'Feteleza',
+                rowTip: 'Malangizo',
+                crops: [
+                    { emoji: '🌽', name: 'Chimanga', spacing: 'Mizere 75cm × malo 25cm, mbeu 1', fertilizer: 'NPK 23:21:0+4S basal + Urea top-dress', tip: 'Bzalani ndi mvula yoyamba yabwino; palani msanga.' },
+                    { emoji: '🥜', name: 'Nthola (Groundnuts)', spacing: 'Mizere 75–90cm × 10cm', fertilizer: 'Palibe naitrogeni; onjezani gypsum/SSP', tip: 'Sinthanitsani ndi chimanga; anitsani bwino kuti mupewe aflatoxin.' },
+                    { emoji: '🫘', name: 'Soya', spacing: 'Mizere 45–75cm × 5cm', fertilizer: 'Rhizobium inoculant; naitrogeni pang\'ono', tip: 'Inoculant imachulukitsa zokolola mosachepera.' },
+                    { emoji: '🌱', name: 'Nyemba (Beans)', spacing: 'Mizere 75cm × 10cm', fertilizer: 'NPK pang\'ono pobzala', tip: 'Sankhani mbewu zosaphwa msanga; kolola zitawuma.' },
+                    { emoji: '🍂', name: 'Fodya (Tobacco)', spacing: 'Mizere 90–120cm × 60cm', fertilizer: 'Feteleza wa fodya malinga ndi malangizo', tip: 'Konzani nazale bwino; sinthani munda chaka ndi chaka.' }
+                ],
+                scienceTitle: 'Njira Zozikidwa pa Sayansi',
+                scienceSub: 'Njira zoyesedwa ku Malawi zomwe zimachulukitsa zokolola ndi kuteteza nthaka.',
+                science: [
+                    { title: 'Conservation Agriculture', text: 'Kulima pang\'ono, kusunga zotsalira za mbewu ngati mulch, ndi kusinthanitsa mbewu — mayeso a CIMMYT/Total LandCare akuonetsa kusunga madzi ndi zokolola zambiri.' },
+                    { title: 'Doubled-up Legumes', text: 'Bzalani nthola ndi nandolo (pigeonpea) limodzi — mumakolola kawiri ndi kuonjezera naitrogeni m\'nthaka (Africa RISING).' },
+                    { title: 'Tied Ridges', text: 'Mizere yotchinga imasunga mvula m\'munda ndi kupulumutsa mbewu nthawi ya chilala chachifupi (DARS Chitedze).' },
+                    { title: 'Kusamalira pambuyo pokolola', text: 'Anitsani kufika 12.5% madzi ndi kusunga mu matumba a PICS kuti muletse kafadala ndi aflatoxin popanda mankhwala.' }
+                ],
+                sources: 'Zochokera: Unduna wa Zaulimi wa ku Malawi — Guide to Agricultural Production (GAP); CIMMYT & DARS Chitedze; Africa RISING; ICRISAT.'
+            };
+        }
+        return {
+            label: 'Farming Guide',
+            intro: 'A step-by-step field journey grounded in the best Malawi research — from the Ministry of Agriculture Guide to Agricultural Production (GAP), CIMMYT & DARS Chitedze trials, and Africa RISING.',
+            story: 'From choosing seed to harvest and safe storage — with the real spacing, fertilizer and timing figures used in Malawi.',
+            sourcePill: 'Research-based · Built for Malawi',
+            bestPracticeLabel: 'Best practice',
+            calendarTitle: 'Malawi Growing Calendar',
+            calendarSub: 'Malawi has one rainy season a year (November–April). Plan your work around this calendar.',
+            calendar: [
+                { months: 'Sep–Oct', phase: 'Prepare land', detail: 'Make ridges and spread manure during the dry season' },
+                { months: 'Nov–Dec', phase: 'Plant', detail: 'Plant with the first effective rains (25mm+); apply basal fertilizer' },
+                { months: 'Dec–Jan', phase: 'Weed & Urea', detail: 'Weed at 2–3 weeks; top-dress Urea at 4–5 weeks' },
+                { months: 'Jan–Feb', phase: 'Scout pests', detail: 'Check for fall armyworm weekly; weed again' },
+                { months: 'Mar–Apr', phase: 'Grain fill', detail: 'Watch for dry spells or floods; protect the crop' },
+                { months: 'Apr–Jun', phase: 'Harvest & store', detail: 'Harvest at maturity, dry, and store in PICS bags' }
+            ],
+            stepsTitle: 'Step-by-Step Walkthrough',
+            stepsSub: 'Seven key stages, each with the specific Malawi recommendation.',
+            steps: [
+                { icon: 'seed', title: 'Choose Adapted, Certified Seed', text: 'Pick a released variety suited to your zone — e.g. maize hybrids (SC403, MH-40), groundnut CG7/Chalimbana, soya Tikolore, or a recommended bean variety.', note: 'Buy certified seed every 2–3 seasons so plants stay vigorous and high-yielding — recycled grain loses yield fast.' },
+                { icon: 'soil', title: 'Prepare Land Early & Conserve Soil', text: 'In the dry season, clear and make ridges 75–90 cm apart. Better still, practise Conservation Agriculture — minimum tillage, keep crop residues as mulch, and rotate cereals with legumes.', note: 'CIMMYT/DARS trials in Malawi show mulch cover and rotation hold soil moisture and lift yields, especially in dry years.' },
+                { icon: 'plant', title: 'Plant on Time at the Right Spacing', text: 'Plant with the first effective rains. Maize: ridges 75 cm apart, stations 25 cm, ONE seed per station (Sasakawa) ≈ 53,000 plants/ha.', note: 'Groundnuts: 10 cm within the row. Soya: 5 cm in 45–75 cm rows. Straight rows make weeding, watering and harvest easier.' },
+                { icon: 'fertilizer', title: 'Feed the Crop Correctly', text: 'Maize: apply basal NPK 23:21:0+4S at planting and top-dress Urea 3–4 weeks after emergence (about 2 bags of each per acre).', note: 'Legumes (soya, groundnut) fix their own nitrogen — inoculate soya with rhizobium and don\'t waste nitrogen fertilizer on them.' },
+                { icon: 'water', title: 'Manage Weeds & Water', text: 'Weed within 2–3 weeks and again before flowering. Weeds cut maize yield most in the first 6 weeks.', note: 'Make tied (box) ridges to trap rainfall and survive short dry spells — a DARS-recommended water-harvesting practice.' },
+                { icon: 'pest', title: 'Protect with Integrated Pest Management', text: 'Scout the field weekly. For fall armyworm: handpick egg masses, put ash or soil in the funnels, and use push-pull (Desmodium + Brachiaria).', note: 'Spray only approved pesticides once pest thresholds are reached — this saves money and protects the environment.' },
+                { icon: 'store', title: 'Harvest & Store to Protect Quality', text: 'Harvest at maturity, dry grain to 12.5% moisture, shell it clean, and store in PICS/hermetic bags to stop weevils and aflatoxin.', note: 'Aflatoxin control is vital for groundnuts — it protects both family health and market value.' }
+            ],
+            cropsTitle: 'Key Crop Snapshots',
+            cropsSub: 'Spacing, fertilizer and the one tip that matters most for each crop.',
+            rowSpacing: 'Spacing',
+            rowFertilizer: 'Fertilizer',
+            rowTip: 'Key tip',
+            crops: [
+                { emoji: '🌽', name: 'Maize', spacing: '75 cm rows × 25 cm stations, 1 seed', fertilizer: 'NPK 23:21:0+4S basal + Urea top-dress', tip: 'Plant with the first good rains; weed early.' },
+                { emoji: '🥜', name: 'Groundnuts', spacing: '75–90 cm rows × 10 cm', fertilizer: 'No nitrogen; add gypsum/SSP', tip: 'Rotate with maize; dry well to avoid aflatoxin.' },
+                { emoji: '🫘', name: 'Soybeans', spacing: '45–75 cm rows × 5 cm', fertilizer: 'Rhizobium inoculant; little/no N', tip: 'Inoculant reliably raises yield at low cost.' },
+                { emoji: '🌱', name: 'Beans', spacing: '75 cm rows × 10 cm', fertilizer: 'A little NPK at planting', tip: 'Pick early-maturing types; harvest when dry.' },
+                { emoji: '🍂', name: 'Tobacco', spacing: '90–120 cm rows × 60 cm', fertilizer: 'Tobacco-specific fertilizer per guidance', tip: 'Raise strong seedlings; rotate fields yearly.' }
+            ],
+            scienceTitle: 'Science-Backed Practices',
+            scienceSub: 'Approaches tested in Malawi that raise yields and protect the soil.',
+            science: [
+                { title: 'Conservation Agriculture', text: 'Minimum tillage, crop residues left as mulch, and rotation. CIMMYT/Total LandCare trials in Malawi show better moisture retention and higher yields.' },
+                { title: 'Doubled-up Legumes', text: 'Intercrop groundnut with pigeonpea in the same season — two harvests plus added soil nitrogen (Africa RISING).' },
+                { title: 'Tied Ridges', text: 'Box ridges hold rainwater in the field and carry the crop through short dry spells (DARS Chitedze).' },
+                { title: 'Post-Harvest & Aflatoxin', text: 'Dry to 12.5% moisture and store in PICS bags to stop weevils and aflatoxin without chemicals.' }
+            ],
+            sources: 'Sources: Malawi Ministry of Agriculture — Guide to Agricultural Production (GAP); CIMMYT & DARS Chitedze; Africa RISING; ICRISAT.'
+        };
     }
 
     showNoData() {
@@ -3324,3 +3441,206 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 // ─── END REGISTRATION MODULE ──────────────────────────────────────────────────
+
+// ─── ADMIN PANEL MODULE ───────────────────────────────────────────────────────
+
+AgroBusinessRevolution.prototype.openAdminPanel = function () {
+    const modal = document.getElementById('admin-modal');
+    if (!modal) return;
+    const savedToken = sessionStorage.getItem('agro_admin_token');
+    if (savedToken) {
+        this._adminToken = savedToken;
+        this._adminShowApps('pending');
+    } else {
+        document.getElementById('admin-login-screen').style.display = '';
+        document.getElementById('admin-apps-screen').style.display = 'none';
+        document.getElementById('admin-review-screen').style.display = 'none';
+    }
+    this.openModal(modal);
+};
+
+AgroBusinessRevolution.prototype._adminBindEvents = function () {
+    const loginBtn = document.getElementById('admin-login-btn');
+    if (loginBtn && !loginBtn._adminBound) {
+        loginBtn._adminBound = true;
+        loginBtn.addEventListener('click', () => this._adminDoLogin());
+        document.getElementById('admin-token-input').addEventListener('keydown', e => {
+            if (e.key === 'Enter') this._adminDoLogin();
+        });
+    }
+
+    const closeBtn = document.getElementById('admin-modal-close');
+    if (closeBtn && !closeBtn._adminBound) {
+        closeBtn._adminBound = true;
+        closeBtn.addEventListener('click', () => {
+            document.getElementById('admin-modal').classList.remove('active');
+            document.body.style.overflow = '';
+        });
+    }
+
+    const backBtn = document.getElementById('admin-back-btn');
+    if (backBtn && !backBtn._adminBound) {
+        backBtn._adminBound = true;
+        backBtn.addEventListener('click', () => this._adminShowApps(this._adminCurrentTab || 'pending'));
+    }
+
+    document.querySelectorAll('#admin-tabs .admin-tab').forEach(tab => {
+        if (!tab._adminBound) {
+            tab._adminBound = true;
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('#admin-tabs .admin-tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                this._adminShowApps(tab.dataset.status);
+            });
+        }
+    });
+};
+
+AgroBusinessRevolution.prototype._adminDoLogin = function () {
+    const token = (document.getElementById('admin-token-input').value || '').trim();
+    const errEl = document.getElementById('admin-login-error');
+    if (!token) { errEl.textContent = 'Please enter the admin token.'; errEl.style.display = ''; return; }
+    errEl.style.display = 'none';
+    this._adminToken = token;
+    sessionStorage.setItem('agro_admin_token', token);
+    this._adminShowApps('pending');
+};
+
+AgroBusinessRevolution.prototype._adminShowApps = function (status) {
+    this._adminCurrentTab = status;
+    document.getElementById('admin-login-screen').style.display = 'none';
+    document.getElementById('admin-review-screen').style.display = 'none';
+    document.getElementById('admin-apps-screen').style.display = '';
+    const list = document.getElementById('admin-apps-list');
+    list.innerHTML = '<div class="loading-spinner" style="margin:2rem auto;"></div>';
+
+    const base = (window.APP_CONFIG && window.APP_CONFIG.apiBase) ? window.APP_CONFIG.apiBase : 'api.php';
+    fetch(`${base}?action=admin_applications&status=${status}&token=${encodeURIComponent(this._adminToken)}`)
+        .then(r => r.json())
+        .then(data => {
+            if (!data.success) {
+                if (data.error === 'Unauthorized') {
+                    sessionStorage.removeItem('agro_admin_token');
+                    document.getElementById('admin-login-screen').style.display = '';
+                    document.getElementById('admin-apps-screen').style.display = 'none';
+                    const errEl = document.getElementById('admin-login-error');
+                    errEl.textContent = 'Invalid token. Please try again.';
+                    errEl.style.display = '';
+                    return;
+                }
+                list.innerHTML = `<p style="color:#dc2626;">Error: ${data.error || 'Failed to load'}</p>`;
+                return;
+            }
+            this._adminRenderList(data.data || []);
+        })
+        .catch(() => { list.innerHTML = '<p style="color:#dc2626;">Network error. Check connection.</p>'; });
+};
+
+AgroBusinessRevolution.prototype._adminRenderList = function (apps) {
+    const list = document.getElementById('admin-apps-list');
+    if (!apps.length) {
+        list.innerHTML = '<p style="text-align:center;color:var(--text-muted);padding:2rem 0;">No applications in this category.</p>';
+        return;
+    }
+    const statusBadge = s => {
+        const map = { pending: '#f59e0b', approved: '#16a34a', denied: '#dc2626' };
+        return `<span style="background:${map[s]||'#6b7280'};color:#fff;border-radius:999px;padding:2px 10px;font-size:0.75rem;font-weight:600;">${s.toUpperCase()}</span>`;
+    };
+    list.innerHTML = apps.map(a => `
+        <div class="admin-app-card" data-id="${a.id}">
+            <div class="admin-app-card-header">
+                <span class="admin-app-ref">${a.application_ref}</span>
+                ${statusBadge(a.status)}
+            </div>
+            <div class="admin-app-card-body">
+                <strong>${a.full_name}</strong> &mdash; <span style="text-transform:capitalize;">${a.user_type}</span><br>
+                <span style="color:var(--text-muted);font-size:0.85rem;">${a.district_name || '—'} &bull; ${a.phone_number}</span><br>
+                <span style="color:var(--text-muted);font-size:0.8rem;">${new Date(a.created_at).toLocaleDateString('en-GB', {day:'numeric',month:'short',year:'numeric'})}</span>
+            </div>
+            ${a.status === 'pending' ? `<button class="admin-review-btn btn-primary" data-id="${a.id}" style="width:100%;margin-top:0.5rem;">Review</button>` : ''}
+        </div>
+    `).join('');
+
+    list.querySelectorAll('.admin-review-btn').forEach(btn => {
+        btn.addEventListener('click', () => this._adminOpenReview(parseInt(btn.dataset.id), apps));
+    });
+};
+
+AgroBusinessRevolution.prototype._adminOpenReview = function (id, apps) {
+    const app = apps.find(a => a.id === id);
+    if (!app) return;
+    this._adminCurrentAppId = id;
+    document.getElementById('admin-apps-screen').style.display = 'none';
+    document.getElementById('admin-review-screen').style.display = '';
+    document.getElementById('admin-notes-input').value = '';
+    document.getElementById('admin-review-msg').style.display = 'none';
+
+    document.getElementById('admin-review-detail').innerHTML = `
+        <div class="admin-detail-card">
+            <div class="admin-detail-row"><span>Reference</span><strong>${app.application_ref}</strong></div>
+            <div class="admin-detail-row"><span>Name</span><strong>${app.full_name}</strong></div>
+            <div class="admin-detail-row"><span>Type</span><strong style="text-transform:capitalize;">${app.user_type}</strong></div>
+            <div class="admin-detail-row"><span>Phone</span><strong>${app.phone_number}</strong></div>
+            <div class="admin-detail-row"><span>Email</span><strong>${app.email || '—'}</strong></div>
+            <div class="admin-detail-row"><span>District</span><strong>${app.district_name || '—'}</strong></div>
+            <div class="admin-detail-row"><span>Channel</span><strong>${app.channel}</strong></div>
+            <div class="admin-detail-row"><span>Applied</span><strong>${new Date(app.created_at).toLocaleString('en-GB')}</strong></div>
+        </div>
+    `;
+
+    const approveBtn = document.getElementById('admin-approve-btn');
+    const denyBtn = document.getElementById('admin-deny-btn');
+    // Remove old listeners by replacing elements
+    const newApprove = approveBtn.cloneNode(true);
+    const newDeny = denyBtn.cloneNode(true);
+    approveBtn.parentNode.replaceChild(newApprove, approveBtn);
+    denyBtn.parentNode.replaceChild(newDeny, denyBtn);
+
+    newApprove.addEventListener('click', () => this._adminSubmitReview('approve'));
+    newDeny.addEventListener('click', () => this._adminSubmitReview('deny'));
+};
+
+AgroBusinessRevolution.prototype._adminSubmitReview = function (action) {
+    const notes = (document.getElementById('admin-notes-input').value || '').trim();
+    const msgEl = document.getElementById('admin-review-msg');
+    const base = (window.APP_CONFIG && window.APP_CONFIG.apiBase) ? window.APP_CONFIG.apiBase : 'api.php';
+
+    msgEl.style.color = '#6b7280';
+    msgEl.textContent = 'Submitting…';
+    msgEl.style.display = '';
+
+    fetch(base + '?action=admin_review', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Admin-Token': this._adminToken
+        },
+        body: JSON.stringify({ application_id: this._adminCurrentAppId, action, notes })
+    })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                msgEl.style.color = '#16a34a';
+                const label = action === 'approve' ? 'Approved' : 'Denied';
+                msgEl.textContent = `✓ ${label} successfully. Email sent to applicant.`;
+                setTimeout(() => this._adminShowApps('pending'), 1800);
+            } else {
+                msgEl.style.color = '#dc2626';
+                msgEl.textContent = 'Error: ' + (data.error || 'Failed to submit');
+            }
+        })
+        .catch(() => { msgEl.style.color = '#dc2626'; msgEl.textContent = 'Network error.'; });
+};
+
+// Bind admin panel events after DOM ready
+document.addEventListener('DOMContentLoaded', function () {
+    if (window.app) window.app._adminBindEvents();
+    else setTimeout(() => window.app && window.app._adminBindEvents(), 500);
+
+    // Auto-open admin panel if URL contains ?admin
+    if (new URLSearchParams(window.location.search).has('admin')) {
+        setTimeout(() => window.app && window.app.openAdminPanel(), 600);
+    }
+});
+
+// ─── END ADMIN PANEL MODULE ───────────────────────────────────────────────────
