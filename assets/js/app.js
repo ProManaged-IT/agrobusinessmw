@@ -1392,70 +1392,110 @@ class AgroBusinessRevolution {
         }, 3000);
     }
 
-    showDistrictsOverview() {
-        this.loadDistricts().then(districts => {
-            const modal = document.getElementById('districts-overview-modal');
-            const grid = document.getElementById('districts-overview-content');
-            if (!modal || !grid) return;
-            const body = grid.parentElement;
+    // ── Recent-district memory (used by the shared picker) ──────────────
+    _getRecentDistricts() {
+        try { return JSON.parse(localStorage.getItem('agro_recent_districts') || '[]'); }
+        catch (_) { return []; }
+    }
+    _pushRecentDistrict(id) {
+        if (!id) return;
+        try {
+            const r = this._getRecentDistricts().filter(x => x !== id);
+            r.unshift(id);
+            localStorage.setItem('agro_recent_districts', JSON.stringify(r.slice(0, 5)));
+        } catch (_) { /* storage may be unavailable */ }
+    }
 
-            // Annotate with region so we can filter/group.
+    /**
+     * Shared district picker used by BOTH the "All Districts" overview and the
+     * Find Buyers/Sellers/Weather selection flow — one uniform, modern UI.
+     * Renders: search + region chips + optional "All Districts" hero + Recent
+     * quick-picks + monogram cards. onSelect receives a district id or 'all'.
+     */
+    _renderDistrictPicker(bodyEl, onSelect, opts = {}) {
+        return this.loadDistricts().then(districts => {
+            if (!bodyEl || !districts || !districts.length) return;
+
+            const regionClass = { Northern: 'r-north', Central: 'r-central', Southern: 'r-south', Malawi: 'r-central' };
             const list = districts.map(d => ({
-                id: d.id,
-                name: d.name,
+                id: d.id, name: d.name,
                 region: (this.districtCoords[d.id] && this.districtCoords[d.id].region) || 'Malawi'
             }));
+            const byId = id => list.find(d => d.id === id);
+            const recent = this._getRecentDistricts().map(byId).filter(Boolean).slice(0, 3);
 
-            const cardHtml = (d, i) => `
-                <button type="button" class="overview-item" style="animation-delay:${i * 0.02}s"
-                    data-region="${d.region}" data-name="${(d.name || '').toLowerCase()}"
-                    onclick="app.selectDistrictFromOverview(${d.id})">
-                    <span class="overview-badge mono">${(d.name || '?').charAt(0).toUpperCase()}</span>
+            const card = (d, i) => `
+                <button type="button" class="overview-item${this.selectedDistrict === d.id ? ' is-selected' : ''}"
+                    style="animation-delay:${i * 0.02}s" data-id="${d.id}" data-name="${(d.name || '').toLowerCase()}">
+                    <span class="overview-badge mono ${regionClass[d.region] || 'r-central'}">${(d.name || '?').charAt(0).toUpperCase()}</span>
                     <span class="overview-title">${d.name}</span>
                     <span class="overview-chip">${d.region}</span>
                 </button>`;
 
-            body.innerHTML = `
+            const allCard = opts.includeAll ? `
+                <button type="button" class="picker-all-card" data-id="all">
+                    <span class="picker-all-icon" aria-hidden="true">🌍</span>
+                    <span class="picker-all-text"><strong>${opts.allLabel || 'All Districts'}</strong><small>Every region across Malawi</small></span>
+                    <span class="material-symbols-rounded picker-all-arrow" aria-hidden="true">chevron_right</span>
+                </button>` : '';
+
+            const recentRow = recent.length ? `
+                <div class="picker-recent">
+                    <span class="picker-recent-label">Recent</span>
+                    <div class="picker-recent-row">
+                        ${recent.map(d => `<button type="button" class="picker-recent-chip" data-id="${d.id}">${d.name}</button>`).join('')}
+                    </div>
+                </div>` : '';
+
+            bodyEl.innerHTML = `
                 <div class="picker-toolbar">
                     <div class="picker-search">
                         <span class="material-symbols-rounded" aria-hidden="true">search</span>
-                        <input id="district-search" type="search" placeholder="Search district…" autocomplete="off" aria-label="Search districts">
+                        <input id="dp-search" type="search" placeholder="Search district…" autocomplete="off" aria-label="Search districts">
                     </div>
-                    <div class="picker-chips" id="district-region-chips" role="tablist">
+                    <div class="picker-chips" id="dp-chips" role="tablist">
                         <button type="button" class="picker-chip active" data-region="all">All</button>
                         <button type="button" class="picker-chip" data-region="Northern">Northern</button>
                         <button type="button" class="picker-chip" data-region="Central">Central</button>
                         <button type="button" class="picker-chip" data-region="Southern">Southern</button>
                     </div>
                 </div>
-                <p class="picker-count" id="district-count"></p>
-                <div id="districts-overview-content" class="overview-grid" aria-live="polite"></div>`;
+                ${allCard}
+                ${recentRow}
+                <p class="picker-count" id="dp-count"></p>
+                <div id="dp-grid" class="overview-grid" aria-live="polite"></div>`;
 
-            const newGrid = document.getElementById('districts-overview-content');
-            const countEl = document.getElementById('district-count');
-            const searchEl = document.getElementById('district-search');
-            const chipsEl = document.getElementById('district-region-chips');
-            let region = 'all';
-            let matches = [];
+            const grid = bodyEl.querySelector('#dp-grid');
+            const countEl = bodyEl.querySelector('#dp-count');
+            const searchEl = bodyEl.querySelector('#dp-search');
+            const chipsEl = bodyEl.querySelector('#dp-chips');
+            let region = 'all', matches = [];
+
+            const choose = (id) => {
+                if (id !== 'all') this._pushRecentDistrict(id);
+                onSelect(id);
+            };
 
             const render = () => {
                 const t = (searchEl.value || '').trim().toLowerCase();
-                matches = list.filter(d =>
-                    (region === 'all' || d.region === region) &&
-                    (!t || d.name.toLowerCase().includes(t)));
-                newGrid.innerHTML = matches.length
-                    ? matches.map(cardHtml).join('')
-                    : `<p class="picker-empty">No districts match “${t}”.</p>`;
+                matches = list.filter(d => (region === 'all' || d.region === region) && (!t || d.name.toLowerCase().includes(t)));
+                grid.innerHTML = matches.length ? matches.map(card).join('') : `<p class="picker-empty">No districts match “${t}”.</p>`;
                 countEl.textContent = `${matches.length} district${matches.length === 1 ? '' : 's'}`;
             };
 
+            // These containers are recreated on every open, so listeners never accumulate.
+            grid.addEventListener('click', (e) => {
+                const c = e.target.closest('.overview-item');
+                if (c) choose(parseInt(c.dataset.id, 10));
+            });
+            const allBtn = bodyEl.querySelector('.picker-all-card');
+            if (allBtn) allBtn.addEventListener('click', () => choose('all'));
+            bodyEl.querySelectorAll('.picker-recent-chip').forEach(ch =>
+                ch.addEventListener('click', () => choose(parseInt(ch.dataset.id, 10))));
+
             searchEl.addEventListener('input', render);
-            // Enter selects the district when the search narrows to one result.
             searchEl.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter' && matches.length === 1) {
-                    e.preventDefault();
-                    this.selectDistrictFromOverview(matches[0].id);
-                }
+                if (e.key === 'Enter' && matches.length === 1) { e.preventDefault(); choose(matches[0].id); }
             });
             chipsEl.addEventListener('click', (e) => {
                 const chip = e.target.closest('.picker-chip');
@@ -1467,9 +1507,17 @@ class AgroBusinessRevolution {
             });
 
             render();
-            this.openModal(modal);
             setTimeout(() => searchEl && searchEl.focus(), 120);
         });
+    }
+
+    showDistrictsOverview() {
+        const modal = document.getElementById('districts-overview-modal');
+        const grid = document.getElementById('districts-overview-content');
+        if (!modal || !grid) return;
+        const body = grid.parentElement;
+        this._renderDistrictPicker(body, (id) => this.selectDistrictFromOverview(id), { includeAll: false })
+            .then(() => this.openModal(modal));
     }
 
     showCropsOverview() {
@@ -1644,161 +1692,30 @@ class AgroBusinessRevolution {
         this._pendingDistrictCallback = callback;
         this.pushNavState('district_selection');
 
-        this.loadDistricts().then(districts => {
+        const modal = document.getElementById('district-modal');
+        if (!modal) { this.showError('District selection not available'); return; }
+        const body = modal.querySelector('.modal-body');
 
-            if (districts.length === 0) {
-                this.showError('No districts available');
-                return;
+        let districtSelected = false;
+        const onDistrictModalClose = () => {
+            modal.removeEventListener('modalclosed', onDistrictModalClose);
+            if (!districtSelected && this.currentScreen === 'content') {
+                this.showScreen('dashboard');
             }
+        };
+        modal.addEventListener('modalclosed', onDistrictModalClose);
 
-            const modal = document.getElementById('district-modal');
-            const list = document.getElementById('district-list');
-            const searchBox = document.getElementById('district-search');
-            const searchStats = document.getElementById('search-stats');
-
-            if (!modal || !list) {
-                this.showError('District selection not available');
-                return;
-            }
-
-            // Clear search
-            if (searchBox) searchBox.value = '';
-
-            // Group districts by region
-            const regions = ['Northern', 'Central', 'Southern'];
-            const districtsByRegion = {};
-            regions.forEach(region => {
-                districtsByRegion[region] = districts.filter(d => (this.districtCoords[d.id]?.region || 'Malawi') === region);
+        // Uses the same shared picker as the overview modal — one uniform design.
+        this._renderDistrictPicker(body, (id) => {
+            this.selectedDistrict = id === 'all' ? null : id;
+            districtSelected = true;
+            this.closeModal(modal);
+            if (callback) callback();
+        }, { includeAll: true }).then(() => this.openModal(modal))
+            .catch(error => {
+                console.error('❌ District selection error:', error);
+                this.showError('Failed to load districts');
             });
-
-            // Track whether user selected before closing
-            let districtSelected = false;
-
-            // On modal close without selection, return to dashboard
-            const onDistrictModalClose = () => {
-                modal.removeEventListener('modalclosed', onDistrictModalClose);
-                if (!districtSelected && this.currentScreen === 'content') {
-                    this.showScreen('dashboard');
-                }
-            };
-            modal.addEventListener('modalclosed', onDistrictModalClose);
-
-            // Render district picker with "All Districts" option in compact grid
-            const renderPicker = () => {
-                let html = `
-                    <button type="button" class="district-all-card" data-id="all" aria-label="Select all districts">
-                        All Districts
-                    </button>
-                `;
-
-                regions.forEach(region => {
-                    const regionDistricts = districtsByRegion[region];
-                    if (regionDistricts.length > 0) {
-                        html += `<div class="district-region-group">
-                            <div class="district-region-header">${region} Region</div>
-                            <div class="district-grid">
-                                ${regionDistricts.map(district => `
-                                    <button type="button" class="district-card" data-id="${district.id}" data-name="${district.name}" data-region="${region}" aria-label="Select ${district.name}">
-                                        ${district.name}
-                                    </button>
-                                `).join('')}
-                            </div>
-                        </div>`;
-                    }
-                });
-
-                list.innerHTML = html;
-            };
-
-            renderPicker();
-
-            // Update search stats
-            if (searchStats) searchStats.textContent = `${districts.length} districts available`;
-
-            // Search/filter functionality with regional grouping preservation
-            const updateSearch = () => {
-                const term = searchBox.value.toLowerCase().trim();
-                let visibleCount = 0;
-
-                if (!term) {
-                    renderPicker();
-                    if (searchStats) searchStats.textContent = `${districts.length} districts available`;
-                } else {
-                    let html = '';
-                    let hasResults = false;
-
-                    regions.forEach(region => {
-                        const filtered = districtsByRegion[region].filter(d =>
-                            d.name.toLowerCase().includes(term) || region.toLowerCase().includes(term)
-                        );
-                        if (filtered.length > 0) {
-                            hasResults = true;
-                            html += `<div class="district-region-group">
-                                <div class="district-region-header">${region} Region</div>
-                                <div class="district-grid">
-                                    ${filtered.map(district => `
-                                        <button type="button" class="district-card" data-id="${district.id}" data-name="${district.name}" data-region="${region}" aria-label="Select ${district.name}">
-                                            ${district.name}
-                                        </button>
-                                    `).join('')}
-                                </div>
-                            </div>`;
-                            visibleCount += filtered.length;
-                        }
-                    });
-
-                    if (hasResults) {
-                        list.innerHTML = html;
-                        if (searchStats) searchStats.textContent = `${visibleCount} district${visibleCount !== 1 ? 's' : ''} found`;
-                    } else {
-                        list.innerHTML = `<div class="district-no-results"><p>No districts match "${term}"</p></div>`;
-                        if (searchStats) searchStats.textContent = 'No results';
-                    }
-                }
-
-                // Re-attach click handlers
-                attachClickHandlers();
-            };
-
-            const selectDistrict = (districtId) => {
-                if (districtId === 'all') {
-                    this.selectedDistrict = null; // Clear to indicate all districts
-                } else {
-                    this.selectedDistrict = districtId;
-                }
-                districtSelected = true;
-                this.closeModal(modal);
-                if (callback) callback();
-            };
-
-            const attachClickHandlers = () => {
-                list.querySelectorAll('.district-card, .district-all-card').forEach(card => {
-                    card.addEventListener('click', () => {
-                        const id = card.dataset.id;
-                        selectDistrict(id);
-                    });
-                    card.addEventListener('keydown', (e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                            e.preventDefault();
-                            const id = card.dataset.id;
-                            selectDistrict(id);
-                        }
-                    });
-                });
-            };
-
-            attachClickHandlers();
-
-            // Search input listener
-            if (searchBox) {
-                searchBox.addEventListener('input', updateSearch);
-            }
-
-            this.openModal(modal);
-        }).catch(error => {
-            console.error('❌ District selection error:', error);
-            this.showError('Failed to load districts');
-        });
     }
 
     showCropSelection(callback) {

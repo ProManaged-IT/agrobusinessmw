@@ -1646,6 +1646,122 @@ button.overview-item {
     width: 100%;
 }
 
+/* Region-tinted monogram badges — subtle warm variation per region */
+.overview-badge.mono.r-north {
+    background: linear-gradient(135deg, #6f5b43 0%, #8B7355 100%);
+}
+
+.overview-badge.mono.r-central {
+    background: linear-gradient(135deg, #8B7355 0%, #C8A45A 100%);
+}
+
+.overview-badge.mono.r-south {
+    background: linear-gradient(135deg, #b07d33 0%, #d8b25e 100%);
+}
+
+/* Currently-selected district gets a gold ring */
+.overview-item.is-selected {
+    border-color: var(--gold);
+    box-shadow: 0 0 0 2px var(--gold) inset, 0 6px 16px -8px rgba(70, 60, 50, 0.25);
+}
+
+/* "All Districts" hero card */
+.picker-all-card {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    width: 100%;
+    text-align: left;
+    border: 1px solid rgba(140, 115, 85, 0.25);
+    border-radius: 16px;
+    padding: 0.95rem 1.1rem;
+    margin-bottom: 1rem;
+    cursor: pointer;
+    color: var(--text);
+    background: linear-gradient(135deg, rgba(139, 115, 85, 0.14), rgba(200, 164, 90, 0.18));
+    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+.picker-all-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--gold);
+    box-shadow: 0 12px 26px -12px rgba(70, 60, 50, 0.3);
+}
+
+.picker-all-icon {
+    font-size: 1.6rem;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.picker-all-text {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    line-height: 1.25;
+}
+
+.picker-all-text strong {
+    font-size: 1rem;
+    color: var(--text);
+}
+
+.picker-all-text small {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
+.picker-all-arrow {
+    color: var(--accent);
+}
+
+/* Recent quick-picks */
+.picker-recent {
+    margin-bottom: 1rem;
+}
+
+.picker-recent-label {
+    display: block;
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+    margin-bottom: 0.45rem;
+}
+
+.picker-recent-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+}
+
+.picker-recent-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    border: 1.5px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    font: inherit;
+    font-size: 0.82rem;
+    font-weight: 600;
+    padding: 0.4rem 0.85rem;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.picker-recent-chip::before {
+    content: '🕘';
+    font-size: 0.8rem;
+}
+
+.picker-recent-chip:hover {
+    border-color: var(--gold);
+    background: rgba(200, 164, 90, 0.12);
+}
+
 .overview-item {
     position: relative;
     display: flex;
