@@ -863,6 +863,7 @@ textarea::placeholder {
         opacity: 0;
         transform: translateY(48px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -1013,7 +1014,7 @@ textarea::placeholder {
 }
 
 .search-box input::placeholder {
-    color: rgba(62,57,48,0.56);
+    color: rgba(62, 57, 48, 0.56);
 }
 
 /* =====================================================
@@ -1667,6 +1668,7 @@ textarea::placeholder {
         opacity: 0;
         transform: translateY(4px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -2634,6 +2636,7 @@ a:focus-visible,
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
     }
+
     .admin-detail-row {
         flex-direction: column;
         gap: 0.2rem;
@@ -2800,7 +2803,7 @@ a:focus-visible,
     gap: 0.6rem;
 }
 
-.guide-crop-card dl > div {
+.guide-crop-card dl>div {
     display: grid;
     gap: 0.15rem;
 }
