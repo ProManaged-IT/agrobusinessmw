@@ -2083,6 +2083,38 @@ button.overview-item {
     line-height: 1.5;
 }
 
+/* Community price level vs AgroBiz reference rate */
+.price-level-badge {
+    display: inline-block;
+    margin-left: 0.4rem;
+    padding: 0.15rem 0.55rem;
+    border-radius: 999px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    border: 1px solid;
+    vertical-align: middle;
+}
+
+.price-level-badge.low {
+    background: rgba(176, 92, 74, 0.12);
+    color: #8a3d2c;
+    border-color: rgba(176, 92, 74, 0.35);
+}
+
+.price-level-badge.fair {
+    background: rgba(200, 164, 90, 0.16);
+    color: var(--accent-dark);
+    border-color: rgba(200, 164, 90, 0.4);
+}
+
+.price-level-badge.high {
+    background: rgba(22, 163, 74, 0.12);
+    color: #15803d;
+    border-color: rgba(22, 163, 74, 0.35);
+}
+
 /* Registration */
 .reg-steps {
     display: flex;

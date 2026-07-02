@@ -2222,6 +2222,19 @@ class AgroBusinessRevolution {
                 const communityBagDisplay = (communityMinBag || communityAvgBag || communityMaxBag) ?
                     `Bag: ${communityMinBag ? 'MK ' + communityMinBag.toLocaleString() : '—'} / ${communityAvgBag ? 'MK ' + communityAvgBag.toLocaleString() : '—'} / ${communityMaxBag ? 'MK ' + communityMaxBag.toLocaleString() : '—'}` : '';
 
+                // Price level: community average vs AgroBiz reference rate (±15% band).
+                let priceLevelBadge = '';
+                if (communityAvg && fewsNum) {
+                    const ratio = communityAvg / fewsNum;
+                    if (ratio < 0.85) {
+                        priceLevelBadge = '<span class="price-level-badge low" title="More than 15% below the AgroBiz reference rate">Low</span>';
+                    } else if (ratio > 1.15) {
+                        priceLevelBadge = '<span class="price-level-badge high" title="More than 15% above the AgroBiz reference rate">High</span>';
+                    } else {
+                        priceLevelBadge = '<span class="price-level-badge fair" title="Within 15% of the AgroBiz reference rate">Fair</span>';
+                    }
+                }
+
                 const hasCommunity = (communityMin || communityAvg || communityMax);
                 const confirmedChip = hasCommunity
                     ? (r.community_confirmed
@@ -2234,7 +2247,7 @@ class AgroBusinessRevolution {
                     <td data-sort-value="${esc(r.crop_name || '')}"><span style="font-size:1.3rem">${this.getCropIcon(r.crop_name)}</span> <strong>${esc(r.crop_name || 'Unknown crop')}</strong><br><small style="color:var(--text-muted)">${esc(r.type)}</small></td>
                     <td data-sort-value="${esc(r.district || '')}">${esc(r.district)}<br><small style="color:var(--text-muted)">${esc(r.market)}</small></td>
                     <td data-sort-value="${fewsNum ?? ''}"><span class="price-badge ${r.source === 'fews' ? 'price-high' : ''}">${esc(fewsDisplay)}</span><div style="font-size:.78rem;color:var(--text-muted);margin-top:.25rem">${esc(fewsPer50Display)}</div></td>
-                    <td data-sort-value="${communityAvg ?? communityMin ?? ''}"><span class="price-badge ${r.source === 'community' ? 'price-high' : ''}">${esc(communityDisplay)}</span>${confirmedChip}<div style="font-size:.78rem;color:var(--text-muted);margin-top:.25rem">${esc(communityBagDisplay)}</div></td>
+                    <td data-sort-value="${communityAvg ?? communityMin ?? ''}"><span class="price-badge ${r.source === 'community' ? 'price-high' : ''}">${esc(communityDisplay)}</span>${priceLevelBadge}${confirmedChip}<div style="font-size:.78rem;color:var(--text-muted);margin-top:.25rem">${esc(communityBagDisplay)}</div></td>
                     <td>${esc(r.unit)}</td>
                     <td data-sort-value="${r._ts || 0}" style="color:var(--text-muted);font-size:.8rem">${esc(r.reports)}</td>
                     <td data-sort-value="${esc(r.sourceLabel || '')}"><span class="price-badge" style="background:${r.source === 'fews' ? 'rgba(139,115,85,.14)' : 'rgba(200,164,90,.16)'};color:${r.source === 'fews' ? 'var(--primary)' : 'var(--accent-dark)'}">${esc(r.sourceLabel)}</span></td>
@@ -2253,7 +2266,7 @@ class AgroBusinessRevolution {
             const area = document.getElementById('content-area');
             area.innerHTML = `
                 <h2 style="font-family:'DM Serif Display',serif;margin-bottom:1rem;color:var(--text-primary)">Crop Prices</h2>
-                <p class="price-meta" style="margin-bottom:1.25rem">AgroBiz reference rates and community market reports are shown side by side in one searchable table.</p>
+                <p class="price-meta" style="margin-bottom:1.25rem">AgroBiz reference rates and community market reports are shown side by side in one searchable table. Community prices carry a level badge — <span class="price-level-badge low">Low</span> <span class="price-level-badge fair">Fair</span> <span class="price-level-badge high">High</span> — showing how they compare to the AgroBiz reference rate (±15%).</p>
 
                 <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:1.5rem;flex-wrap:wrap">
                     <button class="price-tab active" id="tab-prices" onclick="app._priceTab('prices')">All Prices <span style="background:var(--accent);color:#fff;border-radius:20px;padding:.1rem .5rem;font-size:.75rem;margin-left:.3rem">${rows.length}</span></button>

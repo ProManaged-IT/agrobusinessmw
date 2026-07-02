@@ -1005,6 +1005,10 @@ try {
                 }));
             }
 
+            // Admin-set reference overrides take precedence over the upstream rate
+            // and fill gaps where the source has no data for a crop/district.
+            $fews = cp_apply_overrides($mysqli, $fews, $crop_id);
+
             // Community prices: only APPROVED reports from the last 45 days count.
             // The headline value is the MEDIAN (outlier-resistant); a group with
             // 3+ reports is "confirmed". Aggregation is done in PHP so we can use a
@@ -1300,6 +1304,85 @@ try {
         'action'    => $action ?? '',
         'timestamp' => date('c')
     ]);
+}
+
+// ─── ADMIN REFERENCE-PRICE OVERRIDES ────────────────────────────────────────
+// Admin-set prices in `price_overrides` override the upstream reference rate for
+// a crop (district_id = 0 → all districts, else a specific district) and inject a
+// synthetic reference row where the source has no data for that crop/district.
+function cp_apply_overrides(mysqli $db, array $fews, ?int $crop_id): array
+{
+    // Table is created lazily by the admin panel; tolerate its absence.
+    $chk = $db->query("SHOW TABLES LIKE 'price_overrides'");
+    if (!$chk || $chk->num_rows === 0) return $fews;
+
+    $sql = "SELECT o.crop_id, o.district_id, o.price_per_kg, o.note,
+                   c.name AS crop_name, d.name AS district_name
+            FROM price_overrides o
+            JOIN crops c ON c.id = o.crop_id
+            LEFT JOIN districts d ON d.id = o.district_id";
+    if ($crop_id) $sql .= " WHERE o.crop_id = " . (int)$crop_id;
+    $res = $db->query($sql);
+    if (!$res || $res->num_rows === 0) return $fews;
+
+    $specific = [];   // [crop_id][district_id] = override row
+    $national = [];    // [crop_id] = override row (district_id 0)
+    while ($o = $res->fetch_assoc()) {
+        $cid = (int)$o['crop_id'];
+        $did = (int)$o['district_id'];
+        if ($did === 0) $national[$cid] = $o;
+        else $specific[$cid][$did] = $o;
+    }
+
+    // Apply to existing reference rows; track which overrides matched something.
+    $usedSpecific = [];
+    $usedNational = [];
+    foreach ($fews as &$row) {
+        $cid = (int)$row['crop_id'];
+        $did = (int)($row['district_id'] ?? 0);
+        if (isset($specific[$cid][$did])) {
+            $row['price'] = (float)$specific[$cid][$did]['price_per_kg'];
+            $row['overridden'] = true;
+            $usedSpecific[$cid . '|' . $did] = true;
+        } elseif (isset($national[$cid])) {
+            $row['price'] = (float)$national[$cid]['price_per_kg'];
+            $row['overridden'] = true;
+            $usedNational[$cid] = true;
+        }
+    }
+    unset($row);
+
+    // Inject synthetic reference rows for overrides that matched no source row.
+    foreach ($specific as $cid => $byDistrict) {
+        foreach ($byDistrict as $did => $o) {
+            if (isset($usedSpecific[$cid . '|' . $did])) continue;
+            $fews[] = [
+                'crop_id'       => $cid,
+                'crop_name'     => $o['crop_name'],
+                'district_id'   => $did,
+                'district_name' => $o['district_name'] ?? '',
+                'market_name'   => 'Admin reference',
+                'price'         => (float)$o['price_per_kg'],
+                'price_type'    => 'Reference',
+                'overridden'    => true,
+            ];
+        }
+    }
+    foreach ($national as $cid => $o) {
+        if (isset($usedNational[$cid])) continue;
+        $fews[] = [
+            'crop_id'       => $cid,
+            'crop_name'     => $o['crop_name'],
+            'district_id'   => 0,
+            'district_name' => '',
+            'market_name'   => 'Admin reference',
+            'price'         => (float)$o['price_per_kg'],
+            'price_type'    => 'Reference',
+            'overridden'    => true,
+        ];
+    }
+
+    return $fews;
 }
 
 // ─── AGROBIZ REFERENCE RATE FETCH + FILE CACHE ──────────────────────────────
