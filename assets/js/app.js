@@ -539,19 +539,19 @@ class AgroBusinessRevolution {
         }
     }
 
-    // Update bindLanguageSwitching method
+    // Update bindLanguageSwitching method — handles both dashboard and content headers
     bindLanguageSwitching() {
         const langCurrent = document.getElementById('current-lang-btn');
         const langDropdown = document.getElementById('lang-dropdown');
+        const contentLangBtn = document.getElementById('content-lang-btn');
+        const contentLangDropdown = document.getElementById('content-lang-dropdown');
 
+        // Dashboard header language toggle
         if (langCurrent) {
-            // Click event
             langCurrent.addEventListener('click', (e) => {
                 e.stopPropagation();
                 this.toggleLanguageDropdown();
             });
-
-            // Keyboard event
             langCurrent.addEventListener('keydown', (e) => {
                 if (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowDown') {
                     e.preventDefault();
@@ -564,7 +564,25 @@ class AgroBusinessRevolution {
             });
         }
 
-        // Language options with keyboard support
+        // Content header language toggle
+        if (contentLangBtn) {
+            contentLangBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.toggleLanguageDropdown();
+            });
+            contentLangBtn.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    this.toggleLanguageDropdown();
+                    if (contentLangDropdown) {
+                        const firstOption = contentLangDropdown.querySelector('.lang-option-smart');
+                        if (firstOption) firstOption.focus();
+                    }
+                }
+            });
+        }
+
+        // Language options with keyboard support (all dropdowns)
         document.querySelectorAll('.lang-option-smart').forEach(option => {
             option.addEventListener('click', (e) => {
                 const lang = option.dataset.lang;
@@ -584,10 +602,16 @@ class AgroBusinessRevolution {
                     e.preventDefault();
                     const prev = option.previousElementSibling;
                     if (prev) prev.focus();
-                    else if (langCurrent) langCurrent.focus();
+                    else {
+                        const parent = option.closest('.lang-dropdown');
+                        const btn = parent && parent.parentElement.querySelector('.lang-toggle');
+                        if (btn) btn.focus();
+                    }
                 } else if (e.key === 'Escape') {
                     this.closeLanguageDropdown();
-                    if (langCurrent) langCurrent.focus();
+                    const parent = option.closest('.lang-dropdown');
+                    const btn = parent && parent.parentElement.querySelector('.lang-toggle');
+                    if (btn) btn.focus();
                 }
             });
         });
@@ -600,35 +624,60 @@ class AgroBusinessRevolution {
         });
     }
 
-    // Update toggleLanguageDropdown method
+    // Update toggleLanguageDropdown method — handles both dashboard and content header
     toggleLanguageDropdown() {
+        // Try dashboard header first, then content header
         const langCurrent = document.getElementById('current-lang-btn');
         const langDropdown = document.getElementById('lang-dropdown');
 
         if (langCurrent && langDropdown) {
             const isActive = langCurrent.classList.contains('active');
-
             if (isActive) {
                 this.closeLanguageDropdown();
             } else {
+                this.closeLanguageDropdown(); // close any other open dropdown first
                 langCurrent.classList.add('active');
                 langDropdown.classList.add('active');
                 langCurrent.setAttribute('aria-expanded', 'true');
+                this.announceToScreenReader('Language selector opened');
+            }
+            return;
+        }
 
-                // Announce to screen readers
+        // Fallback: content header
+        const contentLangBtn = document.getElementById('content-lang-btn');
+        const contentLangDropdown = document.getElementById('content-lang-dropdown');
+        if (contentLangBtn && contentLangDropdown) {
+            const isActive = contentLangBtn.classList.contains('active');
+            if (isActive) {
+                this.closeLanguageDropdown();
+            } else {
+                this.closeLanguageDropdown();
+                contentLangBtn.classList.add('active');
+                contentLangDropdown.classList.add('active');
+                contentLangBtn.setAttribute('aria-expanded', 'true');
                 this.announceToScreenReader('Language selector opened');
             }
         }
     }
 
     closeLanguageDropdown() {
+        // Close dashboard dropdown
         const langCurrent = document.getElementById('current-lang-btn');
         const langDropdown = document.getElementById('lang-dropdown');
-
         if (langCurrent && langDropdown) {
             langCurrent.classList.remove('active');
             langDropdown.classList.remove('active');
             langCurrent.setAttribute('aria-expanded', 'false');
+        }
+
+        // Close content header dropdown
+        const contentLangBtn = document.getElementById('content-lang-btn');
+        const contentLangDropdown = document.getElementById('content-lang-dropdown');
+        if (contentLangBtn && contentLangDropdown) {
+            contentLangBtn.classList.remove('active');
+            contentLangDropdown.classList.remove('active');
+            contentLangBtn.setAttribute('aria-expanded', 'false');
         }
     }
 
@@ -665,6 +714,12 @@ class AgroBusinessRevolution {
         document.querySelectorAll('.lang-code').forEach(code => {
             if (code) code.textContent = codes[this.currentLang];
         });
+
+        // Sync the content header language switcher
+        const contentFlag = document.getElementById('content-flag');
+        const contentCode = document.getElementById('content-lang-code');
+        if (contentFlag) contentFlag.textContent = flags[this.currentLang];
+        if (contentCode) contentCode.textContent = codes[this.currentLang];
     }
 
     // Update updateTexts method

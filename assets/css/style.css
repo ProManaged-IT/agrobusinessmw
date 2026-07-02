@@ -300,6 +300,64 @@ textarea::placeholder {
     transform: rotate(180deg);
 }
 
+/* ── Content header language switcher (compact) ── */
+.lang-btn-content {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 0.35rem 0.6rem;
+    border-radius: 2px;
+    cursor: pointer;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    min-width: 38px;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+.lang-btn-content:hover {
+    background: var(--border);
+}
+.lang-btn-content.active {
+    background: var(--gold);
+    color: white;
+}
+.lang-flag-content {
+    font-size: 0.85rem;
+}
+.lang-code-content {
+    font-weight: 700;
+}
+.content-lang-switcher {
+    position: relative;
+    display: inline-block;
+}
+.content-lang-dropdown {
+    right: 0;
+    left: auto;
+}
+.content-lang-dropdown .lang-dropdown {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    min-width: 160px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    box-shadow: 0 4px 12px rgba(62, 57, 48, 0.15);
+    display: none;
+    flex-direction: column;
+    margin-top: 4px;
+    z-index: 101;
+    animation: slideDown 0.2s ease;
+}
+.content-lang-dropdown .lang-dropdown.active {
+    display: flex;
+}
+
 .lang-dropdown {
     position: absolute;
     top: 100%;
