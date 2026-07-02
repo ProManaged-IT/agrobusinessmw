@@ -568,12 +568,12 @@ class AgroBusinessRevolution {
         if (contentLangBtn) {
             contentLangBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
-                this.toggleLanguageDropdown();
+                this.toggleLanguageDropdown('content');
             });
             contentLangBtn.addEventListener('keydown', (e) => {
                 if (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowDown') {
                     e.preventDefault();
-                    this.toggleLanguageDropdown();
+                    this.toggleLanguageDropdown('content');
                     if (contentLangDropdown) {
                         const firstOption = contentLangDropdown.querySelector('.lang-option-smart');
                         if (firstOption) firstOption.focus();
@@ -624,40 +624,21 @@ class AgroBusinessRevolution {
         });
     }
 
-    // Update toggleLanguageDropdown method — handles both dashboard and content header
-    toggleLanguageDropdown() {
-        // Try dashboard header first, then content header
-        const langCurrent = document.getElementById('current-lang-btn');
-        const langDropdown = document.getElementById('lang-dropdown');
+    // Update toggleLanguageDropdown method — toggles the switcher that was clicked
+    // ('dashboard' header or 'content' header). Both switchers exist in the DOM at
+    // once, so the target must be explicit or the wrong dropdown opens.
+    toggleLanguageDropdown(target = 'dashboard') {
+        const btn = document.getElementById(target === 'content' ? 'content-lang-btn' : 'current-lang-btn');
+        const dropdown = document.getElementById(target === 'content' ? 'content-lang-dropdown' : 'lang-dropdown');
+        if (!btn || !dropdown) return;
 
-        if (langCurrent && langDropdown) {
-            const isActive = langCurrent.classList.contains('active');
-            if (isActive) {
-                this.closeLanguageDropdown();
-            } else {
-                this.closeLanguageDropdown(); // close any other open dropdown first
-                langCurrent.classList.add('active');
-                langDropdown.classList.add('active');
-                langCurrent.setAttribute('aria-expanded', 'true');
-                this.announceToScreenReader('Language selector opened');
-            }
-            return;
-        }
-
-        // Fallback: content header
-        const contentLangBtn = document.getElementById('content-lang-btn');
-        const contentLangDropdown = document.getElementById('content-lang-dropdown');
-        if (contentLangBtn && contentLangDropdown) {
-            const isActive = contentLangBtn.classList.contains('active');
-            if (isActive) {
-                this.closeLanguageDropdown();
-            } else {
-                this.closeLanguageDropdown();
-                contentLangBtn.classList.add('active');
-                contentLangDropdown.classList.add('active');
-                contentLangBtn.setAttribute('aria-expanded', 'true');
-                this.announceToScreenReader('Language selector opened');
-            }
+        const isActive = btn.classList.contains('active');
+        this.closeLanguageDropdown(); // close any open dropdown first
+        if (!isActive) {
+            btn.classList.add('active');
+            dropdown.classList.add('active');
+            btn.setAttribute('aria-expanded', 'true');
+            this.announceToScreenReader('Language selector opened');
         }
     }
 
