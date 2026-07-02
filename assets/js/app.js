@@ -539,19 +539,19 @@ class AgroBusinessRevolution {
         }
     }
 
-    // Update bindLanguageSwitching method
+    // Update bindLanguageSwitching method — handles both dashboard and content headers
     bindLanguageSwitching() {
         const langCurrent = document.getElementById('current-lang-btn');
         const langDropdown = document.getElementById('lang-dropdown');
+        const contentLangBtn = document.getElementById('content-lang-btn');
+        const contentLangDropdown = document.getElementById('content-lang-dropdown');
 
+        // Dashboard header language toggle
         if (langCurrent) {
-            // Click event
             langCurrent.addEventListener('click', (e) => {
                 e.stopPropagation();
                 this.toggleLanguageDropdown();
             });
-
-            // Keyboard event
             langCurrent.addEventListener('keydown', (e) => {
                 if (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowDown') {
                     e.preventDefault();
@@ -564,7 +564,25 @@ class AgroBusinessRevolution {
             });
         }
 
-        // Language options with keyboard support
+        // Content header language toggle
+        if (contentLangBtn) {
+            contentLangBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.toggleLanguageDropdown();
+            });
+            contentLangBtn.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    this.toggleLanguageDropdown();
+                    if (contentLangDropdown) {
+                        const firstOption = contentLangDropdown.querySelector('.lang-option-smart');
+                        if (firstOption) firstOption.focus();
+                    }
+                }
+            });
+        }
+
+        // Language options with keyboard support (all dropdowns)
         document.querySelectorAll('.lang-option-smart').forEach(option => {
             option.addEventListener('click', (e) => {
                 const lang = option.dataset.lang;
@@ -584,10 +602,16 @@ class AgroBusinessRevolution {
                     e.preventDefault();
                     const prev = option.previousElementSibling;
                     if (prev) prev.focus();
-                    else if (langCurrent) langCurrent.focus();
+                    else {
+                        const parent = option.closest('.lang-dropdown');
+                        const btn = parent && parent.parentElement.querySelector('.lang-toggle');
+                        if (btn) btn.focus();
+                    }
                 } else if (e.key === 'Escape') {
                     this.closeLanguageDropdown();
-                    if (langCurrent) langCurrent.focus();
+                    const parent = option.closest('.lang-dropdown');
+                    const btn = parent && parent.parentElement.querySelector('.lang-toggle');
+                    if (btn) btn.focus();
                 }
             });
         });
@@ -600,35 +624,60 @@ class AgroBusinessRevolution {
         });
     }
 
-    // Update toggleLanguageDropdown method
+    // Update toggleLanguageDropdown method — handles both dashboard and content header
     toggleLanguageDropdown() {
+        // Try dashboard header first, then content header
         const langCurrent = document.getElementById('current-lang-btn');
         const langDropdown = document.getElementById('lang-dropdown');
 
         if (langCurrent && langDropdown) {
             const isActive = langCurrent.classList.contains('active');
-
             if (isActive) {
                 this.closeLanguageDropdown();
             } else {
+                this.closeLanguageDropdown(); // close any other open dropdown first
                 langCurrent.classList.add('active');
                 langDropdown.classList.add('active');
                 langCurrent.setAttribute('aria-expanded', 'true');
+                this.announceToScreenReader('Language selector opened');
+            }
+            return;
+        }
 
-                // Announce to screen readers
+        // Fallback: content header
+        const contentLangBtn = document.getElementById('content-lang-btn');
+        const contentLangDropdown = document.getElementById('content-lang-dropdown');
+        if (contentLangBtn && contentLangDropdown) {
+            const isActive = contentLangBtn.classList.contains('active');
+            if (isActive) {
+                this.closeLanguageDropdown();
+            } else {
+                this.closeLanguageDropdown();
+                contentLangBtn.classList.add('active');
+                contentLangDropdown.classList.add('active');
+                contentLangBtn.setAttribute('aria-expanded', 'true');
                 this.announceToScreenReader('Language selector opened');
             }
         }
     }
 
     closeLanguageDropdown() {
+        // Close dashboard dropdown
         const langCurrent = document.getElementById('current-lang-btn');
         const langDropdown = document.getElementById('lang-dropdown');
-
         if (langCurrent && langDropdown) {
             langCurrent.classList.remove('active');
             langDropdown.classList.remove('active');
             langCurrent.setAttribute('aria-expanded', 'false');
+        }
+
+        // Close content header dropdown
+        const contentLangBtn = document.getElementById('content-lang-btn');
+        const contentLangDropdown = document.getElementById('content-lang-dropdown');
+        if (contentLangBtn && contentLangDropdown) {
+            contentLangBtn.classList.remove('active');
+            contentLangDropdown.classList.remove('active');
+            contentLangBtn.setAttribute('aria-expanded', 'false');
         }
     }
 
@@ -665,6 +714,12 @@ class AgroBusinessRevolution {
         document.querySelectorAll('.lang-code').forEach(code => {
             if (code) code.textContent = codes[this.currentLang];
         });
+
+        // Sync the content header language switcher
+        const contentFlag = document.getElementById('content-flag');
+        const contentCode = document.getElementById('content-lang-code');
+        if (contentFlag) contentFlag.textContent = flags[this.currentLang];
+        if (contentCode) contentCode.textContent = codes[this.currentLang];
     }
 
     // Update updateTexts method
@@ -2131,66 +2186,87 @@ class AgroBusinessRevolution {
                 return d === 0 ? 'Today' : d === 1 ? 'Yesterday' : `${d}d ago`;
             };
 
-            // Combine FEWS and community reports, dedupe by crop + district and keep the latest report only
+            // Combine FEWS and community reports into ONE row per crop + district,
+            // so a crop that has an AgroBiz reference AND community reports shows both
+            // (and the price-level badge can compare them).
             const combinedMap = Object.create(null);
 
             const normalizeKey = (cropName, districtName) => `${(cropName || '').toLowerCase()}::${(districtName || '').toLowerCase()}`;
 
-            // Helper to add candidate record into map if it's newer
-            const addCandidate = (rec) => {
-                const key = normalizeKey(rec.crop_name, rec.district);
-                const existing = combinedMap[key];
-                const existingTs = existing && existing._ts ? existing._ts : 0;
-                const candidateTs = rec._ts || 0;
-                if (!existing || candidateTs >= existingTs) {
-                    combinedMap[key] = rec;
+            // Get (or create) the record for a crop + district.
+            const getRec = (cropId, cropName, districtName) => {
+                const key = normalizeKey(cropName, districtName);
+                if (!combinedMap[key]) {
+                    combinedMap[key] = {
+                        _ts: 0,
+                        _hasFews: false,
+                        _hasCommunity: false,
+                        source: 'community',
+                        sourceLabel: 'Community',
+                        crop_id: cropId,
+                        crop_name: cropName,
+                        district: districtName || '—',
+                        market: '—',
+                        fewsPrice: '—',
+                        fews_price_num: null,
+                        communityPrice: '—',
+                        community_min_num: null,
+                        community_avg_num: null,
+                        community_max_num: null,
+                        community_min_bag: null,
+                        community_avg_bag: null,
+                        community_max_bag: null,
+                        community_confirmed: false,
+                        reports: '—',
+                        unit: 'kg',
+                        type: 'Farmer/trader report'
+                    };
                 }
+                return combinedMap[key];
             };
 
-            // FEWS entries
+            // FEWS entries — populate the AgroBiz reference slot.
             fews.forEach(r => {
+                const rec = getRec(r.crop_id, r.crop_name, r.district_name || r.region || '—');
                 const ts = r.price_date ? new Date(r.price_date).getTime() : 0;
-                addCandidate({
-                    _ts: ts,
-                    source: 'fews',
-                    sourceLabel: 'AgroBiz Rate',
-                    crop_id: r.crop_id,
-                    crop_name: r.crop_name,
-                    district: r.district_name || r.region || '—',
-                    market: r.market_name || r.market || '—',
-                    fewsPrice: fmt(r.price ?? r.value),
-                    fews_price_num: Number(r.price ?? r.value) || null,
-                    communityPrice: '—',
-                    reports: r.price_date ? new Date(r.price_date).toLocaleDateString() : '—',
-                    unit: r.unit || 'kg',
-                    type: r.price_type || 'Retail reference'
-                });
+                rec._hasFews = true;
+                rec.fews_price_num = Number(r.price ?? r.value) || null;
+                rec.fewsPrice = fmt(r.price ?? r.value);
+                rec.unit = r.unit || rec.unit;
+                if (rec.market === '—') rec.market = r.market_name || r.market || '—';
+                rec._ts = Math.max(rec._ts, ts);
             });
 
-            // Community entries
+            // Community entries — populate the community slot.
             community.forEach(r => {
+                const rec = getRec(r.crop_id, r.crop_name, r.district_name || '—');
                 const ts = r.last_reported ? new Date(r.last_reported).getTime() : 0;
-                addCandidate({
-                    _ts: ts,
-                    source: 'community',
-                    sourceLabel: 'Community',
-                    crop_id: r.crop_id,
-                    crop_name: r.crop_name,
-                    district: r.district_name || '—',
-                    market: r.market_name || '—',
-                    fewsPrice: '—',
-                    communityPrice: `${fmt(r.min_price)} / ${fmt(r.avg_price)} / ${fmt(r.max_price)}`,
-                    community_min_num: Number(r.min_price) || null,
-                    community_avg_num: Number(r.avg_price) || null,
-                    community_max_num: Number(r.max_price) || null,
-                    community_min_bag: Number(r.min_price_bag) || null,
-                    community_avg_bag: Number(r.avg_price_bag) || null,
-                    community_max_bag: Number(r.max_price_bag) || null,
-                    community_confirmed: !!r.confirmed,
-                    reports: `${r.report_count} report${Number(r.report_count) === 1 ? '' : 's'} · ${ago(r.last_reported)}`,
-                    unit: r.unit || 'kg',
-                    type: 'Farmer/trader report'
-                });
+                rec._hasCommunity = true;
+                rec.communityPrice = `${fmt(r.min_price)} / ${fmt(r.avg_price)} / ${fmt(r.max_price)}`;
+                rec.community_min_num = Number(r.min_price) || null;
+                rec.community_avg_num = Number(r.avg_price) || null;
+                rec.community_max_num = Number(r.max_price) || null;
+                rec.community_min_bag = Number(r.min_price_bag) || null;
+                rec.community_avg_bag = Number(r.avg_price_bag) || null;
+                rec.community_max_bag = Number(r.max_price_bag) || null;
+                rec.community_confirmed = !!r.confirmed;
+                rec.unit = r.unit || rec.unit;
+                if (rec.market === '—') rec.market = r.market_name || '—';
+                rec.reports = `${r.report_count} report${Number(r.report_count) === 1 ? '' : 's'} · ${ago(r.last_reported)}`;
+                rec._ts = Math.max(rec._ts, ts);
+            });
+
+            // Finalise source labelling now that both slots are filled.
+            Object.values(combinedMap).forEach(rec => {
+                if (rec._hasFews && rec._hasCommunity) {
+                    rec.source = 'both';
+                    rec.sourceLabel = 'AgroBiz + Community';
+                    rec.type = 'Reference + farmer reports';
+                } else if (rec._hasFews) {
+                    rec.source = 'fews';
+                    rec.sourceLabel = 'AgroBiz Rate';
+                    rec.type = 'Retail reference';
+                }
             });
 
             const rows = Object.values(combinedMap).sort((a, b) => (a.crop_name || '').localeCompare(b.crop_name || '') || (b._ts || 0) - (a._ts || 0));
