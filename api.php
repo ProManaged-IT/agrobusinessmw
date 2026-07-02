@@ -312,6 +312,49 @@ try {
     exit;
 }
 
+/**
+ * Admin credentials live in the `admin_users` table, not hardcoded in source.
+ * On first run the table is created and seeded once from .env (if present),
+ * so existing deployments migrate without a manual step.
+ */
+function admin_get_user(mysqli $mysqli): ?array {
+    static $cached = null;
+    if ($cached !== null) return $cached;
+
+    $mysqli->query(
+        "CREATE TABLE IF NOT EXISTS admin_users (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            username VARCHAR(100) NOT NULL UNIQUE,
+            password_hash VARCHAR(255) NOT NULL,
+            admin_token VARCHAR(255) NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+        )"
+    );
+
+    $result = $mysqli->query("SELECT username, password_hash, admin_token FROM admin_users LIMIT 1");
+    $row = $result ? $result->fetch_assoc() : null;
+
+    if (!$row) {
+        $seedUser  = $_ENV['ADMIN_USER'] ?? 'admin';
+        $seedPass  = $_ENV['ADMIN_PASSWORD'] ?? bin2hex(random_bytes(8));
+        $seedToken = $_ENV['ADMIN_TOKEN'] ?? bin2hex(random_bytes(16));
+        $hash = password_hash($seedPass, PASSWORD_DEFAULT);
+        $stmt = $mysqli->prepare(
+            "INSERT INTO admin_users (username, password_hash, admin_token) VALUES (?, ?, ?)"
+        );
+        $stmt->bind_param('sss', $seedUser, $hash, $seedToken);
+        $stmt->execute();
+        $row = ['username' => $seedUser, 'password_hash' => $hash, 'admin_token' => $seedToken];
+    }
+
+    return $cached = $row;
+}
+
+function admin_get_token(mysqli $mysqli): string {
+    return admin_get_user($mysqli)['admin_token'] ?? '';
+}
+
 // Get action parameter
 $action = $_GET['action'] ?? '';
 
@@ -810,7 +853,7 @@ try {
         // ── ONBOARDING: Admin — list applications ───────────────────
         case 'admin_applications':
             $adminToken = $_SERVER['HTTP_X_ADMIN_TOKEN'] ?? ($_GET['token'] ?? '');
-            $envAdminToken = $_ENV['ADMIN_TOKEN'] ?? 'agro_admin_2024';
+            $envAdminToken = admin_get_token($mysqli);
             if ($adminToken !== $envAdminToken) {
                 http_response_code(200);
                 echo json_encode(['success' => false, 'error' => 'Unauthorized']);
@@ -843,7 +886,7 @@ try {
             if ($_SERVER['REQUEST_METHOD'] !== 'POST') throw new Exception('POST method required');
 
             $adminToken = $_SERVER['HTTP_X_ADMIN_TOKEN'] ?? '';
-            $envAdminToken = $_ENV['ADMIN_TOKEN'] ?? 'agro_admin_2024';
+            $envAdminToken = admin_get_token($mysqli);
             if ($adminToken !== $envAdminToken) {
                 http_response_code(200);
                 echo json_encode(['success' => false, 'error' => 'Unauthorized']);
@@ -1196,7 +1239,7 @@ try {
         // ── COMMUNITY PRICE REVIEW: admin queue ─────────────────────
         case 'price_review_list':
             $adminToken = $_SERVER['HTTP_X_ADMIN_TOKEN'] ?? ($_GET['token'] ?? '');
-            if ($adminToken !== ($_ENV['ADMIN_TOKEN'] ?? 'agro_admin_2024')) {
+            if ($adminToken !== (admin_get_token($mysqli))) {
                 echo json_encode(['success' => false, 'error' => 'Unauthorized']);
                 exit;
             }
@@ -1229,7 +1272,7 @@ try {
         case 'price_review':
             if ($_SERVER['REQUEST_METHOD'] !== 'POST') throw new Exception('POST method required');
             $adminToken = $_SERVER['HTTP_X_ADMIN_TOKEN'] ?? '';
-            if ($adminToken !== ($_ENV['ADMIN_TOKEN'] ?? 'agro_admin_2024')) {
+            if ($adminToken !== (admin_get_token($mysqli))) {
                 echo json_encode(['success' => false, 'error' => 'Unauthorized']);
                 exit;
             }
@@ -1251,7 +1294,7 @@ try {
 
         case 'fews_prices_refresh':
             $adminToken = $_SERVER['HTTP_X_ADMIN_TOKEN'] ?? $_GET['token'] ?? '';
-            if ($adminToken !== ($_ENV['ADMIN_TOKEN'] ?? 'agro_admin_2024')) {
+            if ($adminToken !== (admin_get_token($mysqli))) {
                 throw new Exception('Unauthorized.');
             }
             $cacheFile = __DIR__ . '/config/fews_prices_cache.json';
@@ -1269,7 +1312,7 @@ try {
         // ── TEST: Send a test email via SMTP ────────────────────────
         case 'test_email':
             $adminToken    = $_SERVER['HTTP_X_ADMIN_TOKEN'] ?? ($_GET['token'] ?? '');
-            $envAdminToken = $_ENV['ADMIN_TOKEN'] ?? 'agro_admin_2024';
+            $envAdminToken = admin_get_token($mysqli);
             if ($adminToken !== $envAdminToken) {
                 throw new Exception('Unauthorised — provide valid admin token');
             }

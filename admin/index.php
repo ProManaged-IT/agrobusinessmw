@@ -25,12 +25,39 @@ if (file_exists($envFile)) {
     }
 }
 
+// ─── DB CONNECTION ────────────────────────────────────────────────────────────
+$host    = $_ENV['DB_HOST'] ?? '';
+$db      = @new mysqli($host, $_ENV['DB_USER'] ?? '', $_ENV['DB_PASS'] ?? '', $_ENV['DB_NAME'] ?? '', (int)($_ENV['DB_PORT'] ?? 3306));
+if ($db->connect_error) die('<p style="color:red">DB connection failed.</p>');
+$db->set_charset('utf8mb4');
+
 // ─── ADMIN AUTH ───────────────────────────────────────────────────────────────
-$adminPassword = $_ENV['ADMIN_PASSWORD'] ?? 'agro_admin_2024';
-$adminUser     = $_ENV['ADMIN_USER']     ?? 'admin';
+// Credentials live in the `admin_users` table (created/seeded from .env on
+// first run by api.php's admin_get_user()) — never hardcoded here.
+$db->query(
+    "CREATE TABLE IF NOT EXISTS admin_users (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        username VARCHAR(100) NOT NULL UNIQUE,
+        password_hash VARCHAR(255) NOT NULL,
+        admin_token VARCHAR(255) NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    )"
+);
+$adminRow = ($res = $db->query("SELECT username, password_hash FROM admin_users LIMIT 1")) ? $res->fetch_assoc() : null;
+if (!$adminRow) {
+    $seedUser  = $_ENV['ADMIN_USER'] ?? 'admin';
+    $seedPass  = $_ENV['ADMIN_PASSWORD'] ?? bin2hex(random_bytes(8));
+    $seedToken = $_ENV['ADMIN_TOKEN'] ?? bin2hex(random_bytes(16));
+    $hash = password_hash($seedPass, PASSWORD_DEFAULT);
+    $stmt = $db->prepare("INSERT INTO admin_users (username, password_hash, admin_token) VALUES (?, ?, ?)");
+    $stmt->bind_param('sss', $seedUser, $hash, $seedToken);
+    $stmt->execute();
+    $adminRow = ['username' => $seedUser, 'password_hash' => $hash];
+}
 
 if (!isset($_SESSION['admin_logged_in'])) {
-    if (isset($_POST['password']) && $_POST['username'] === $adminUser && $_POST['password'] === $adminPassword) {
+    if (isset($_POST['password']) && $_POST['username'] === $adminRow['username'] && password_verify($_POST['password'], $adminRow['password_hash'])) {
         $_SESSION['admin_logged_in'] = true;
     } else {
         if (isset($_POST['password'])) {
@@ -40,12 +67,6 @@ if (!isset($_SESSION['admin_logged_in'])) {
         exit;
     }
 }
-
-// ─── DB CONNECTION ────────────────────────────────────────────────────────────
-$host    = $_ENV['DB_HOST'] ?? '';
-$db      = @new mysqli($host, $_ENV['DB_USER'] ?? '', $_ENV['DB_PASS'] ?? '', $_ENV['DB_NAME'] ?? '', (int)($_ENV['DB_PORT'] ?? 3306));
-if ($db->connect_error) die('<p style="color:red">DB connection failed.</p>');
-$db->set_charset('utf8mb4');
 
 // Reference-price override store (district_id 0 = all districts). Created lazily.
 $db->query("CREATE TABLE IF NOT EXISTS price_overrides (
